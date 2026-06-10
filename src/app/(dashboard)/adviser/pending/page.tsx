@@ -13,7 +13,7 @@ import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { cn } from '@/lib/utils/cn';
 import { formatCurrency, formatDate } from '@/lib/utils/format';
-import { CheckCircle, XCircle, ClipboardList, ArrowRight, Shield } from 'lucide-react';
+import { CheckCircle, XCircle, ClipboardList, ArrowRight, Shield, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Skeleton } from '@/components/ui/skeleton';
 
@@ -23,6 +23,8 @@ export default function PendingApprovalsPage() {
   const [rejectReason, setRejectReason] = useState('');
   const [rejectTarget, setRejectTarget] = useState<string | null>(null);
   const [selectedForm, setSelectedForm] = useState<any>(null);
+  const [approvingFormId, setApprovingFormId] = useState<string | null>(null);
+  const [rejectingFormId, setRejectingFormId] = useState<string | null>(null);
   const profile = useAuthStore(s => s.profile);
 
   const loadForms = async () => {
@@ -34,21 +36,33 @@ export default function PendingApprovalsPage() {
 
   useEffect(() => { loadForms(); }, [profile]);
 
+  // Background polling to sync with event detail page changes
+  useEffect(() => {
+    const interval = setInterval(loadForms, 30000);
+    return () => clearInterval(interval);
+  }, [profile]);
+
   const handleApprove = async (formId: string, eventId: string) => {
+    if (approvingFormId || rejectingFormId) return;
+    setApprovingFormId(formId);
     try {
       await approveNoReceiptForm(formId, eventId);
       toast.success('Form approved');
       loadForms();
     } catch (err: any) {
       toast.error(err.message);
+    } finally {
+      setApprovingFormId(null);
     }
   };
 
   const handleReject = async (formId: string, eventId: string) => {
+    if (rejectingFormId || approvingFormId) return;
     if (!rejectReason.trim()) {
       toast.error('Please provide a reason');
       return;
     }
+    setRejectingFormId(formId);
     try {
       await rejectNoReceiptForm(formId, eventId, rejectReason);
       toast.success('Form rejected');
@@ -57,6 +71,8 @@ export default function PendingApprovalsPage() {
       loadForms();
     } catch (err: any) {
       toast.error(err.message);
+    } finally {
+      setRejectingFormId(null);
     }
   };
 
@@ -111,11 +127,13 @@ export default function PendingApprovalsPage() {
                       )}
                     </div>
                     <div className="flex items-center gap-2 ml-4" onClick={(e) => e.stopPropagation()}>
-                      <Button size="sm" onClick={() => handleApprove(form.id, form.event_id)}>
-                        <CheckCircle className="h-3.5 w-3.5 mr-1" /> Approve
+                      <Button size="sm" onClick={() => handleApprove(form.id, form.event_id)} disabled={approvingFormId === form.id || rejectingFormId === form.id}>
+                        {approvingFormId === form.id ? <Loader2 className="h-3.5 w-3.5 mr-1 animate-spin" /> : <CheckCircle className="h-3.5 w-3.5 mr-1" />}
+                        {approvingFormId === form.id ? 'Approving...' : 'Approve'}
                       </Button>
-                      <Button size="sm" variant="destructive" onClick={() => setRejectTarget(form.id)}>
-                        <XCircle className="h-3.5 w-3.5 mr-1" /> Reject
+                      <Button size="sm" variant="destructive" onClick={() => setRejectTarget(form.id)} disabled={rejectingFormId === form.id || approvingFormId === form.id}>
+                        {rejectingFormId === form.id ? <Loader2 className="h-3.5 w-3.5 mr-1 animate-spin" /> : <XCircle className="h-3.5 w-3.5 mr-1" />}
+                        Reject
                       </Button>
                     </div>
                   </div>
@@ -135,11 +153,12 @@ export default function PendingApprovalsPage() {
           <div className="space-y-4">
             <Label>Rejection Reason</Label>
             <Textarea value={rejectReason} onChange={e => setRejectReason(e.target.value)} placeholder="Explain why..." rows={4} />
-            <Button variant="destructive" className="w-full" onClick={() => {
+            <Button variant="destructive" className="w-full" disabled={rejectingFormId !== null} onClick={() => {
               const form = forms.find(f => f.id === rejectTarget);
               if (form) handleReject(rejectTarget!, form.event_id);
             }}>
-              Submit Rejection
+              {rejectingFormId ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : null}
+              {rejectingFormId ? 'Submitting...' : 'Submit Rejection'}
             </Button>
           </div>
         </DialogContent>

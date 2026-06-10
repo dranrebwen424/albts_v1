@@ -16,7 +16,7 @@ import { Separator } from '@/components/ui/separator';
 import { Label } from '@/components/ui/label';
 import { cn } from '@/lib/utils/cn';
 import { formatCurrency, formatDate } from '@/lib/utils/format';
-import { ArrowLeft, Receipt as ReceiptIcon, FileText, CheckCircle, XCircle, Shield, Eye, Image as ImageIcon } from 'lucide-react';
+import { ArrowLeft, Receipt as ReceiptIcon, FileText, CheckCircle, XCircle, Shield, Eye, Image as ImageIcon, Loader2 } from 'lucide-react';
 import { PieChart, Pie, Cell, ResponsiveContainer } from 'recharts';
 import { toast } from 'sonner';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -35,6 +35,9 @@ export default function AdviserEventDetailPage({ params }: { params: Promise<{ e
   const [report, setReport] = useState<any>(null);
   const [selectedForm, setSelectedForm] = useState<any>(null);
   const [selectedReceipt, setSelectedReceipt] = useState<any>(null);
+  const [approvingForm, setApprovingForm] = useState(false);
+  const [rejectingForm, setRejectingForm] = useState(false);
+  const [approvingReport, setApprovingReport] = useState(false);
 
   useEffect(() => {
     const init = async () => {
@@ -67,7 +70,23 @@ export default function AdviserEventDetailPage({ params }: { params: Promise<{ e
     init();
   }, [params]);
 
+  // Background polling to sync with pending page changes
+  useEffect(() => {
+    if (!eventId) return;
+    const interval = setInterval(async () => {
+      const [f, r] = await Promise.all([
+        getNoReceiptForms(eventId),
+        getFinancialReport(eventId).catch(() => null),
+      ]);
+      setForms(f);
+      if (r) setReport(r);
+    }, 30000);
+    return () => clearInterval(interval);
+  }, [eventId]);
+
   const handleApproveForm = async (formId: string) => {
+    if (approvingForm || rejectingForm) return;
+    setApprovingForm(true);
     try {
       await approveNoReceiptForm(formId, eventId);
       toast.success('Form approved');
@@ -75,14 +94,18 @@ export default function AdviserEventDetailPage({ params }: { params: Promise<{ e
       setForms(f);
     } catch (err: any) {
       toast.error(err.message);
+    } finally {
+      setApprovingForm(false);
     }
   };
 
   const handleRejectForm = async (formId: string) => {
+    if (rejectingForm || approvingForm) return;
     if (!rejectReason.trim()) {
       toast.error('Please provide a reason for rejection');
       return;
     }
+    setRejectingForm(true);
     try {
       await rejectNoReceiptForm(formId, eventId, rejectReason);
       toast.success('Form rejected');
@@ -92,11 +115,14 @@ export default function AdviserEventDetailPage({ params }: { params: Promise<{ e
       setForms(f);
     } catch (err: any) {
       toast.error(err.message);
+    } finally {
+      setRejectingForm(false);
     }
   };
 
   const handleApproveReport = async () => {
-    if (!report) return;
+    if (!report || approvingReport) return;
+    setApprovingReport(true);
     try {
       await approveFinancialReport(report.id, eventId);
       toast.success('Financial Statement approved');
@@ -104,6 +130,8 @@ export default function AdviserEventDetailPage({ params }: { params: Promise<{ e
       setReport(r);
     } catch (err: any) {
       toast.error(err.message);
+    } finally {
+      setApprovingReport(false);
     }
   };
 
@@ -253,11 +281,13 @@ export default function AdviserEventDetailPage({ params }: { params: Promise<{ e
                           )}
                         </div>
                         <div className="flex items-center gap-2 ml-4" onClick={(e) => e.stopPropagation()}>
-                          <Button size="sm" variant="default" onClick={() => handleApproveForm(form.id)}>
-                            <CheckCircle className="h-3.5 w-3.5 mr-1" /> Approve
+                          <Button size="sm" variant="default" onClick={() => handleApproveForm(form.id)} disabled={approvingForm || rejectingForm}>
+                            {approvingForm ? <Loader2 className="h-3.5 w-3.5 mr-1 animate-spin" /> : <CheckCircle className="h-3.5 w-3.5 mr-1" />}
+                            {approvingForm ? 'Approving...' : 'Approve'}
                           </Button>
-                          <Button size="sm" variant="destructive" onClick={() => setRejectTarget(form.id)}>
-                            <XCircle className="h-3.5 w-3.5 mr-1" /> Reject
+                          <Button size="sm" variant="destructive" onClick={() => setRejectTarget(form.id)} disabled={rejectingForm || approvingForm}>
+                            {rejectingForm ? <Loader2 className="h-3.5 w-3.5 mr-1 animate-spin" /> : <XCircle className="h-3.5 w-3.5 mr-1" />}
+                            Reject
                           </Button>
                         </div>
                       </div>
@@ -394,8 +424,9 @@ export default function AdviserEventDetailPage({ params }: { params: Promise<{ e
 
       {report && report.status === 'pending' && (
         <div className="flex justify-end">
-          <Button size="sm" onClick={handleApproveReport}>
-            <CheckCircle className="h-3.5 w-3.5 mr-1" /> Approve Financial Statement
+          <Button size="sm" onClick={handleApproveReport} disabled={approvingReport}>
+            {approvingReport ? <Loader2 className="h-3.5 w-3.5 mr-1 animate-spin" /> : <CheckCircle className="h-3.5 w-3.5 mr-1" />}
+            {approvingReport ? 'Approving...' : 'Approve Financial Statement'}
           </Button>
         </div>
       )}
@@ -410,8 +441,9 @@ export default function AdviserEventDetailPage({ params }: { params: Promise<{ e
           <div className="space-y-4">
             <Label>Rejection Reason</Label>
             <Textarea value={rejectReason} onChange={e => setRejectReason(e.target.value)} placeholder="Explain why this form is being rejected..." rows={4} />
-            <Button variant="destructive" className="w-full" onClick={() => rejectTarget && handleRejectForm(rejectTarget)}>
-              Submit Rejection
+            <Button variant="destructive" className="w-full" onClick={() => rejectTarget && handleRejectForm(rejectTarget)} disabled={rejectingForm}>
+              {rejectingForm ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : null}
+              {rejectingForm ? 'Submitting...' : 'Submit Rejection'}
             </Button>
           </div>
         </DialogContent>

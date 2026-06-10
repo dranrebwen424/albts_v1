@@ -7,27 +7,22 @@ import { cn } from '@/lib/utils/cn';
 import { useSidebarStore } from '@/stores/sidebar';
 import { useAuthStore } from '@/stores/auth';
 import {
-  LayoutDashboard,
   CalendarRange,
-  Receipt,
   ClipboardList,
-  Users,
   Building2,
   FileText,
-  Shield,
   ChevronLeft,
   ChevronRight,
   LogOut,
   Bell,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Avatar } from '@/components/ui/avatar';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Separator } from '@/components/ui/separator';
 import { createClient } from '@/lib/supabase/client';
 import { getPendingForms, getNotifications, markAllNotificationsRead } from '@/lib/actions';
 import { formatDateTime } from '@/lib/utils/format';
 import { useRouter } from 'next/navigation';
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 
 interface NavItem {
   label: string;
@@ -48,7 +43,7 @@ const navItems: NavItem[] = [
 export function Sidebar() {
   const pathname = usePathname();
   const router = useRouter();
-  const { collapsed, toggle } = useSidebarStore();
+  const { collapsed, toggle, mobileOpen, setMobileOpen } = useSidebarStore();
   const { profile } = useAuthStore();
 
   const handleSignOut = async () => {
@@ -104,13 +99,8 @@ export function Sidebar() {
     }
   }, [showNotifs]);
 
-  return (
-    <aside
-      className={cn(
-        'fixed left-0 top-0 z-40 flex h-screen flex-col border-r border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-950 transition-all duration-300',
-        collapsed ? 'w-16' : 'w-60'
-      )}
-    >
+  const sidebarContent = (
+    <>
       {/* Logo */}
       <div className={cn('flex h-14 items-center border-b border-neutral-200 dark:border-neutral-800 px-4', collapsed ? 'justify-center' : 'justify-between')}>
         {!collapsed && (
@@ -231,15 +221,95 @@ export function Sidebar() {
           </div>
         )}
         <Button
-          variant="ghost"
+          variant="outline"
           size={collapsed ? 'icon' : 'default'}
-          className={cn('w-full justify-start gap-3', collapsed && 'justify-center')}
+          className={cn(
+            'w-full justify-start gap-3 border-rose-200 dark:border-rose-900 text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/50',
+            collapsed && 'justify-center'
+          )}
           onClick={handleSignOut}
         >
           <LogOut className="h-4 w-4" />
           {!collapsed && <span>Sign out</span>}
         </Button>
       </div>
-    </aside>
+    </>
+  );
+
+  return (
+    <>
+      {/* Mobile drawer */}
+      <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
+        <SheetContent side="left" className="p-0 w-72">
+          <SheetHeader>
+            <SheetTitle className="sr-only">Navigation</SheetTitle>
+          </SheetHeader>
+          <div className="flex h-full flex-col">
+            <div className="flex h-14 items-center border-b border-neutral-200 dark:border-neutral-800 px-4">
+              <span className="text-sm font-semibold tracking-tight">ALBTS</span>
+            </div>
+            <ScrollArea className="flex-1 px-2 py-4 min-h-0">
+              <nav className="flex flex-col gap-1">
+                {userNavItems.map((item) => {
+                  const isActive = pathname.startsWith(item.href);
+                  const isPending = item.label === 'Pending Approvals';
+                  return (
+                    <Link
+                      key={item.href}
+                      href={item.href}
+                      onClick={() => setMobileOpen(false)}
+                      className={cn(
+                        'flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors relative',
+                        isActive
+                          ? 'bg-neutral-100 dark:bg-neutral-800 text-neutral-900 dark:text-white font-medium'
+                          : 'text-neutral-500 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white hover:bg-neutral-100 dark:hover:bg-neutral-800'
+                      )}
+                    >
+                      {item.icon}
+                      <span>{item.label}</span>
+                      {isPending && pendingCount > 0 && (
+                        <span className="ml-auto flex items-center justify-center h-5 min-w-5 px-1.5 rounded-full text-[10px] font-semibold bg-red-500 text-white">
+                          {pendingCount > 99 ? '99+' : pendingCount}
+                        </span>
+                      )}
+                    </Link>
+                  );
+                })}
+              </nav>
+            </ScrollArea>
+            <div className="border-t border-neutral-200 dark:border-neutral-800 p-3">
+              {profile && (
+                <div className="px-1 pb-3">
+                  <div className="text-sm font-medium text-neutral-900 dark:text-white truncate">
+                    {profile.first_name} {profile.last_name}
+                  </div>
+                  <div className="text-xs text-neutral-500 dark:text-neutral-400 capitalize">
+                    {profile.role}
+                  </div>
+                </div>
+              )}
+              <Button
+                variant="outline"
+                className="w-full justify-start gap-3 border-rose-200 dark:border-rose-900 text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/50"
+                onClick={handleSignOut}
+              >
+                <LogOut className="h-4 w-4" />
+                <span>Sign out</span>
+              </Button>
+            </div>
+          </div>
+        </SheetContent>
+      </Sheet>
+
+      {/* Desktop sidebar */}
+      <aside
+        className={cn(
+          'fixed left-0 top-0 z-40 hidden lg:flex h-screen flex-col border-r border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-950 transition-all duration-300',
+          collapsed ? 'w-16' : 'w-60'
+        )}
+      >
+        {sidebarContent}
+      </aside>
+    </>
   );
 }

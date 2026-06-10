@@ -1,8 +1,9 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { Sidebar } from '@/components/layout/sidebar';
+import { MobileNav } from '@/components/layout/mobile-nav';
 import { useSidebarStore } from '@/stores/sidebar';
 import { useAuthStore } from '@/stores/auth';
 import { createClient } from '@/lib/supabase/client';
@@ -11,9 +12,19 @@ import { cn } from '@/lib/utils/cn';
 
 export function DashboardLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
-  const { collapsed } = useSidebarStore();
+  const { collapsed, setIsMobile, isMobile } = useSidebarStore();
   const { setProfile, profile } = useAuthStore();
   const [loading, setLoading] = useState(true);
+
+  const handleResize = useCallback(() => {
+    setIsMobile(window.innerWidth < 1024);
+  }, [setIsMobile]);
+
+  useEffect(() => {
+    handleResize();
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, [handleResize]);
 
   useEffect(() => {
     const initAuth = async () => {
@@ -26,9 +37,12 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
       }
 
       try {
-        const res = await fetch('/api/auth/get-role');
-        const profile = await res.json();
-        if (res.ok) {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('user_id', user.id)
+          .single();
+        if (profile) {
           setProfile(profile as any);
         }
       } catch {}
@@ -51,13 +65,14 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
   return (
     <div className="flex h-screen overflow-hidden bg-neutral-50 dark:bg-neutral-900">
       <Sidebar />
+      {isMobile && <MobileNav />}
       <main
         className={cn(
           'flex-1 overflow-y-auto transition-all duration-300',
-          collapsed ? 'ml-16' : 'ml-60'
+          isMobile ? 'ml-0 pt-14 pb-16' : collapsed ? 'ml-16' : 'ml-60'
         )}
       >
-        <div className="container mx-auto p-6 max-w-7xl">
+        <div className="container mx-auto p-4 lg:p-6 max-w-7xl">
           {children}
         </div>
       </main>

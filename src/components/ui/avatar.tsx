@@ -1,4 +1,5 @@
 import * as React from "react";
+import Image from "next/image";
 import { cn } from "@/lib/utils/cn";
 
 const Avatar = React.forwardRef<
@@ -14,7 +15,7 @@ const Avatar = React.forwardRef<
     {...props}
   >
     {src ? (
-      <img src={src} alt={fallback} className="aspect-square h-full w-full" />
+      <Image src={src} alt={fallback} fill className="object-cover" sizes="36px" />
     ) : (
       <span className="text-neutral-600 dark:text-neutral-400">
         {fallback.charAt(0).toUpperCase()}

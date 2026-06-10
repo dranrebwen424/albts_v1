@@ -1,10 +1,11 @@
 'use client';
 
 import { useEffect, useState, useCallback, useRef } from 'react';
+import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/client';
-import { getEvent, getReceipts, getNoReceiptForms, uploadReceipt, confirmReceipt, submitNoReceiptForm, resubmitNoReceiptForm, getNotifications, markAllNotificationsRead } from '@/lib/actions';
+import { getEvent, getReceipts, getNoReceiptForms, uploadReceipt, confirmReceipt, submitNoReceiptForm, resubmitNoReceiptForm, getNotifications, markAllNotificationsRead, retryOcr } from '@/lib/actions';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -18,11 +19,13 @@ import { Progress } from '@/components/ui/progress';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { cn } from '@/lib/utils/cn';
 import { formatCurrency, formatDate } from '@/lib/utils/format';
-import { ArrowLeft, Upload, Receipt as ReceiptIcon, FileText, CheckCircle, XCircle, Clock, Wallet, Image as ImageIcon, Plus, Trash2, Shield, Download, ChevronRight, Eye, Bell } from 'lucide-react';
-import { PieChart, Pie, Cell, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip } from 'recharts';
+import { ArrowLeft, Upload, Receipt as ReceiptIcon, FileText, CheckCircle, XCircle, Clock, Wallet, Image as ImageIcon, Plus, Trash2, Shield, Download, ChevronRight, Eye, Bell, Camera, Loader2, RefreshCw } from 'lucide-react';
+import { PieChart, Pie, Cell, ResponsiveContainer } from 'recharts';
 import { toast } from 'sonner';
 import { useDropzone } from 'react-dropzone';
 import { Skeleton } from '@/components/ui/skeleton';
+import { CameraCapture } from '@/components/camera/camera-capture';
+import { UploadSheet } from '@/components/camera/upload-sheet';
 import type { Event, Receipt, NoReceiptForm } from '@/types';
 
 const COLORS = ['#0a0a0a', '#e5e5e5', '#22c55e'];
@@ -55,6 +58,17 @@ export default function EventDetailPage({ params }: { params: Promise<{ eventId:
 
   // Receipt detail modal
   const [selectedReceipt, setSelectedReceipt] = useState<any>(null);
+
+  // Camera & upload sheet state
+  const [showCamera, setShowCamera] = useState(false);
+  const [showUploadSheet, setShowUploadSheet] = useState(false);
+  const [uploadSource, setUploadSource] = useState<'camera' | 'file' | null>(null);
+
+  // OCR error dialog state
+  const [showOcrError, setShowOcrError] = useState<{ imageUrl: string } | null>(null);
+  const [ocrRetrying, setOcrRetrying] = useState(false);
+  const [ocrErrorCooldown, setOcrErrorCooldown] = useState(false);
+
 
   // Notification state
   const [notifications, setNotifications] = useState<any[]>([]);
@@ -110,13 +124,14 @@ export default function EventDetailPage({ params }: { params: Promise<{ eventId:
   const onDrop = useCallback(async (acceptedFiles: File[]) => {
     if (acceptedFiles.length === 0) return;
     setUploading(true);
+    setUploadSource('file');
     const file = acceptedFiles[0];
     const formData = new FormData();
     formData.append('file', file);
 
     // Quick quality check — warn if image is likely too small or blurry
     try {
-      const img = new Image();
+      const img = document.createElement('img');
       const url = URL.createObjectURL(file);
       await new Promise<void>((resolve, reject) => {
         img.onload = () => { URL.revokeObjectURL(url); resolve(); };
@@ -135,13 +150,12 @@ export default function EventDetailPage({ params }: { params: Promise<{ eventId:
       setReviewImageUrl(result.imageUrl);
 
       if (result.ocrFailed || !result.parsed) {
-        setReviewParsed(null);
-        setEditingReceipt({ vendor: '', si_or_number: '', date: '', time: '', items: [], subtotal: 0, discount: 0, total: 0, category: '', category_reasoning: '', confidence: 0 });
+        setShowOcrError({ imageUrl: result.imageUrl });
       } else {
         setReviewParsed(result.parsed);
         setEditingReceipt(result.parsed);
+        setReviewReceipt(true);
       }
-      setReviewReceipt(true);
     } catch (err: any) {
       toast.error(err.message || 'Failed to upload receipt');
     }
@@ -170,6 +184,68 @@ export default function EventDetailPage({ params }: { params: Promise<{ eventId:
       toast.error(err.message || 'Failed to save receipt');
     }
   };
+
+  const handleCameraCapture = useCallback(async (file: File) => {
+    setShowCamera(false);
+    setUploading(true);
+    setUploadSource('camera');
+    const formData = new FormData();
+    formData.append('file', file);
+
+    try {
+      const result = await uploadReceipt(eventId, formData);
+      setReviewImageUrl(result.imageUrl);
+
+      if (result.ocrFailed || !result.parsed) {
+        setShowOcrError({ imageUrl: result.imageUrl });
+      } else {
+        setReviewParsed(result.parsed);
+        setEditingReceipt(result.parsed);
+        setReviewReceipt(true);
+      }
+    } catch (err: any) {
+      toast.error(err.message || 'Failed to upload receipt');
+    }
+    setUploading(false);
+  }, [eventId]);
+
+  const handleRetake = useCallback(() => {
+    setShowOcrError(null);
+    if (uploadSource === 'camera') {
+      setShowCamera(true);
+    } else {
+      setShowUploadSheet(true);
+    }
+  }, [uploadSource]);
+
+  const handleRetryOcr = useCallback(async () => {
+    if (!showOcrError) return;
+    setOcrRetrying(true);
+    try {
+      const result = await retryOcr(eventId, showOcrError.imageUrl);
+      if (!result.ocrFailed && result.parsed) {
+        setShowOcrError(null);
+        setReviewParsed(result.parsed);
+        setEditingReceipt(result.parsed);
+        setReviewReceipt(true);
+        toast.success('Receipt read successfully');
+      } else {
+        setOcrErrorCooldown(true);
+        setTimeout(() => setOcrErrorCooldown(false), 3000);
+        toast.error('Still couldn\'t read the receipt. Try taking a clearer photo.');
+      }
+    } catch {
+      toast.error('Failed to retry OCR');
+    }
+    setOcrRetrying(false);
+  }, [eventId, showOcrError]);
+
+  const handleEnterManually = useCallback(() => {
+    setShowOcrError(null);
+    setReviewParsed(null);
+    setEditingReceipt({ vendor: '', si_or_number: '', date: '', time: '', items: [], subtotal: 0, discount: 0, total: 0, category: '', category_reasoning: '', confidence: 0 });
+    setReviewReceipt(true);
+  }, []);
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,
@@ -409,14 +485,61 @@ export default function EventDetailPage({ params }: { params: Promise<{ eventId:
         {/* Receipts Tab */}
         <TabsContent value="receipts" className="space-y-4">
           {!isViewOnly && (
-            <div {...getRootProps()} className="border-2 border-dashed border-neutral-300 dark:border-neutral-700 rounded-xl p-8 text-center cursor-pointer hover:border-neutral-500 transition-colors">
-              <input {...getInputProps()} />
-              <Upload className="h-8 w-8 mx-auto mb-2 text-neutral-400" />
-              <p className="text-sm text-neutral-500 dark:text-neutral-400">
-                {isDragActive ? 'Drop receipt here' : 'Drop receipt image or click to upload'}
-              </p>
-              <p className="text-xs text-neutral-400 mt-1">PNG, JPG, JPEG, WEBP</p>
-            </div>
+            <>
+              {/* Desktop dropzone */}
+              <div {...getRootProps()} className="hidden lg:block border-2 border-dashed border-neutral-300 dark:border-neutral-700 rounded-xl p-8 text-center cursor-pointer hover:border-neutral-500 transition-colors">
+                <input {...getInputProps()} />
+                <Upload className="h-8 w-8 mx-auto mb-2 text-neutral-400" />
+                <p className="text-sm text-neutral-500 dark:text-neutral-400">
+                  {isDragActive ? 'Drop receipt here' : 'Drop receipt image or click to upload'}
+                </p>
+                <p className="text-xs text-neutral-400 mt-1">PNG, JPG, JPEG, WEBP</p>
+              </div>
+
+              {/* Mobile upload button */}
+              <div className="lg:hidden">
+                <button
+                  onClick={() => setShowUploadSheet(true)}
+                  disabled={uploading}
+                  className="w-full flex items-center justify-center gap-3 border-2 border-dashed border-neutral-300 dark:border-neutral-700 rounded-xl p-6 text-center hover:border-neutral-500 transition-colors disabled:opacity-50"
+                >
+                  <Camera className="h-6 w-6 text-neutral-400" />
+                  <div className="text-left">
+                    <p className="text-sm font-medium text-neutral-700 dark:text-neutral-300">Upload Receipt</p>
+                    <p className="text-xs text-neutral-400">Take a photo or browse files</p>
+                  </div>
+                </button>
+              </div>
+
+              {/* Upload sheet (mobile) */}
+              <UploadSheet
+                open={showUploadSheet}
+                onClose={() => setShowUploadSheet(false)}
+                onTakePhoto={() => setShowCamera(true)}
+                onBrowseFiles={() => {
+                  // Trigger hidden file input for mobile
+                  const input = document.createElement('input');
+                  input.type = 'file';
+                  input.accept = 'image/*';
+                  input.capture = 'environment';
+                  input.onchange = (e) => {
+                    const file = (e.target as HTMLInputElement).files?.[0];
+                    if (file) {
+                      onDrop([file]);
+                    }
+                  };
+                  input.click();
+                }}
+              />
+
+              {/* Camera capture (mobile) */}
+              {showCamera && (
+                <CameraCapture
+                  onCapture={handleCameraCapture}
+                  onClose={() => setShowCamera(false)}
+                />
+              )}
+            </>
           )}
 
           {receipts.length === 0 ? (
@@ -432,9 +555,9 @@ export default function EventDetailPage({ params }: { params: Promise<{ eventId:
                   <Card className="hover:shadow-md transition-all">
                     <CardContent className="p-4">
                       <div className="flex items-start gap-3">
-                        <div className="h-12 w-12 rounded-lg bg-neutral-100 dark:bg-neutral-800 overflow-hidden flex-shrink-0">
+                        <div className="h-12 w-12 rounded-lg bg-neutral-100 dark:bg-neutral-800 overflow-hidden flex-shrink-0 relative">
                           {receipt.image_url ? (
-                            <img src={receipt.image_url} alt="" className="h-full w-full object-cover" />
+                            <Image src={receipt.image_url} alt="" fill className="object-cover" sizes="48px" />
                           ) : (
                             <div className="h-full w-full flex items-center justify-center">
                               <ImageIcon className="h-5 w-5 text-neutral-400" />
@@ -469,7 +592,7 @@ export default function EventDetailPage({ params }: { params: Promise<{ eventId:
                   <Plus className="h-4 w-4 mr-2" /> New No-Receipt Form
                 </Button>
               </DialogTrigger>
-              <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
+              <DialogContent className="max-w-[calc(100vw-32px)] sm:max-w-2xl max-h-[85vh] overflow-y-auto">
                 <DialogHeader>
                   <DialogTitle>No-Receipt Form</DialogTitle>
                   <DialogDescription>
@@ -861,7 +984,7 @@ Rejection reason: <span className="min-w-0 break-words">{form.rejection_reason}<
 
       {/* Form Detail Modal */}
       <Dialog open={!!selectedForm} onOpenChange={(open) => !open && setSelectedForm(null)}>
-        <DialogContent className="max-w-3xl max-h-[95vh] overflow-y-auto">
+        <DialogContent className="max-w-[calc(100vw-32px)] sm:max-w-3xl max-h-[95vh] overflow-y-auto">
           {selectedForm && (
             <>
               <DialogHeader>
@@ -1056,9 +1179,40 @@ Rejection reason: <span className="min-w-0 break-words">{form.rejection_reason}<
         </Card>
       ) : null}
 
+      {/* OCR Error Dialog */}
+      <Dialog open={!!showOcrError} onOpenChange={(open) => { if (!open) setShowOcrError(null); }}>
+        <DialogContent className="max-w-[calc(100vw-32px)] sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>We couldn't read the receipt right now</DialogTitle>
+            <DialogDescription>
+              The receipt image could not be read. Try taking a clearer photo with better lighting, or tap Retry to try again.
+            </DialogDescription>
+          </DialogHeader>
+          {showOcrError && (
+            <div className="space-y-4">
+              <div className="relative w-full h-36 rounded-lg overflow-hidden bg-neutral-100 dark:bg-neutral-900">
+                <Image src={showOcrError.imageUrl} alt="Receipt" fill className="object-contain" sizes="(max-width: 768px) 100vw, 50vw" />
+              </div>
+              <div className="flex flex-col gap-2">
+                <Button onClick={handleRetake}>
+                  <Camera className="h-4 w-4 mr-2" /> Take Photo Again
+                </Button>
+                <Button onClick={handleRetryOcr} disabled={ocrRetrying || ocrErrorCooldown}>
+                  {ocrRetrying ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <RefreshCw className="h-4 w-4 mr-2" />}
+                  {ocrRetrying ? 'Reading receipt...' : ocrErrorCooldown ? 'Please wait...' : 'Retry OCR'}
+                </Button>
+                <Button variant="outline" onClick={handleEnterManually}>
+                  <FileText className="h-4 w-4 mr-2" /> Enter Manually
+                </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
       {/* Receipt Review Modal */}
       <Dialog open={!!reviewReceipt} onOpenChange={(open) => { if (!open) { setReviewReceipt(false); setEditingReceipt(null); } }}>
-        <DialogContent className="max-w-3xl max-h-[85vh] overflow-y-auto">
+        <DialogContent className="max-w-[calc(100vw-32px)] sm:max-w-3xl max-h-[85vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>{reviewParsed ? 'Review Receipt Data' : 'Manual Receipt Entry'}</DialogTitle>
             <DialogDescription>
@@ -1068,8 +1222,8 @@ Rejection reason: <span className="min-w-0 break-words">{form.rejection_reason}<
           {editingReceipt && (
             <div className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <img src={reviewImageUrl} alt="Receipt" className="rounded-lg w-full object-cover max-h-48" />
+                <div className="relative w-full h-48">
+                  <Image src={reviewImageUrl} alt="Receipt" fill className="rounded-lg object-cover" sizes="(max-width: 768px) 100vw, 50vw" />
                 </div>
                 <div className="space-y-3">
                   <div className="space-y-1">
@@ -1191,16 +1345,16 @@ Rejection reason: <span className="min-w-0 break-words">{form.rejection_reason}<
 
       {/* Receipt Detail Modal */}
       <Dialog open={!!selectedReceipt} onOpenChange={(open) => !open && setSelectedReceipt(null)}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="max-w-[calc(100vw-32px)] sm:max-w-2xl">
           {selectedReceipt && (
             <>
               <DialogHeader>
                 <DialogTitle>{selectedReceipt.vendor || 'Receipt Details'}</DialogTitle>
               </DialogHeader>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
+                <div className="relative w-full h-64">
                   {selectedReceipt.image_url && (
-                    <img src={selectedReceipt.image_url} alt="Receipt" className="rounded-lg w-full object-cover max-h-64" />
+                    <Image src={selectedReceipt.image_url} alt="Receipt" fill className="rounded-lg object-cover" sizes="(max-width: 768px) 100vw, 50vw" />
                   )}
                 </div>
                 <div className="space-y-3">

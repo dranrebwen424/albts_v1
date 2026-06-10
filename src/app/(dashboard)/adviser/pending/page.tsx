@@ -159,7 +159,7 @@ export default function PendingApprovalsPage() {
 
       {/* Form Detail Modal */}
       <Dialog open={!!selectedForm} onOpenChange={(open) => !open && setSelectedForm(null)}>
-        <DialogContent className="max-w-3xl max-h-[95vh] overflow-y-auto">
+        <DialogContent className="max-w-[calc(100vw-32px)] sm:max-w-3xl max-h-[95vh] overflow-y-auto">
           {selectedForm && (
             <>
               <DialogHeader>

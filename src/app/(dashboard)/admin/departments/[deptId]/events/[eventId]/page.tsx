@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import Image from 'next/image';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/client';
@@ -175,9 +176,9 @@ export default function AdminEventDetailPage() {
                   <Card className="hover:shadow-md transition-all cursor-pointer">
                     <CardContent className="p-4">
                       <div className="flex items-start gap-3">
-                        <div className="h-12 w-12 rounded-lg bg-neutral-100 dark:bg-neutral-800 overflow-hidden flex-shrink-0">
+                        <div className="h-12 w-12 rounded-lg bg-neutral-100 dark:bg-neutral-800 overflow-hidden flex-shrink-0 relative">
                           {receipt.image_url ? (
-                            <img src={receipt.image_url} alt="" className="h-full w-full object-cover" />
+                            <Image src={receipt.image_url} alt="" fill className="object-cover" sizes="48px" />
                           ) : (
                             <div className="h-full w-full flex items-center justify-center">
                               <ImageIcon className="h-5 w-5 text-neutral-400" />
@@ -254,7 +255,9 @@ export default function AdminEventDetailPage() {
             {selectedReceipt && (
               <div className="space-y-4">
                 {selectedReceipt.image_url && (
-                  <img src={selectedReceipt.image_url} alt="Receipt" className="w-full rounded-lg border" />
+                  <div className="relative w-full h-64">
+                    <Image src={selectedReceipt.image_url} alt="Receipt" fill className="rounded-lg border object-cover" sizes="100vw" />
+                  </div>
                 )}
                 <div className="grid grid-cols-2 gap-3 text-sm">
                   <div>
@@ -306,7 +309,7 @@ export default function AdminEventDetailPage() {
 
       {/* Form Detail Modal */}
       <Dialog open={!!selectedForm} onOpenChange={(open) => { if (!open) setSelectedForm(null); }}>
-        <DialogContent className="max-w-3xl max-h-[95vh]">
+        <DialogContent className="max-w-[calc(100vw-32px)] sm:max-w-3xl max-h-[95vh]">
           <DialogHeader>
             <DialogTitle>{selectedForm?.expense_name || 'No-Receipt Form'}</DialogTitle>
           </DialogHeader>

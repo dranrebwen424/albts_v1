@@ -49,3 +49,37 @@ body {
     transform: scale(0.95);
   }
 }
+
+@keyframes pulse-bracket {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+@keyframes breathe {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.02); }
+}
+
+@utility pb-safe {
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+@utility pt-safe {
+  padding-top: env(safe-area-inset-top, 0px);
+}
+
+@utility pl-safe {
+  padding-left: env(safe-area-inset-left, 0px);
+}
+
+@utility pr-safe {
+  padding-right: env(safe-area-inset-right, 0px);
+}
+
+@utility animate-pulse-bracket {
+  animation: pulse-bracket 2s ease-in-out infinite;
+}
+
+@utility animate-breathe {
+  animation: breathe 2s ease-in-out infinite;
+}

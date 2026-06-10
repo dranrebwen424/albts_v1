@@ -1,5 +1,6 @@
 'use server';
 
+import { cache } from 'react';
 import { createClient } from '@/lib/supabase/server';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { parseReceipt } from '@/lib/openrouter/client';
@@ -24,11 +25,11 @@ async function createAuditLog(departmentId: string, action: string, details?: Re
 
 // ─── Departments ───
 
-export async function getDepartments() {
+export const getDepartments = cache(async () => {
   const supabase = await createClient();
   const { data } = await supabase.from('departments').select('*').order('name');
   return data || [];
-}
+});
 
 export async function createDepartment(name: string, code: string) {
   const supabase = await createClient();
@@ -41,7 +42,7 @@ export async function createDepartment(name: string, code: string) {
 
 // ─── Events ───
 
-export async function getEvents(departmentId: string) {
+export const getEvents = cache(async (departmentId: string) => {
   const supabase = await createClient();
   const { data } = await supabase
     .from('events')
@@ -49,9 +50,9 @@ export async function getEvents(departmentId: string) {
     .eq('department_id', departmentId)
     .order('created_at', { ascending: false });
   return data || [];
-}
+});
 
-export async function getEvent(eventId: string) {
+export const getEvent = cache(async (eventId: string) => {
   const supabase = await createClient();
   const { data } = await supabase
     .from('events')
@@ -59,7 +60,7 @@ export async function getEvent(eventId: string) {
     .eq('id', eventId)
     .single();
   return data;
-}
+});
 
 export async function createEvent(
   departmentId: string,
@@ -119,7 +120,7 @@ export async function markEventDone(eventId: string, departmentId: string) {
 
 // ─── Receipts ───
 
-export async function getReceipts(eventId: string) {
+export const getReceipts = cache(async (eventId: string) => {
   const supabase = await createClient();
   const { data } = await supabase
     .from('receipts')
@@ -127,7 +128,7 @@ export async function getReceipts(eventId: string) {
     .eq('event_id', eventId)
     .order('created_at', { ascending: false });
   return data || [];
-}
+});
 
 export async function uploadReceipt(
   eventId: string,
@@ -163,6 +164,24 @@ export async function uploadReceipt(
     return { success: true, imageUrl: publicUrl, parsed, ocrFailed: false };
   } catch {
     return { success: true, imageUrl: publicUrl, parsed: null, ocrFailed: true };
+  }
+}
+
+export async function retryOcr(eventId: string, imageUrl: string) {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error('Unauthorized');
+
+  const response = await fetch(imageUrl);
+  const blob = await response.blob();
+  const buffer = await blob.arrayBuffer();
+  const base64 = Buffer.from(buffer).toString('base64');
+
+  try {
+    const parsed = await parseReceipt(base64, blob.type);
+    return { parsed, ocrFailed: false };
+  } catch {
+    return { parsed: null, ocrFailed: true };
   }
 }
 
@@ -317,7 +336,7 @@ export async function rejectReceipt(receiptId: string, eventId: string) {
 
 // ─── No-Receipt Forms ───
 
-export async function getNoReceiptForms(eventId: string) {
+export const getNoReceiptForms = cache(async (eventId: string) => {
   const supabase = await createClient();
   const { data } = await supabase
     .from('no_receipt_forms')
@@ -325,9 +344,9 @@ export async function getNoReceiptForms(eventId: string) {
     .eq('event_id', eventId)
     .order('created_at', { ascending: false });
   return data || [];
-}
+});
 
-export async function getPendingForms(departmentId: string) {
+export const getPendingForms = cache(async (departmentId: string) => {
   const supabase = await createClient();
   const { data } = await supabase
     .from('no_receipt_forms')
@@ -337,9 +356,9 @@ export async function getPendingForms(departmentId: string) {
     .is('rejection_reason', null)
     .order('created_at', { ascending: false });
   return data || [];
-}
+});
 
-export async function getWaitingForms(departmentId: string) {
+export const getWaitingForms = cache(async (departmentId: string) => {
   const supabase = await createClient();
   const { data } = await supabase
     .from('no_receipt_forms')
@@ -349,7 +368,7 @@ export async function getWaitingForms(departmentId: string) {
     .not('rejection_reason', 'is', null)
     .order('created_at', { ascending: false });
   return data || [];
-}
+});
 
 export async function submitNoReceiptForm(formData: any) {
   const supabase = await createClient();
@@ -713,7 +732,7 @@ export async function approveFinancialReport(reportId: string, eventId: string) 
   return true;
 }
 
-export async function getFinancialReport(eventId: string) {
+export const getFinancialReport = cache(async (eventId: string) => {
   const supabase = await createClient();
   const { data } = await supabase
     .from('financial_reports')
@@ -723,11 +742,11 @@ export async function getFinancialReport(eventId: string) {
     .limit(1)
     .single();
   return data;
-}
+});
 
 // ─── Notifications ───
 
-export async function getNotifications(userId: string) {
+export const getNotifications = cache(async (userId: string) => {
   const supabase = await createClient();
   const { data } = await supabase
     .from('notifications')
@@ -736,7 +755,7 @@ export async function getNotifications(userId: string) {
     .order('created_at', { ascending: false })
     .limit(20);
   return data || [];
-}
+});
 
 export async function markNotificationRead(notificationId: string) {
   const supabase = await createClient();
@@ -761,7 +780,7 @@ export async function markAllNotificationsRead(userId: string) {
 
 // ─── Users (Admin) ───
 
-export async function getDepartmentUsers(departmentId: string) {
+export const getDepartmentUsers = cache(async (departmentId: string) => {
   const supabase = createAdminClient();
   const { data } = await supabase
     .from('profiles')
@@ -769,16 +788,16 @@ export async function getDepartmentUsers(departmentId: string) {
     .eq('department_id', departmentId)
     .order('last_name');
   return data || [];
-}
+});
 
-export async function getAllProfiles() {
+export const getAllProfiles = cache(async () => {
   const supabase = createAdminClient();
   const { data } = await supabase
     .from('profiles')
     .select('*, departments(name)')
     .order('last_name');
   return data || [];
-}
+});
 
 export async function deleteUser(userId: string) {
   const supabase = await createClient();
@@ -824,24 +843,42 @@ export async function getEventsWithFsStatus(departmentId: string) {
     .eq('department_id', departmentId)
     .order('created_at', { ascending: false });
 
-  if (!events) return [];
+  if (!events || events.length === 0) return [];
 
-  const results = await Promise.all(
-    events.map(async (event) => {
-      const forms = await getNoReceiptForms(event.id);
-      const pendingForms = forms.filter(f => f.status !== 'approved');
-      const hasFsRecord = !!(await getFinancialReport(event.id).catch(() => null));
-      return {
-        ...event,
-        formCount: forms.length,
-        pendingFormCount: pendingForms.length,
-        canGenerateFs: forms.length > 0 && pendingForms.length === 0,
-        hasFsRecord,
-      };
-    })
-  );
+  const eventIds = events.map(e => e.id);
 
-  return results;
+  // Batch: get all forms for all events in one query
+  const { data: allForms } = await supabase
+    .from('no_receipt_forms')
+    .select('event_id, status')
+    .in('event_id', eventIds);
+
+  // Batch: get all financial reports for all events in one query
+  const { data: allReports } = await supabase
+    .from('financial_reports')
+    .select('event_id')
+    .in('event_id', eventIds);
+
+  // Index by event_id
+  const formsByEvent: Record<string, any[]> = {};
+  for (const form of allForms || []) {
+    if (!formsByEvent[form.event_id]) formsByEvent[form.event_id] = [];
+    formsByEvent[form.event_id].push(form);
+  }
+
+  const reportsSet = new Set((allReports || []).map(r => r.event_id));
+
+  return events.map(event => {
+    const forms = formsByEvent[event.id] || [];
+    const pendingForms = forms.filter(f => f.status !== 'approved');
+    return {
+      ...event,
+      formCount: forms.length,
+      pendingFormCount: pendingForms.length,
+      canGenerateFs: forms.length > 0 && pendingForms.length === 0,
+      hasFsRecord: reportsSet.has(event.id),
+    };
+  });
 }
 
 export async function getFsDetailData(eventId: string) {
@@ -850,21 +887,24 @@ export async function getFsDetailData(eventId: string) {
   const event = await getEvent(eventId);
   if (!event) throw new Error('Event not found');
 
-  const department = (await supabase.from('departments').select('name').eq('id', event.department_id).single()).data;
+  // Batch department query with the event data we already have
+  const [{ data: department }, receipts, forms, fsRecord] = await Promise.all([
+    supabase.from('departments').select('name').eq('id', event.department_id).single(),
+    getReceipts(eventId),
+    getNoReceiptForms(eventId),
+    getFinancialReport(eventId).catch(() => null),
+  ]);
 
-  const receipts = await getReceipts(eventId);
-  const forms = await getNoReceiptForms(eventId);
+  const approvedReceipts = receipts.filter((r: any) => r.status === 'approved');
+  const approvedForms = forms.filter((f: any) => f.status === 'approved');
 
-  const approvedReceipts = receipts.filter(r => r.status === 'approved');
-  const approvedForms = forms.filter(f => f.status === 'approved');
-
-  const pendingForms = forms.filter(f => f.status !== 'approved');
+  const pendingForms = forms.filter((f: any) => f.status !== 'approved');
   const formCount = forms.length;
   const pendingFormCount = pendingForms.length;
   const canGenerateFs = formCount > 0 && pendingFormCount === 0;
 
-  const totalReceiptExpenses = approvedReceipts.reduce((sum, r) => sum + (r.total || 0), 0);
-  const totalFormExpenses = approvedForms.reduce((sum, f) => sum + (f.amount || 0), 0);
+  const totalReceiptExpenses = approvedReceipts.reduce((sum: number, r: any) => sum + (r.total || 0), 0);
+  const totalFormExpenses = approvedForms.reduce((sum: number, f: any) => sum + (f.amount || 0), 0);
   const totalExpenses = totalReceiptExpenses + totalFormExpenses;
 
   const remainingBudget = event.budget;
@@ -878,8 +918,6 @@ export async function getFsDetailData(eventId: string) {
     const cat = f.expense_type || 'Other';
     categoryBreakdown[cat] = (categoryBreakdown[cat] || 0) + (f.amount || 0);
   }
-
-  const fsRecord = await getFinancialReport(eventId).catch(() => null);
 
   return {
     event,

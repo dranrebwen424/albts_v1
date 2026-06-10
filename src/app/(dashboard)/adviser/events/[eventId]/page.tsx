@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/client';
@@ -349,8 +350,8 @@ export default function AdviserEventDetailPage({ params }: { params: Promise<{ e
               <Card className="hover:shadow-md transition-all cursor-pointer">
                 <CardContent className="p-4">
                   <div className="flex items-start gap-3">
-                    <div className="h-12 w-12 rounded-lg bg-neutral-100 dark:bg-neutral-800 overflow-hidden flex-shrink-0">
-                      {receipt.image_url && <img src={receipt.image_url} alt="" className="h-full w-full object-cover" />}
+                    <div className="h-12 w-12 rounded-lg bg-neutral-100 dark:bg-neutral-800 overflow-hidden flex-shrink-0 relative">
+                      {receipt.image_url && <Image src={receipt.image_url} alt="" fill className="object-cover" sizes="48px" />}
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-medium truncate">{receipt.vendor || 'Unknown'}</p>
@@ -416,7 +417,7 @@ export default function AdviserEventDetailPage({ params }: { params: Promise<{ e
 
       {/* Form Detail Modal */}
       <Dialog open={!!selectedForm} onOpenChange={(open) => !open && setSelectedForm(null)}>
-        <DialogContent className="max-w-3xl max-h-[95vh] overflow-y-auto">
+        <DialogContent className="max-w-[calc(100vw-32px)] sm:max-w-3xl max-h-[95vh] overflow-y-auto">
           {selectedForm && (
             <>
               <DialogHeader>
@@ -602,16 +603,16 @@ export default function AdviserEventDetailPage({ params }: { params: Promise<{ e
 
       {/* Receipt Detail Modal */}
       <Dialog open={!!selectedReceipt} onOpenChange={(open) => !open && setSelectedReceipt(null)}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="max-w-[calc(100vw-32px)] sm:max-w-2xl">
           {selectedReceipt && (
             <>
               <DialogHeader>
                 <DialogTitle>{selectedReceipt.vendor || 'Receipt Details'}</DialogTitle>
               </DialogHeader>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
+                <div className="relative w-full h-64">
                   {selectedReceipt.image_url && (
-                    <img src={selectedReceipt.image_url} alt="Receipt" className="rounded-lg w-full object-cover max-h-64" />
+                    <Image src={selectedReceipt.image_url} alt="Receipt" fill className="rounded-lg object-cover" sizes="(max-width: 768px) 100vw, 50vw" />
                   )}
                 </div>
                 <div className="space-y-3">

@@ -38,6 +38,8 @@ export default function EventDetailPage({ params }: { params: Promise<{ eventId:
   const [loading, setLoading] = useState(true);
   const profile = useAuthStore(s => s.profile);
   const [uploading, setUploading] = useState(false);
+  const [processingReceipt, setProcessingReceipt] = useState(false);
+  const [confirmingReceipt, setConfirmingReceipt] = useState(false);
 
   // Receipt review state
   const [reviewReceipt, setReviewReceipt] = useState<any>(null);
@@ -102,6 +104,7 @@ export default function EventDetailPage({ params }: { params: Promise<{ eventId:
 
   const onDrop = useCallback(async (acceptedFiles: File[]) => {
     if (acceptedFiles.length === 0) return;
+    setProcessingReceipt(true);
     setUploading(true);
     setUploadSource('file');
     const file = acceptedFiles[0];
@@ -127,6 +130,7 @@ export default function EventDetailPage({ params }: { params: Promise<{ eventId:
     try {
       const result = await uploadReceipt(eventId, formData);
       setReviewImageUrl(result.imageUrl);
+      setProcessingReceipt(false);
 
       if (result.ocrFailed || !result.parsed) {
         setShowOcrError({ imageUrl: result.imageUrl });
@@ -136,13 +140,15 @@ export default function EventDetailPage({ params }: { params: Promise<{ eventId:
         setReviewReceipt(true);
       }
     } catch (err: any) {
+      setProcessingReceipt(false);
       toast.error(err.message || 'Failed to upload receipt');
     }
     setUploading(false);
   }, [eventId]);
 
   const handleConfirmReceipt = async () => {
-    if (!editingReceipt) return;
+    if (!editingReceipt || confirmingReceipt) return;
+    setConfirmingReceipt(true);
     try {
       const items = (editingReceipt.items || []).map((i: any) => ({
         ...i,
@@ -161,11 +167,14 @@ export default function EventDetailPage({ params }: { params: Promise<{ eventId:
       setEvent(e);
     } catch (err: any) {
       toast.error(err.message || 'Failed to save receipt');
+    } finally {
+      setConfirmingReceipt(false);
     }
   };
 
   const handleCameraCapture = useCallback(async (file: File) => {
     setShowCamera(false);
+    setProcessingReceipt(true);
     setUploading(true);
     setUploadSource('camera');
     const formData = new FormData();
@@ -174,6 +183,7 @@ export default function EventDetailPage({ params }: { params: Promise<{ eventId:
     try {
       const result = await uploadReceipt(eventId, formData);
       setReviewImageUrl(result.imageUrl);
+      setProcessingReceipt(false);
 
       if (result.ocrFailed || !result.parsed) {
         setShowOcrError({ imageUrl: result.imageUrl });
@@ -183,6 +193,7 @@ export default function EventDetailPage({ params }: { params: Promise<{ eventId:
         setReviewReceipt(true);
       }
     } catch (err: any) {
+      setProcessingReceipt(false);
       toast.error(err.message || 'Failed to upload receipt');
     }
     setUploading(false);
@@ -1273,14 +1284,24 @@ Rejection reason: <span className="min-w-0 break-words">{form.rejection_reason}<
                 <Button variant="outline" onClick={() => { setReviewReceipt(false); setEditingReceipt(null); }}>
                   Cancel
                 </Button>
-                <Button onClick={handleConfirmReceipt}>
-                  Confirm & Deduct from Budget
+                <Button onClick={handleConfirmReceipt} disabled={confirmingReceipt}>
+                  {confirmingReceipt ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Saving...</> : 'Confirm & Deduct from Budget'}
                 </Button>
               </div>
             </div>
           )}
         </DialogContent>
       </Dialog>
+
+      {/* Processing overlay */}
+      {processingReceipt && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+          <div className="flex flex-col items-center gap-4 rounded-xl bg-white p-8 shadow-lg dark:bg-neutral-900">
+            <Loader2 className="h-10 w-10 animate-spin text-neutral-600 dark:text-neutral-400" />
+            <p className="text-sm font-medium text-neutral-700 dark:text-neutral-300">Processing receipt...</p>
+          </div>
+        </div>
+      )}
 
       {/* Receipt Detail Modal */}
       <Dialog open={!!selectedReceipt} onOpenChange={(open) => !open && setSelectedReceipt(null)}>

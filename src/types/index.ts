@@ -162,7 +162,7 @@ export interface AuditLog {
   admin_id: string;
   department_id: string;
   action: string;
-  details: any;
+  details: Record<string, unknown>;
   created_at: string;
 }
 

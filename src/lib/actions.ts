@@ -1053,7 +1053,8 @@ export async function sendResetCode(email: string) {
       last_name: user.user_metadata?.last_name || '',
       reset_code: code,
     });
-  } catch {
+  } catch (e: any) {
+    console.error('Send reset code email failed:', e?.message || e);
     // If email fails, invalidate the code
     await adminClient
       .from('password_reset_codes')
@@ -1092,12 +1093,6 @@ export async function verifyResetCode(email: string, code: string) {
   if (record.code_hash !== hashed) {
     throw new Error('Invalid code');
   }
-
-  // Mark code as used
-  await supabase
-    .from('password_reset_codes')
-    .update({ used: true })
-    .eq('id', record.id);
 
   return { token: record.reset_token };
 }

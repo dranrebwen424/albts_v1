@@ -71,23 +71,31 @@ export function CameraCapture({ onCapture, onClose }: CameraCaptureProps) {
         }
 
         if (videoRef.current) {
-          videoRef.current.setAttribute('playsinline', '');
-          videoRef.current.muted = true;
-          videoRef.current.srcObject = stream;
+          const video = videoRef.current;
+          video.setAttribute('playsinline', '');
+          video.muted = true;
+          video.srcObject = stream;
           await new Promise<void>((resolve) => {
-            let started = false;
-            const onTimeUpdate = () => {
-              if (!started) {
-                started = true;
-                videoRef.current?.removeEventListener('timeupdate', onTimeUpdate);
-                requestAnimationFrame(() => requestAnimationFrame(() => resolve()));
-              }
-            };
-            videoRef.current?.addEventListener('timeupdate', onTimeUpdate);
-            videoRef.current?.play().catch(() => {
-              videoRef.current?.removeEventListener('timeupdate', onTimeUpdate);
-              resolve();
-            });
+            const failTimer = setTimeout(() => { resolve(); }, 3000);
+            const cleanup = () => { clearTimeout(failTimer); };
+            if ('requestVideoFrameCallback' in video) {
+              video.requestVideoFrameCallback(() => {
+                cleanup();
+                requestAnimationFrame(() => resolve());
+              });
+            } else {
+              const poll = () => {
+                const el = videoRef.current;
+                if (el && el.videoWidth > 0 && el.videoHeight > 0) {
+                  cleanup();
+                  requestAnimationFrame(() => resolve());
+                  return;
+                }
+                requestAnimationFrame(poll);
+              };
+              requestAnimationFrame(poll);
+            }
+            video.play().catch(() => { cleanup(); resolve(); });
           });
         }
 

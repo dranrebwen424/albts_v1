@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { createClient } from '@/lib/supabase/client';
+import { useAuthStore } from '@/stores/auth';
 import { getEvents } from '@/lib/actions';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -18,15 +18,12 @@ export default function AdminEventsPage() {
 
   useEffect(() => {
     const init = async () => {
-      const supabase = createClient();
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) { router.push('/login'); return; }
       const e = await getEvents(params.deptId as string);
       setEvents(e);
       setLoading(false);
     };
     init();
-  }, [params.deptId, router]);
+  }, [params.deptId]);
 
   if (loading) {
     return <div className="py-4 space-y-3">{[1,2,3].map(i => <Skeleton key={i} className="h-24 rounded-xl" />)}</div>;

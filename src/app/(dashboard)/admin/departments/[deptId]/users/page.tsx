@@ -1,8 +1,8 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useParams, useRouter } from 'next/navigation';
-import { createClient } from '@/lib/supabase/client';
+import { useParams } from 'next/navigation';
+import { useAuthStore } from '@/stores/auth';
 import { getDepartmentUsers, deleteUser } from '@/lib/actions';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -17,7 +17,6 @@ import { Skeleton } from '@/components/ui/skeleton';
 
 export default function UsersPage() {
   const params = useParams();
-  const router = useRouter();
   const [users, setUsers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [showCreate, setShowCreate] = useState(false);
@@ -25,15 +24,12 @@ export default function UsersPage() {
 
   useEffect(() => {
     const init = async () => {
-      const supabase = createClient();
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) { router.push('/login'); return; }
       const data = await getDepartmentUsers(params.deptId as string);
       setUsers(data);
       setLoading(false);
     };
     init();
-  }, [params.deptId, router]);
+  }, [params.deptId]);
 
   const handleCreate = async () => {
     if (!form.first_name || !form.last_name || !form.email) {

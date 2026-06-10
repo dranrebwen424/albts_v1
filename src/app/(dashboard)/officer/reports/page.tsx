@@ -1,44 +1,24 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useEffect } from 'react';
 import Link from 'next/link';
-import { createClient } from '@/lib/supabase/client';
+import { useAuthStore } from '@/stores/auth';
+import { useEventsStore } from '@/stores/events';
 import { getEventsWithFsStatus } from '@/lib/actions';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { FileText, Users, Calendar, FolderOpen } from 'lucide-react';
-import { formatCurrency } from '@/lib/utils/format';
-import { Skeleton } from '@/components/ui/skeleton';
-import type { Profile } from '@/types';
 
 export default function OfficerReportsPage() {
-  const [events, setEvents] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [profile, setProfile] = useState<Profile | null>(null);
-  const router = useRouter();
+  const events = useEventsStore(s => s.events);
+  const setEvents = useEventsStore(s => s.setEvents);
+  const profile = useAuthStore(s => s.profile);
 
+  // Background refresh — store is already populated by sidebar prefetch
   useEffect(() => {
-    const init = async () => {
-      const supabase = createClient();
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) { router.push('/login'); return; }
-
-      const { data: prof } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('user_id', user.id)
-        .single();
-      setProfile(prof as any);
-
-      if (prof) {
-        const data = await getEventsWithFsStatus(prof.department_id);
-        setEvents(data);
-      }
-      setLoading(false);
-    };
-    init();
-  }, [router]);
+    if (!profile) return;
+    getEventsWithFsStatus(profile.department_id).then(setEvents).catch(() => {});
+  }, [profile, setEvents]);
 
   function getStatusInfo(event: any) {
     if (event.status === 'done') {
@@ -51,17 +31,6 @@ export default function OfficerReportsPage() {
       return { label: 'Ready to Generate', variant: 'success' as const };
     }
     return { label: 'Ongoing', variant: 'warning' as const };
-  }
-
-  if (loading) {
-    return (
-      <div className="space-y-6">
-        <Skeleton className="h-8 w-56" />
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {[1, 2, 3].map(i => <Skeleton key={i} className="h-44 rounded-xl" />)}
-        </div>
-      </div>
-    );
   }
 
   return (

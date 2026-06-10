@@ -1,52 +1,25 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useEffect } from 'react';
 import Link from 'next/link';
-import { createClient } from '@/lib/supabase/client';
-import { getEvents } from '@/lib/actions';
+import { useAuthStore } from '@/stores/auth';
+import { useEventsStore } from '@/stores/events';
+import { getEventsWithFsStatus } from '@/lib/actions';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Users, Wallet, FolderOpen } from 'lucide-react';
 import { formatCurrency } from '@/lib/utils/format';
-import { Skeleton } from '@/components/ui/skeleton';
 
 export default function AdviserEventsPage() {
-  const [events, setEvents] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
-  const router = useRouter();
+  const events = useEventsStore(s => s.events);
+  const setEvents = useEventsStore(s => s.setEvents);
+  const profile = useAuthStore(s => s.profile);
 
+  // Background refresh — store is already populated by sidebar prefetch
   useEffect(() => {
-    const init = async () => {
-      const supabase = createClient();
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) { router.push('/login'); return; }
-
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('user_id', user.id)
-        .single();
-
-      if (profile) {
-        const data = await getEvents(profile.department_id);
-        setEvents(data);
-      }
-      setLoading(false);
-    };
-    init();
-  }, [router]);
-
-  if (loading) {
-    return (
-      <div className="space-y-6">
-        <Skeleton className="h-8 w-48" />
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {[1, 2, 3].map(i => <Skeleton key={i} className="h-40 rounded-xl" />)}
-        </div>
-      </div>
-    );
-  }
+    if (!profile) return;
+    getEventsWithFsStatus(profile.department_id).then(setEvents).catch(() => {});
+  }, [profile, setEvents]);
 
   return (
     <div className="space-y-6">

@@ -97,6 +97,7 @@ CREATE TABLE IF NOT EXISTS notifications (
   message TEXT NOT NULL,
   type TEXT NOT NULL DEFAULT 'general',
   read BOOLEAN DEFAULT false,
+  event_id UUID REFERENCES events(id) ON DELETE CASCADE,
   created_at TIMESTAMPTZ DEFAULT now()
 );
 

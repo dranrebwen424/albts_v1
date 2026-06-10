@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { Sidebar } from '@/components/layout/sidebar';
 import { MobileNav } from '@/components/layout/mobile-nav';
@@ -13,8 +13,7 @@ import { cn } from '@/lib/utils/cn';
 export function DashboardLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const { collapsed, setIsMobile, isMobile } = useSidebarStore();
-  const { setProfile, profile } = useAuthStore();
-  const [loading, setLoading] = useState(true);
+  const { setProfile } = useAuthStore();
 
   const handleResize = useCallback(() => {
     setIsMobile(window.innerWidth < 1024);
@@ -46,21 +45,10 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
           setProfile(profile as any);
         }
       } catch {}
-      setLoading(false);
     };
 
     initAuth();
   }, [router, setProfile]);
-
-  if (loading) {
-    return (
-      <div className="flex h-screen items-center justify-center">
-        <div className="h-6 w-6 animate-spin rounded-full border-2 border-neutral-300 border-t-neutral-900 dark:border-neutral-700 dark:border-t-white" />
-      </div>
-    );
-  }
-
-  if (!profile) return null;
 
   return (
     <div className="flex h-screen overflow-hidden bg-neutral-50 dark:bg-neutral-900">

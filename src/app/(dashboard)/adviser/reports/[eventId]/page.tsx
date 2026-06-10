@@ -1,9 +1,9 @@
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
-import { useRouter, useParams } from 'next/navigation';
+import { useParams } from 'next/navigation';
 import Link from 'next/link';
-import { createClient } from '@/lib/supabase/client';
+import { useAuthStore } from '@/stores/auth';
 import { getFsDetailData, approveFinancialReport, getFinancialReport } from '@/lib/actions';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -16,14 +16,13 @@ import {
 import { formatCurrency } from '@/lib/utils/format';
 import { Skeleton } from '@/components/ui/skeleton';
 import { toast } from 'sonner';
-import type { Profile } from '@/types';
 
 export default function AdviserReportDetailPage() {
-  const router = useRouter();
   const params = useParams();
   const eventId = params.eventId as string;
 
   const [loading, setLoading] = useState(true);
+  const profile = useAuthStore(s => s.profile);
   const [data, setData] = useState<any>(null);
   const [approving, setApproving] = useState(false);
 
@@ -37,16 +36,9 @@ export default function AdviserReportDetailPage() {
   }, [eventId]);
 
   useEffect(() => {
-    const init = async () => {
-      const supabase = createClient();
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) { router.push('/login'); return; }
-
-      await loadData();
-      setLoading(false);
-    };
-    init();
-  }, [router, loadData]);
+    if (!profile) return;
+    loadData().finally(() => setLoading(false));
+  }, [profile, loadData]);
 
   const handleApprove = async () => {
     if (!data?.fsRecord) return;

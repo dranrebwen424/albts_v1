@@ -148,6 +148,8 @@ export interface Notification {
   message: string;
   type: string;
   read: boolean;
+  event_id: string | null;
+  events?: { name: string } | null;
   created_at: string;
 }
 

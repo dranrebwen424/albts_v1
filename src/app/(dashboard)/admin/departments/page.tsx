@@ -1,9 +1,8 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { createClient } from '@/lib/supabase/client';
+import { useAuthStore } from '@/stores/auth';
 import { getDepartments, createDepartment } from '@/lib/actions';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -20,19 +19,14 @@ export default function AdminDepartmentsPage() {
   const [showCreate, setShowCreate] = useState(false);
   const [newName, setNewName] = useState('');
   const [newCode, setNewCode] = useState('');
-  const router = useRouter();
-
   useEffect(() => {
     const init = async () => {
-      const supabase = createClient();
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) { router.push('/login'); return; }
       const data = await getDepartments();
       setDepartments(data);
       setLoading(false);
     };
     init();
-  }, [router]);
+  }, []);
 
   const handleCreate = async () => {
     if (!newName.trim() || !newCode.trim()) {

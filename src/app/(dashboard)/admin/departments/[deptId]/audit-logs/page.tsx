@@ -1,7 +1,8 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import { useParams } from 'next/navigation';
+import { useAuthStore } from '@/stores/auth';
 import { createClient } from '@/lib/supabase/client';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -11,15 +12,12 @@ import { Skeleton } from '@/components/ui/skeleton';
 
 export default function AuditLogsPage() {
   const params = useParams();
-  const router = useRouter();
   const [logs, setLogs] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const init = async () => {
       const supabase = createClient();
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) { router.push('/login'); return; }
       const { data } = await supabase
         .from('audit_logs')
         .select('*, profiles!audit_logs_admin_id_fkey(first_name, last_name)')
@@ -29,7 +27,7 @@ export default function AuditLogsPage() {
       setLoading(false);
     };
     init();
-  }, [params.deptId, router]);
+  }, [params.deptId]);
 
   if (loading) return <div className="py-4 space-y-3">{[1,2,3].map(i => <Skeleton key={i} className="h-16 rounded-xl" />)}</div>;
 

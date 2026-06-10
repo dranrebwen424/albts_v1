@@ -337,6 +337,18 @@ export function CameraCapture({ onCapture, onClose }: CameraCaptureProps) {
         <X className="h-5 w-5" />
       </button>
 
+      {/* Always-mounted video — hidden when not active so ref is always available */}
+      <video
+        ref={videoRef}
+        autoPlay
+        muted
+        playsInline
+        className={cn(
+          'absolute inset-0 h-full w-full object-cover',
+          state !== 'active' && 'hidden'
+        )}
+      />
+
       {/* Requesting */}
       {state === 'requesting' && (
         <div className="absolute inset-0 flex items-center justify-center">
@@ -377,13 +389,6 @@ export function CameraCapture({ onCapture, onClose }: CameraCaptureProps) {
       {state === 'active' && (
         <div className="relative h-full w-full flex flex-col">
           <div className="relative flex-1 overflow-hidden">
-            <video
-              ref={videoRef}
-              autoPlay
-              muted
-              playsInline
-              className="absolute inset-0 h-full w-full object-cover"
-            />
             <ViewfinderOverlay focusFeedback={focusFeedback} stability={stability} />
 
             {/* Top controls */}

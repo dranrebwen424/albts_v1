@@ -1,9 +1,9 @@
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import { useParams } from 'next/navigation';
 import Link from 'next/link';
-import { createClient } from '@/lib/supabase/client';
+import { useAuthStore } from '@/stores/auth';
 import { getFsDetailData } from '@/lib/actions';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -17,7 +17,6 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { toast } from 'sonner';
 
 export default function AdminReportDetailPage() {
-  const router = useRouter();
   const params = useParams();
   const deptId = params.deptId as string;
   const eventId = params.eventId as string;
@@ -36,14 +35,11 @@ export default function AdminReportDetailPage() {
 
   useEffect(() => {
     const init = async () => {
-      const supabase = createClient();
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) { router.push('/login'); return; }
       await loadData();
       setLoading(false);
     };
     init();
-  }, [router, loadData]);
+  }, [loadData]);
 
   if (loading) {
     return (

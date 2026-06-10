@@ -1,0 +1,1 @@
+ALTER TABLE notifications ADD COLUMN event_id UUID REFERENCES events(id) ON DELETE CASCADE;

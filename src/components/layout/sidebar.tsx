@@ -2,10 +2,12 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState } from 'react';
 import { cn } from '@/lib/utils/cn';
 import { useSidebarStore } from '@/stores/sidebar';
 import { useAuthStore } from '@/stores/auth';
+import { useNotifStore } from '@/stores/notifications';
+import { useEventsStore } from '@/stores/events';
 import {
   CalendarRange,
   ClipboardList,
@@ -19,8 +21,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { createClient } from '@/lib/supabase/client';
-import { getPendingForms, getNotifications, markAllNotificationsRead } from '@/lib/actions';
-import { formatDateTime } from '@/lib/utils/format';
+import { getPendingForms, getNotifications, getEventsWithFsStatus } from '@/lib/actions';
 import { useRouter } from 'next/navigation';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 
@@ -33,9 +34,11 @@ interface NavItem {
 
 const navItems: NavItem[] = [
   { label: 'Events', href: '/officer/events', icon: <CalendarRange className="h-4 w-4" />, roles: ['officer'] },
+  { label: 'Notifications', href: '/officer/notifications', icon: <Bell className="h-4 w-4" />, roles: ['officer'] },
   { label: 'Financial Reports', href: '/officer/reports', icon: <FileText className="h-4 w-4" />, roles: ['officer'] },
   { label: 'Events', href: '/adviser/events', icon: <CalendarRange className="h-4 w-4" />, roles: ['adviser'] },
   { label: 'Pending Approvals', href: '/adviser/pending', icon: <ClipboardList className="h-4 w-4" />, roles: ['adviser'] },
+  { label: 'Notifications', href: '/adviser/notifications', icon: <Bell className="h-4 w-4" />, roles: ['adviser'] },
   { label: 'Financial Reports', href: '/adviser/reports', icon: <FileText className="h-4 w-4" />, roles: ['adviser'] },
   { label: 'Departments', href: '/admin/departments', icon: <Building2 className="h-4 w-4" />, roles: ['admin'] },
 ];
@@ -57,8 +60,6 @@ export function Sidebar() {
   );
 
   const [pendingCount, setPendingCount] = useState(0);
-  const [notifications, setNotifications] = useState<any[]>([]);
-  const [showNotifs, setShowNotifs] = useState(false);
 
   useEffect(() => {
     if (profile?.role === 'adviser' && profile?.department_id) {
@@ -68,36 +69,27 @@ export function Sidebar() {
     }
   }, [profile]);
 
-  const userId = profile?.user_id;
+  // Background notification polling for both roles — populates Zustand store
+  const { setNotifications, unreadCount } = useNotifStore();
 
   useEffect(() => {
-    if (profile?.role === 'adviser' && userId) {
-      getNotifications(userId).then(setNotifications).catch(() => {});
-      const interval = setInterval(() => {
-        getNotifications(userId).then(setNotifications).catch(() => {});
-      }, 15000);
-      return () => clearInterval(interval);
-    }
-  }, [profile, userId]);
+    if (!profile?.user_id) return;
+    const fetch = () => getNotifications(profile.user_id).then(setNotifications).catch(() => {});
+    fetch();
+    const interval = setInterval(fetch, 30000);
+    return () => clearInterval(interval);
+  }, [profile?.user_id, setNotifications]);
+
+  // Background events prefetch — populates shared store for instant list pages
+  const { setEvents } = useEventsStore();
 
   useEffect(() => {
-    if (!showNotifs || !userId) return;
-    markAllNotificationsRead(userId).catch(() => {});
-  }, [showNotifs, userId]);
-
-  const notifRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    const handleClickOutside = (e: MouseEvent) => {
-      if (notifRef.current && !notifRef.current.contains(e.target as Node)) {
-        setShowNotifs(false);
-      }
-    };
-    if (showNotifs) {
-      document.addEventListener('mousedown', handleClickOutside);
-      return () => document.removeEventListener('mousedown', handleClickOutside);
-    }
-  }, [showNotifs]);
+    if (!profile?.department_id) return;
+    const fetch = () => getEventsWithFsStatus(profile.department_id).then(setEvents).catch(() => {});
+    fetch();
+    const interval = setInterval(fetch, 60000);
+    return () => clearInterval(interval);
+  }, [profile?.department_id, setEvents]);
 
   const sidebarContent = (
     <>
@@ -119,6 +111,7 @@ export function Sidebar() {
           {userNavItems.map((item) => {
             const isActive = pathname.startsWith(item.href);
             const isPending = item.label === 'Pending Approvals';
+            const isNotif = item.label === 'Notifications';
             return (
               <Link
                 key={item.href}
@@ -141,71 +134,18 @@ export function Sidebar() {
                     {pendingCount > 99 ? '99+' : pendingCount}
                   </span>
                 )}
+                {isNotif && unreadCount > 0 && (
+                  <span className={cn(
+                    'flex items-center justify-center h-5 min-w-5 px-1.5 rounded-full text-[10px] font-semibold bg-red-500 text-white',
+                    collapsed ? 'absolute -top-1 -right-1' : 'ml-auto'
+                  )}>
+                    {unreadCount > 99 ? '99+' : unreadCount}
+                  </span>
+                )}
               </Link>
             );
           })}
         </nav>
-
-        {profile?.role === 'adviser' && (
-          <div ref={notifRef} className="relative mt-2 px-2">
-            <button
-              onClick={() => setShowNotifs(!showNotifs)}
-              className={cn(
-                'flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors w-full relative',
-                'text-neutral-500 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white hover:bg-neutral-100 dark:hover:bg-neutral-800',
-                collapsed && 'justify-center px-2'
-              )}
-            >
-              <Bell className="h-4 w-4" />
-              {!collapsed && <span>Notifications</span>}
-              {notifications.filter(n => !n.read).length > 0 && (
-                <span className={cn(
-                  'flex items-center justify-center h-5 min-w-5 px-1.5 rounded-full text-[10px] font-semibold bg-red-500 text-white',
-                  collapsed ? 'absolute -top-1 -right-1' : 'ml-auto'
-                )}>
-                  {notifications.filter(n => !n.read).length > 9 ? '9+' : notifications.filter(n => !n.read).length}
-                </span>
-              )}
-            </button>
-
-            {showNotifs && (
-              <div className={cn(
-                'bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-lg shadow-lg z-50 overflow-hidden',
-                collapsed ? 'absolute left-full ml-2 top-0 w-72' : 'w-full mt-1'
-              )}>
-                <div className="max-h-64 overflow-y-auto">
-                  {notifications.length === 0 ? (
-                    <div className="p-4 text-center text-xs text-neutral-500">No notifications</div>
-                  ) : (
-                    notifications.map((n) => {
-                      const extractedEventId = n.type?.startsWith('budget_') ? n.type.split('_').pop() : null;
-                      return (
-                        <button
-                          key={n.id}
-                          onClick={() => {
-                            if (extractedEventId) {
-                              router.push(`/adviser/events/${extractedEventId}`);
-                              setShowNotifs(false);
-                            }
-                          }}
-                          className={cn(
-                            'w-full text-left px-3 py-2.5 text-xs border-b border-neutral-100 dark:border-neutral-800 last:border-0 transition-colors',
-                            n.read ? 'opacity-60' : 'bg-neutral-50 dark:bg-neutral-800/50',
-                            extractedEventId ? 'cursor-pointer hover:bg-neutral-100 dark:hover:bg-neutral-700' : 'cursor-default'
-                          )}
-                        >
-                          <div className="font-medium text-neutral-900 dark:text-white">{n.title}</div>
-                          <div className="text-neutral-500 dark:text-neutral-400 mt-0.5">{n.message}</div>
-                          <div className="text-[10px] text-neutral-400 mt-0.5">{formatDateTime(n.created_at)}</div>
-                        </button>
-                      );
-                    })
-                  )}
-                </div>
-              </div>
-            )}
-          </div>
-        )}
       </ScrollArea>
 
       {/* User */}
@@ -253,6 +193,7 @@ export function Sidebar() {
                 {userNavItems.map((item) => {
                   const isActive = pathname.startsWith(item.href);
                   const isPending = item.label === 'Pending Approvals';
+                  const isNotif = item.label === 'Notifications';
                   return (
                     <Link
                       key={item.href}
@@ -272,9 +213,15 @@ export function Sidebar() {
                           {pendingCount > 99 ? '99+' : pendingCount}
                         </span>
                       )}
+                      {isNotif && unreadCount > 0 && (
+                        <span className="ml-auto flex items-center justify-center h-5 min-w-5 px-1.5 rounded-full text-[10px] font-semibold bg-red-500 text-white">
+                          {unreadCount > 99 ? '99+' : unreadCount}
+                        </span>
+                      )}
                     </Link>
                   );
                 })}
+
               </nav>
             </ScrollArea>
             <div className="border-t border-neutral-200 dark:border-neutral-800 p-3 pb-14">

@@ -1,11 +1,10 @@
 'use client';
 
-import { useEffect, useState, useCallback, useRef } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import Image from 'next/image';
-import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { createClient } from '@/lib/supabase/client';
-import { getEvent, getReceipts, getNoReceiptForms, uploadReceipt, confirmReceipt, submitNoReceiptForm, resubmitNoReceiptForm, getNotifications, markAllNotificationsRead, retryOcr } from '@/lib/actions';
+import { useAuthStore } from '@/stores/auth';
+import { getEvent, getReceipts, getNoReceiptForms, uploadReceipt, confirmReceipt, submitNoReceiptForm, resubmitNoReceiptForm, retryOcr } from '@/lib/actions';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -19,7 +18,7 @@ import { Progress } from '@/components/ui/progress';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { cn } from '@/lib/utils/cn';
 import { formatCurrency, formatDate } from '@/lib/utils/format';
-import { ArrowLeft, Upload, Receipt as ReceiptIcon, FileText, CheckCircle, XCircle, Clock, Wallet, Image as ImageIcon, Plus, Trash2, Shield, Download, ChevronRight, Eye, Bell, Camera, Loader2, RefreshCw } from 'lucide-react';
+import { ArrowLeft, Upload, Receipt as ReceiptIcon, FileText, CheckCircle, XCircle, Clock, Wallet, Image as ImageIcon, Plus, Trash2, Shield, Download, ChevronRight, Eye, Camera, Loader2, RefreshCw } from 'lucide-react';
 import { PieChart, Pie, Cell, ResponsiveContainer } from 'recharts';
 import { toast } from 'sonner';
 import { useDropzone } from 'react-dropzone';
@@ -31,13 +30,12 @@ import type { Event, Receipt, NoReceiptForm } from '@/types';
 const COLORS = ['#0a0a0a', '#e5e5e5', '#22c55e'];
 
 export default function EventDetailPage({ params }: { params: Promise<{ eventId: string }> }) {
-  const router = useRouter();
   const [eventId, setEventId] = useState<string>('');
   const [event, setEvent] = useState<any>(null);
   const [receipts, setReceipts] = useState<any[]>([]);
   const [forms, setForms] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [profile, setProfile] = useState<any>(null);
+  const profile = useAuthStore(s => s.profile);
   const [uploading, setUploading] = useState(false);
 
   // Receipt review state
@@ -70,11 +68,6 @@ export default function EventDetailPage({ params }: { params: Promise<{ eventId:
   const [ocrErrorCooldown, setOcrErrorCooldown] = useState(false);
 
 
-  // Notification state
-  const [notifications, setNotifications] = useState<any[]>([]);
-  const [showNotifications, setShowNotifications] = useState(false);
-  const notifRef = useRef<HTMLDivElement>(null);
-
   // Form detail modal
   const [selectedForm, setSelectedForm] = useState<any>(null);
 
@@ -82,13 +75,6 @@ export default function EventDetailPage({ params }: { params: Promise<{ eventId:
     const init = async () => {
       const p = await params;
       setEventId(p.eventId);
-
-      const supabase = createClient();
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) { router.push('/login'); return; }
-
-      const { data: prof } = await supabase.from('profiles').select('*').eq('user_id', user.id).single();
-      setProfile(prof as any);
 
       const [eventData, receiptsData, formsData] = await Promise.all([
         getEvent(p.eventId),
@@ -100,26 +86,10 @@ export default function EventDetailPage({ params }: { params: Promise<{ eventId:
       setReceipts(receiptsData);
       setForms(formsData);
 
-      // Fetch notifications for the user
-      const notifs = await getNotifications(user.id);
-      setNotifications(notifs);
-
       setLoading(false);
     };
     init();
-  }, [params, router]);
-
-  useEffect(() => {
-    const handleClickOutside = (e: MouseEvent) => {
-      if (notifRef.current && !notifRef.current.contains(e.target as Node)) {
-        setShowNotifications(false);
-      }
-    };
-    if (showNotifications) {
-      document.addEventListener('mousedown', handleClickOutside);
-    }
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, [showNotifications]);
+  }, [params]);
 
   const onDrop = useCallback(async (acceptedFiles: File[]) => {
     if (acceptedFiles.length === 0) return;
@@ -362,44 +332,6 @@ export default function EventDetailPage({ params }: { params: Promise<{ eventId:
           <p className="text-sm text-neutral-500 dark:text-neutral-400">
             Budget: {formatCurrency(event.budget + totalExpenses)} | Used: {formatCurrency(totalExpenses)} | Remaining: <span className={event.budget < 0 ? 'text-red-500 font-semibold' : ''}>{formatCurrency(event.budget)}</span>
           </p>
-        </div>
-        <div className="relative" ref={notifRef}>
-          <Button variant="ghost" size="icon" className="relative" onClick={() => {
-            const next = !showNotifications;
-            setShowNotifications(next);
-            if (next && profile?.user_id) {
-              markAllNotificationsRead(profile.user_id).then(() => {
-                getNotifications(profile.user_id).then(setNotifications);
-              }).catch(() => {});
-            }
-          }}>
-            <Bell className="h-5 w-5" />
-            {notifications.filter(n => !n.read).length > 0 && (
-              <span className="absolute -top-1 -right-1 flex items-center justify-center h-4 min-w-4 px-1 rounded-full text-[10px] font-semibold bg-red-500 text-white">
-                {notifications.filter(n => !n.read).length > 9 ? '9+' : notifications.filter(n => !n.read).length}
-              </span>
-            )}
-          </Button>
-          {showNotifications && (
-            <div className="absolute right-0 top-full mt-2 w-80 bg-white dark:bg-neutral-950 border border-neutral-200 dark:border-neutral-800 rounded-xl shadow-lg z-50">
-              <div className="p-3 border-b border-neutral-200 dark:border-neutral-800">
-                <p className="text-xs font-semibold">Notifications</p>
-              </div>
-              <div className="max-h-64 overflow-y-auto">
-                {notifications.length === 0 ? (
-                  <div className="p-4 text-center text-xs text-neutral-500">No notifications</div>
-                ) : (
-                  notifications.map((n) => (
-                    <div key={n.id} className={cn('p-3 border-b border-neutral-100 dark:border-neutral-800 text-xs', !n.read && 'bg-neutral-50 dark:bg-neutral-900')}>
-                      <p className="font-medium">{n.title}</p>
-                      <p className="text-neutral-500 mt-0.5">{n.message}</p>
-                      <p className="text-[10px] text-neutral-400 mt-1">{formatDate(n.created_at)}</p>
-                    </div>
-                  ))
-                )}
-              </div>
-            </div>
-          )}
         </div>
         <Badge variant={event.status === 'ongoing' ? 'warning' : 'success'}>
           {event.status === 'ongoing' ? 'Ongoing' : 'Done'}

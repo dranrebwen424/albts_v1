@@ -2,9 +2,8 @@
 
 import { useEffect, useState } from 'react';
 import Image from 'next/image';
-import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { createClient } from '@/lib/supabase/client';
+import { useAuthStore } from '@/stores/auth';
 import { getEvent, getReceipts, getNoReceiptForms, approveNoReceiptForm, rejectNoReceiptForm, approveFinancialReport, getFinancialReport } from '@/lib/actions';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -24,12 +23,12 @@ import { Skeleton } from '@/components/ui/skeleton';
 const COLORS = ['#0a0a0a', '#e5e5e5', '#22c55e'];
 
 export default function AdviserEventDetailPage({ params }: { params: Promise<{ eventId: string }> }) {
-  const router = useRouter();
   const [eventId, setEventId] = useState('');
   const [event, setEvent] = useState<any>(null);
   const [receipts, setReceipts] = useState<any[]>([]);
   const [forms, setForms] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const profile = useAuthStore(s => s.profile);
   const [rejectReason, setRejectReason] = useState('');
   const [rejectTarget, setRejectTarget] = useState<string | null>(null);
   const [report, setReport] = useState<any>(null);
@@ -41,29 +40,22 @@ export default function AdviserEventDetailPage({ params }: { params: Promise<{ e
       const p = await params;
       setEventId(p.eventId);
 
-      const supabase = createClient();
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) { router.push('/login'); return; }
-
-      const [eventData, receiptsData, formsData] = await Promise.all([
+      const [eventData, receiptsData, formsData, report] = await Promise.all([
         getEvent(p.eventId),
         getReceipts(p.eventId),
         getNoReceiptForms(p.eventId),
+        getFinancialReport(p.eventId).catch(() => null),
       ]);
 
       setEvent(eventData);
       setReceipts(receiptsData);
       setForms(formsData);
-
-      try {
-        const r = await getFinancialReport(p.eventId);
-        setReport(r);
-      } catch {}
+      setReport(report);
 
       setLoading(false);
     };
     init();
-  }, [params, router]);
+  }, [params]);
 
   const handleApproveForm = async (formId: string) => {
     try {

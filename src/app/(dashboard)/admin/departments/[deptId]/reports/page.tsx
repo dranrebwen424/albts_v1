@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { createClient } from '@/lib/supabase/client';
+import { useAuthStore } from '@/stores/auth';
 import { getEvents, getReceipts, getNoReceiptForms } from '@/lib/actions';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { formatCurrency } from '@/lib/utils/format';
@@ -17,9 +17,6 @@ export default function ReportsPage() {
 
   useEffect(() => {
     const init = async () => {
-      const supabase = createClient();
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) { router.push('/login'); return; }
       const data = await getEvents(params.deptId as string);
       const enriched = await Promise.all(data.map(async (event: any) => {
         const [receipts, forms] = await Promise.all([
@@ -35,7 +32,7 @@ export default function ReportsPage() {
       setLoading(false);
     };
     init();
-  }, [params.deptId, router]);
+  }, [params.deptId]);
 
   if (loading) return <div className="py-4 space-y-3">{[1,2,3].map(i => <Skeleton key={i} className="h-24 rounded-xl" />)}</div>;
 

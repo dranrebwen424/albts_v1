@@ -2,9 +2,9 @@
 
 import { useEffect, useState } from 'react';
 import Image from 'next/image';
-import { useParams, useRouter } from 'next/navigation';
+import { useParams } from 'next/navigation';
 import Link from 'next/link';
-import { createClient } from '@/lib/supabase/client';
+import { useAuthStore } from '@/stores/auth';
 import { getEvent, getReceipts, getNoReceiptForms } from '@/lib/actions';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -26,7 +26,6 @@ const COLORS = ['#0a0a0a', '#e5e5e5', '#22c55e'];
 
 export default function AdminEventDetailPage() {
   const params = useParams();
-  const router = useRouter();
   const deptId = params.deptId as string;
   const eventId = params.eventId as string;
 
@@ -40,10 +39,6 @@ export default function AdminEventDetailPage() {
 
   useEffect(() => {
     const init = async () => {
-      const supabase = createClient();
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) { router.push('/login'); return; }
-
       const [eventData, receiptsData, formsData] = await Promise.all([
         getEvent(eventId),
         getReceipts(eventId),
@@ -55,7 +50,7 @@ export default function AdminEventDetailPage() {
       setLoading(false);
     };
     init();
-  }, [eventId, router]);
+  }, [eventId]);
 
   if (loading) {
     return (

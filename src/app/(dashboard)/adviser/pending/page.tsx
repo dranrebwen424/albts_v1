@@ -1,9 +1,8 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { createClient } from '@/lib/supabase/client';
+import { useAuthStore } from '@/stores/auth';
 import { getPendingForms, approveNoReceiptForm, rejectNoReceiptForm } from '@/lib/actions';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -24,27 +23,16 @@ export default function PendingApprovalsPage() {
   const [rejectReason, setRejectReason] = useState('');
   const [rejectTarget, setRejectTarget] = useState<string | null>(null);
   const [selectedForm, setSelectedForm] = useState<any>(null);
-  const router = useRouter();
+  const profile = useAuthStore(s => s.profile);
 
   const loadForms = async () => {
-    const supabase = createClient();
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) { router.push('/login'); return; }
-
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('department_id')
-      .eq('user_id', user.id)
-      .single();
-
-    if (profile) {
-      const data = await getPendingForms(profile.department_id);
-      setForms(data);
-    }
+    if (!profile) return;
+    const data = await getPendingForms(profile.department_id);
+    setForms(data);
     setLoading(false);
   };
 
-  useEffect(() => { loadForms(); }, [router]);
+  useEffect(() => { loadForms(); }, [profile]);
 
   const handleApprove = async (formId: string, eventId: string) => {
     try {

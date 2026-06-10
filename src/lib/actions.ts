@@ -110,6 +110,7 @@ export async function markEventDone(eventId: string, departmentId: string) {
       title: 'Event Completed',
       message: `Event "${event.name}" has been marked as done.`,
       type: 'event_done',
+      event_id: eventId,
     });
   }
 
@@ -395,6 +396,7 @@ export async function submitNoReceiptForm(formData: any) {
       title: 'New No-Receipt Form',
       message: `A new no-receipt form "${formData.expense_name}" has been submitted for "${event.name}".`,
       type: 'form_submitted',
+      event_id: formData.event_id,
     });
   }
 
@@ -445,6 +447,7 @@ export async function approveNoReceiptForm(formId: string, eventId: string) {
     title: 'Form Approved',
     message: `Your no-receipt form "${form.expense_name}" has been approved.`,
     type: 'form_approved',
+    event_id: eventId,
   });
 
   // Record on blockchain
@@ -519,6 +522,7 @@ async function checkBudgetThreshold(eventId: string) {
           title: threshold.title,
           message: threshold.message,
           type: notifType,
+          event_id: eventId,
         });
         await createAuditLog(event.department_id, threshold.title, {
           event_id: eventId,
@@ -556,6 +560,7 @@ export async function rejectNoReceiptForm(formId: string, eventId: string, reaso
       title: 'Form Permanently Rejected',
       message: `Your no-receipt form "${form.expense_name}" has been permanently rejected. Reason: ${reason}`,
       type: 'form_rejected',
+      event_id: eventId,
     });
   } else {
     // First rejection - set rejection reason but keep status as pending for resubmission
@@ -571,6 +576,7 @@ export async function rejectNoReceiptForm(formId: string, eventId: string, reaso
       title: 'Form Needs Revision',
       message: `Your no-receipt form "${form.expense_name}" was rejected. Reason: ${reason}. Please submit a revised explanation.`,
       type: 'form_rejected',
+      event_id: eventId,
     });
   }
 
@@ -627,6 +633,7 @@ export async function resubmitNoReceiptForm(formId: string, eventId: string, exp
       title: 'Form Resubmitted',
       message: `A no-receipt form has been resubmitted for "${event.name}".`,
       type: 'form_resubmitted',
+      event_id: eventId,
     });
   }
 
@@ -678,6 +685,7 @@ export async function generateFinancialReport(eventId: string, departmentId: str
       title: 'Financial Statement Ready',
       message: `Financial Statement for "${event.name}" is ready for review.`,
       type: 'fs_ready',
+      event_id: eventId,
     });
   }
 
@@ -719,6 +727,7 @@ export async function approveFinancialReport(reportId: string, eventId: string) 
       title: 'Financial Statement Approved',
       message: `The Financial Statement for "${event.name}" has been approved. You can now download the PDF.`,
       type: 'fs_approved',
+      event_id: eventId,
     });
   }
 
@@ -750,11 +759,14 @@ export const getNotifications = cache(async (userId: string) => {
   const supabase = await createClient();
   const { data } = await supabase
     .from('notifications')
-    .select('*')
+    .select('*, events!left(name)')
     .eq('user_id', userId)
     .order('created_at', { ascending: false })
-    .limit(20);
-  return data || [];
+    .limit(50);
+  return (data || []).map((n: any) => ({
+    ...n,
+    events: n.events || null,
+  })) as any[];
 });
 
 export async function markNotificationRead(notificationId: string) {

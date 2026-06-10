@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { toast } from 'sonner';
+import { Loader2 } from 'lucide-react';
 import { setPasswordChanged } from '@/lib/actions';
 
 export default function ChangePasswordPage() {
@@ -15,6 +16,8 @@ export default function ChangePasswordPage() {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const router = useRouter();
+
+  const passwordMismatch = confirmPassword.length > 0 && password !== confirmPassword;
 
   const handleChangePassword = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -70,6 +73,7 @@ export default function ChangePasswordPage() {
                 onChange={(e) => setPassword(e.target.value)}
                 required
                 minLength={6}
+                disabled={loading}
               />
             </div>
             <div className="space-y-2">
@@ -81,10 +85,15 @@ export default function ChangePasswordPage() {
                 onChange={(e) => setConfirmPassword(e.target.value)}
                 required
                 minLength={6}
+                disabled={loading}
+                className={passwordMismatch ? 'border-red-500 focus-visible:ring-red-500' : ''}
               />
+              {passwordMismatch && (
+                <p className="text-xs text-red-500">Passwords do not match</p>
+              )}
             </div>
-            <Button type="submit" className="w-full" disabled={loading}>
-              {loading ? 'Changing...' : 'Change Password'}
+            <Button type="submit" className="w-full" disabled={loading || passwordMismatch}>
+              {loading ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Changing...</> : 'Change Password'}
             </Button>
           </form>
         </CardContent>

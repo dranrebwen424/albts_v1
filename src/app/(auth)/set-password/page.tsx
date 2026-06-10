@@ -19,6 +19,8 @@ function SetPasswordForm() {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [loading, setLoading] = useState(false);
 
+  const passwordMismatch = confirmPassword.length > 0 && password !== confirmPassword;
+
   useEffect(() => {
     if (!token) {
       toast.error('Invalid reset link');
@@ -83,9 +85,13 @@ function SetPasswordForm() {
               required
               minLength={6}
               disabled={loading}
+              className={passwordMismatch ? 'border-red-500 focus-visible:ring-red-500' : ''}
             />
+            {passwordMismatch && (
+              <p className="text-xs text-red-500">Passwords do not match</p>
+            )}
           </div>
-          <Button type="submit" className="w-full" disabled={loading}>
+          <Button type="submit" className="w-full" disabled={loading || passwordMismatch}>
             {loading ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Saving...</> : 'Set Password'}
           </Button>
         </form>

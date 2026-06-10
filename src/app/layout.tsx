@@ -18,6 +18,10 @@ export const metadata: Metadata = {
   description: 'Departmental Liquidation & Financial Reporting System',
 };
 
+export const viewport = {
+  viewportFit: 'cover',
+};
+
 export default function RootLayout({
   children,
 }: Readonly<{

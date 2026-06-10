@@ -71,8 +71,16 @@ export function CameraCapture({ onCapture, onClose }: CameraCaptureProps) {
         }
 
         if (videoRef.current) {
+          videoRef.current.setAttribute('playsinline', '');
           videoRef.current.srcObject = stream;
-          await videoRef.current.play();
+          await new Promise<void>((resolve) => {
+            const onCanPlay = () => {
+              videoRef.current?.removeEventListener('canplay', onCanPlay);
+              resolve();
+            };
+            videoRef.current?.addEventListener('canplay', onCanPlay);
+            videoRef.current?.play();
+          });
         }
 
         setState('active');
@@ -356,8 +364,8 @@ export function CameraCapture({ onCapture, onClose }: CameraCaptureProps) {
             <video
               ref={videoRef}
               autoPlay
+              muted
               playsInline
-              webkit-playsinline="true"
               className="absolute inset-0 h-full w-full object-cover"
             />
             <ViewfinderOverlay focusFeedback={focusFeedback} stability={stability} />

@@ -33,7 +33,7 @@ export function ViewfinderOverlay({ focusFeedback, stability }: ViewfinderOverla
   return (
     <div className="absolute inset-0 pointer-events-none">
       {/* Semi-transparent borders */}
-      <div className="absolute inset-0 bg-black/35" />
+      <div className="absolute inset-0 bg-black/25" />
 
       {/* Clear center rectangle */}
       <div className="absolute inset-0 flex items-center justify-center">

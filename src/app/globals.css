@@ -61,7 +61,7 @@ body {
 }
 
 @utility pb-safe {
-  padding-bottom: env(safe-area-inset-bottom, 0px);
+  padding-bottom: env(safe-area-inset-bottom, 16px);
 }
 
 @utility pt-safe {

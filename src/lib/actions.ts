@@ -1046,7 +1046,8 @@ export async function sendResetCode(email: string) {
 
   // Send email with code
   try {
-    await sendEmail(process.env.EMAILJS_TEMPLATE_ID!, email, {
+    const resetTemplateId = process.env.EMAILJS_RESET_TEMPLATE_ID || process.env.EMAILJS_TEMPLATE_ID!;
+    await sendEmail(resetTemplateId, email, {
       to_email: email,
       first_name: user.user_metadata?.first_name || 'User',
       last_name: user.user_metadata?.last_name || '',

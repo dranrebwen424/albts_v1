@@ -10,5 +10,10 @@ CREATE TABLE IF NOT EXISTS password_reset_codes (
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
+ALTER TABLE password_reset_codes ENABLE ROW LEVEL SECURITY;
+
+-- Only the service_role admin client accesses this table, so default-deny is sufficient
+-- No public policies needed — all access is via server actions using the admin client
+
 -- Add password_changed column to profiles
 ALTER TABLE profiles ADD COLUMN IF NOT EXISTS password_changed BOOLEAN DEFAULT FALSE;

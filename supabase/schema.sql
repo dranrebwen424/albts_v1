@@ -253,6 +253,8 @@ CREATE TABLE IF NOT EXISTS password_reset_codes (
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
+ALTER TABLE password_reset_codes ENABLE ROW LEVEL SECURITY;
+
 -- Triggers
 CREATE OR REPLACE FUNCTION handle_new_user()
 RETURNS TRIGGER AS $$

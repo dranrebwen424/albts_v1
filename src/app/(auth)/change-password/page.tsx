@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { toast } from 'sonner';
+import { setPasswordChanged } from '@/lib/actions';
 
 export default function ChangePasswordPage() {
   const [password, setPassword] = useState('');
@@ -31,12 +32,16 @@ export default function ChangePasswordPage() {
     setLoading(true);
 
     const supabase = createClient();
-    const { error } = await supabase.auth.updateUser({ password });
+    const { data, error } = await supabase.auth.updateUser({ password });
 
     if (error) {
       toast.error(error.message);
       setLoading(false);
       return;
+    }
+
+    if (data?.user) {
+      await setPasswordChanged(data.user.id).catch(() => {});
     }
 
     toast.success('Password changed successfully');

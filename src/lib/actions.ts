@@ -963,3 +963,201 @@ export async function prefetchEventDetail(eventId: string) {
 export async function prefetchFsDetail(eventId: string) {
   return getFsDetailData(eventId);
 }
+
+// ─── Password Reset ───
+
+function generateResetToken(): string {
+  const chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
+  let token = '';
+  for (let i = 0; i < 32; i++) {
+    token += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  return token;
+}
+
+function generateCode(): string {
+  return String(Math.floor(100000 + Math.random() * 900000));
+}
+
+function hashCode(code: string): string {
+  // Simple hash for the 6-digit code — not crypto-grade, sufficient for OTP
+  let hash = 0;
+  for (let i = 0; i < code.length; i++) {
+    const char = code.charCodeAt(i);
+    hash = ((hash << 5) - hash) + char;
+    hash |= 0;
+  }
+  return 'h_' + hash.toString(36);
+}
+
+export async function generateInvitationToken(email: string) {
+  const supabase = createAdminClient();
+  const resetToken = generateResetToken();
+  const code = generateCode(); // dummy code (not used for invitation flow)
+  const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(); // 7 days
+
+  const { error } = await supabase.from('password_reset_codes').insert({
+    email,
+    code_hash: hashCode(code),
+    reset_token: resetToken,
+    expires_at: expiresAt,
+    type: 'invitation',
+  });
+
+  if (error) throw new Error(error.message);
+  return resetToken;
+}
+
+export async function sendResetCode(email: string) {
+  const adminClient = createAdminClient();
+
+  // Check if user exists
+  const { data: users, error: listError } = await adminClient.auth.admin.listUsers();
+  if (listError) throw new Error('Failed to verify account');
+
+  const user = users.users.find(u => u.email === email);
+  if (!user) {
+    // Don't reveal if email exists — return success either way
+    return { sent: false };
+  }
+
+  // Remove any existing unused codes for this email
+  await adminClient
+    .from('password_reset_codes')
+    .update({ used: true })
+    .eq('email', email)
+    .eq('used', false)
+    .eq('type', 'reset');
+
+  // Generate code and token
+  const code = generateCode();
+  const resetToken = generateResetToken();
+  const expiresAt = new Date(Date.now() + 15 * 60 * 1000).toISOString(); // 15 min
+
+  const { error } = await adminClient.from('password_reset_codes').insert({
+    email,
+    code_hash: hashCode(code),
+    reset_token: resetToken,
+    expires_at: expiresAt,
+    type: 'reset',
+  });
+
+  if (error) throw new Error(error.message);
+
+  // Send email with code
+  try {
+    await sendEmail(process.env.EMAILJS_TEMPLATE_ID!, email, {
+      to_email: email,
+      first_name: user.user_metadata?.first_name || 'User',
+      last_name: user.user_metadata?.last_name || '',
+      reset_code: code,
+    });
+  } catch {
+    // If email fails, invalidate the code
+    await adminClient
+      .from('password_reset_codes')
+      .update({ used: true })
+      .eq('reset_token', resetToken);
+    throw new Error('Failed to send reset code. Please try again.');
+  }
+
+  return { sent: true, email };
+}
+
+export async function verifyResetCode(email: string, code: string) {
+  if (!code || code.length !== 6) {
+    throw new Error('Invalid code');
+  }
+
+  const supabase = createAdminClient();
+  const hashed = hashCode(code);
+
+  const { data: records, error } = await supabase
+    .from('password_reset_codes')
+    .select('*')
+    .eq('email', email)
+    .eq('type', 'reset')
+    .eq('used', false)
+    .gte('expires_at', new Date().toISOString())
+    .order('created_at', { ascending: false })
+    .limit(1);
+
+  if (error) throw new Error(error.message);
+  if (!records || records.length === 0) {
+    throw new Error('Invalid or expired code');
+  }
+
+  const record = records[0];
+  if (record.code_hash !== hashed) {
+    throw new Error('Invalid code');
+  }
+
+  // Mark code as used
+  await supabase
+    .from('password_reset_codes')
+    .update({ used: true })
+    .eq('id', record.id);
+
+  return { token: record.reset_token };
+}
+
+export async function resetPasswordWithToken(token: string, newPassword: string) {
+  if (!newPassword || newPassword.length < 6) {
+    throw new Error('Password must be at least 6 characters');
+  }
+
+  const supabase = createAdminClient();
+
+  const { data: records, error } = await supabase
+    .from('password_reset_codes')
+    .select('*')
+    .eq('reset_token', token)
+    .eq('used', false)
+    .gte('expires_at', new Date().toISOString())
+    .limit(1);
+
+  if (error) throw new Error(error.message);
+  if (!records || records.length === 0) {
+    throw new Error('Invalid or expired reset link');
+  }
+
+  const record = records[0];
+
+  // Find the user by email
+  const { data: users, error: listError } = await supabase.auth.admin.listUsers();
+  if (listError) throw new Error('Failed to find user');
+
+  const user = users.users.find(u => u.email === record.email);
+  if (!user) throw new Error('User not found');
+
+  // Update password using admin API
+  const { error: updateError } = await supabase.auth.admin.updateUserById(user.id, {
+    password: newPassword,
+  });
+
+  if (updateError) throw new Error(updateError.message);
+
+  // Mark token as used
+  await supabase
+    .from('password_reset_codes')
+    .update({ used: true })
+    .eq('id', record.id);
+
+  // Set password_changed = true
+  await supabase
+    .from('profiles')
+    .update({ password_changed: true })
+    .eq('user_id', user.id);
+
+  return { success: true };
+}
+
+export async function setPasswordChanged(userId: string) {
+  const supabase = createAdminClient();
+  const { error } = await supabase
+    .from('profiles')
+    .update({ password_changed: true })
+    .eq('user_id', userId);
+  if (error) throw new Error(error.message);
+  return true;
+}

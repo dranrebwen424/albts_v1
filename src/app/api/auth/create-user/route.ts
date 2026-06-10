@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { sendEmail } from '@/lib/email/client';
+import { generateInvitationToken } from '@/lib/actions';
 
 export async function POST(request: Request) {
   try {
@@ -42,6 +43,15 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: profileError.message }, { status: 400 });
     }
 
+    // Generate invitation token
+    let setPasswordLink = `${process.env.NEXT_PUBLIC_APP_URL}/change-password`;
+    try {
+      const token = await generateInvitationToken(email);
+      setPasswordLink = `${process.env.NEXT_PUBLIC_APP_URL}/set-password?token=${token}`;
+    } catch (tokenError: any) {
+      console.error('Failed to generate invitation token:', tokenError);
+    }
+
     // Send welcome email
     let emailSent = false;
     try {
@@ -50,7 +60,8 @@ export async function POST(request: Request) {
         first_name,
         last_name,
         default_password: 'Mabini2026',
-        change_password_link: `${process.env.NEXT_PUBLIC_APP_URL}/change-password`,
+        set_password_link: setPasswordLink,
+        change_password_link: setPasswordLink,
       });
       emailSent = true;
     } catch (emailError: any) {

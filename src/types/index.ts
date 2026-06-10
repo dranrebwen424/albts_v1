@@ -162,6 +162,17 @@ export interface AuditLog {
   created_at: string;
 }
 
+export interface PasswordResetCode {
+  id: string;
+  email: string;
+  code_hash: string;
+  reset_token: string;
+  expires_at: string;
+  used: boolean;
+  type: 'invitation' | 'reset';
+  created_at: string;
+}
+
 export interface FinancialReport {
   id: string;
   event_id: string;

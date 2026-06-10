@@ -16,7 +16,8 @@ CREATE TABLE IF NOT EXISTS profiles (
   department_id UUID REFERENCES departments(id) ON DELETE SET NULL,
   role TEXT NOT NULL CHECK (role IN ('officer', 'adviser', 'admin')),
   created_at TIMESTAMPTZ DEFAULT now(),
-  UNIQUE(user_id)
+  UNIQUE(user_id),
+  password_changed BOOLEAN DEFAULT FALSE
 );
 
 -- Events
@@ -238,6 +239,18 @@ CREATE POLICY "audit_logs_select_admin" ON audit_logs FOR SELECT USING (
 
 CREATE POLICY "audit_logs_insert_admin" ON audit_logs FOR INSERT WITH CHECK (
   (SELECT role FROM profiles WHERE user_id = auth.uid()) = 'admin'
+);
+
+-- Password Reset Codes
+CREATE TABLE IF NOT EXISTS password_reset_codes (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  email TEXT NOT NULL,
+  code_hash TEXT NOT NULL,
+  reset_token TEXT NOT NULL UNIQUE,
+  expires_at TIMESTAMPTZ NOT NULL DEFAULT (NOW() + INTERVAL '15 minutes'),
+  used BOOLEAN DEFAULT FALSE,
+  type TEXT NOT NULL CHECK (type IN ('invitation', 'reset')),
+  created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
 -- Triggers

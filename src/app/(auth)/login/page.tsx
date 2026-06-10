@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { createClient } from '@/lib/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -42,6 +43,12 @@ export default function LoginPage() {
         if (!res.ok) {
           setError(profile.error || 'Account not set up. Contact your admin.');
           setLoading(false);
+          return;
+        }
+
+        // Redirect to change password if this is a first-time login
+        if (!profile.password_changed) {
+          router.push('/change-password');
           return;
         }
 
@@ -108,6 +115,11 @@ export default function LoginPage() {
                 >
                   {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                 </button>
+              </div>
+              <div className="flex justify-end">
+                <Link href="/forgot-password" className="text-xs text-neutral-500 hover:text-neutral-900 dark:hover:text-neutral-300">
+                  Forgot password?
+                </Link>
               </div>
             </div>
             {error && (

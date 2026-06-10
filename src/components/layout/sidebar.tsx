@@ -17,6 +17,7 @@ import {
   ChevronRight,
   LogOut,
   Bell,
+  UserCircle,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -41,6 +42,9 @@ const navItems: NavItem[] = [
   { label: 'Notifications', href: '/adviser/notifications', icon: <Bell className="h-4 w-4" />, roles: ['adviser'] },
   { label: 'Financial Reports', href: '/adviser/reports', icon: <FileText className="h-4 w-4" />, roles: ['adviser'] },
   { label: 'Departments', href: '/admin/departments', icon: <Building2 className="h-4 w-4" />, roles: ['admin'] },
+  { label: 'Profile', href: '/officer/profile', icon: <UserCircle className="h-4 w-4" />, roles: ['officer'] },
+  { label: 'Profile', href: '/adviser/profile', icon: <UserCircle className="h-4 w-4" />, roles: ['adviser'] },
+  { label: 'Profile', href: '/admin/profile', icon: <UserCircle className="h-4 w-4" />, roles: ['admin'] },
 ];
 
 export function Sidebar() {

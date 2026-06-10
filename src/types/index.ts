@@ -15,6 +15,8 @@ export interface Department {
   created_at: string;
 }
 
+export type AccountStatus = 'active' | 'deactivated';
+
 export interface Profile {
   id: string;
   user_id: string;
@@ -25,6 +27,8 @@ export interface Profile {
   role: UserRole;
   created_at: string;
   email?: string;
+  password_changed?: boolean;
+  status?: AccountStatus;
 }
 
 export interface Event {

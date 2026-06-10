@@ -17,7 +17,8 @@ CREATE TABLE IF NOT EXISTS profiles (
   role TEXT NOT NULL CHECK (role IN ('officer', 'adviser', 'admin')),
   created_at TIMESTAMPTZ DEFAULT now(),
   UNIQUE(user_id),
-  password_changed BOOLEAN DEFAULT FALSE
+  password_changed BOOLEAN DEFAULT FALSE,
+  status TEXT NOT NULL DEFAULT 'active' CHECK (status IN ('active', 'deactivated'))
 );
 
 -- Events

@@ -32,6 +32,7 @@ export const getDepartments = cache(async () => {
 });
 
 export async function createDepartment(name: string, code: string) {
+  await checkUserActive();
   const supabase = await createClient();
   const { data, error } = await supabase.from('departments').insert({ name, code }).select().single();
   if (error) throw new Error(error.message);
@@ -69,9 +70,8 @@ export async function createEvent(
   adviserId: string,
   budget: number
 ) {
+  const user = await checkUserActive();
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) throw new Error('Unauthorized');
 
   // Only officers can create events
   const { data: profile } = await supabase
@@ -95,6 +95,7 @@ export async function createEvent(
 }
 
 export async function markEventDone(eventId: string, departmentId: string) {
+  await checkUserActive();
   const supabase = await createClient();
   const { error } = await supabase
     .from('events')
@@ -135,9 +136,8 @@ export async function uploadReceipt(
   eventId: string,
   formData: FormData
 ) {
+  await checkUserActive();
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) throw new Error('Unauthorized');
 
   const file = formData.get('file') as File;
   if (!file) throw new Error('No file provided');
@@ -169,9 +169,8 @@ export async function uploadReceipt(
 }
 
 export async function retryOcr(eventId: string, imageUrl: string) {
+  await checkUserActive();
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) throw new Error('Unauthorized');
 
   const response = await fetch(imageUrl);
   const blob = await response.blob();
@@ -200,9 +199,8 @@ export async function confirmReceipt(
     confidence: number;
   }
 ) {
+  const user = await checkUserActive();
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) throw new Error('Unauthorized');
 
   const { data: event } = await supabase
     .from('events')
@@ -269,6 +267,7 @@ export async function confirmReceipt(
 }
 
 export async function approveReceipt(receiptId: string, eventId: string) {
+  await checkUserActive();
   const supabase = await createClient();
   const { data: receipt } = await supabase
     .from('receipts')
@@ -325,6 +324,7 @@ export async function approveReceipt(receiptId: string, eventId: string) {
 }
 
 export async function rejectReceipt(receiptId: string, eventId: string) {
+  await checkUserActive();
   const supabase = await createClient();
   const { error } = await supabase
     .from('receipts')
@@ -372,9 +372,8 @@ export const getWaitingForms = cache(async (departmentId: string) => {
 });
 
 export async function submitNoReceiptForm(formData: any) {
+  const user = await checkUserActive();
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) throw new Error('Unauthorized');
 
   const { data, error } = await supabase
     .from('no_receipt_forms')
@@ -413,6 +412,7 @@ export async function submitNoReceiptForm(formData: any) {
 }
 
 export async function approveNoReceiptForm(formId: string, eventId: string) {
+  await checkUserActive();
   const supabase = await createClient();
   const { data: form } = await supabase
     .from('no_receipt_forms')
@@ -537,6 +537,7 @@ async function checkBudgetThreshold(eventId: string) {
 }
 
 export async function rejectNoReceiptForm(formId: string, eventId: string, reason: string) {
+  await checkUserActive();
   const supabase = await createClient();
   const { data: form } = await supabase
     .from('no_receipt_forms')
@@ -594,9 +595,8 @@ export async function rejectNoReceiptForm(formId: string, eventId: string, reaso
 }
 
 export async function resubmitNoReceiptForm(formId: string, eventId: string, explanation: string) {
+  const user = await checkUserActive();
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) throw new Error('Unauthorized');
 
   // Verify the officer is the submitter
   const { data: existing } = await supabase
@@ -650,9 +650,8 @@ export async function resubmitNoReceiptForm(formId: string, eventId: string, exp
 // ─── Financial Reports ───
 
 export async function generateFinancialReport(eventId: string, departmentId: string) {
+  const user = await checkUserActive();
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) throw new Error('Unauthorized');
 
   // Gather data
   const event = await getEvent(eventId);
@@ -700,9 +699,8 @@ export async function generateFinancialReport(eventId: string, departmentId: str
 }
 
 export async function approveFinancialReport(reportId: string, eventId: string) {
+  const user = await checkUserActive();
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) throw new Error('Unauthorized');
 
   const { data: report } = await supabase
     .from('financial_reports')
@@ -770,6 +768,7 @@ export const getNotifications = cache(async (userId: string) => {
 });
 
 export async function markNotificationRead(notificationId: string) {
+  await checkUserActive();
   const supabase = await createClient();
   const { error } = await supabase
     .from('notifications')
@@ -780,6 +779,7 @@ export async function markNotificationRead(notificationId: string) {
 }
 
 export async function markAllNotificationsRead(userId: string) {
+  await checkUserActive();
   const supabase = await createClient();
   const { error } = await supabase
     .from('notifications')
@@ -812,9 +812,8 @@ export const getAllProfiles = cache(async () => {
 });
 
 export async function deleteUser(userId: string) {
+  const user = await checkUserActive();
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) throw new Error('Unauthorized');
 
   const { data: profile } = await supabase
     .from('profiles')
@@ -1155,5 +1154,154 @@ export async function setPasswordChanged(userId: string) {
     .update({ password_changed: true })
     .eq('user_id', userId);
   if (error) throw new Error(error.message);
+  return true;
+}
+
+// ─── Profile & Account Status ───
+
+async function checkUserActive() {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error('Unauthorized');
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('status')
+    .eq('user_id', user.id)
+    .single();
+  if (profile?.status === 'deactivated') {
+    throw new Error('Account deactivated. Contact your admin.');
+  }
+  return user;
+}
+
+export async function getMyProfile() {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error('Unauthorized');
+
+  const { data: profile, error } = await supabase
+    .from('profiles')
+    .select('*, departments(name)')
+    .eq('user_id', user.id)
+    .single();
+
+  if (error) throw new Error(error.message);
+  return {
+    ...profile,
+    email: user.email,
+  };
+}
+
+export async function getUserProfileById(userId: string) {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error('Unauthorized');
+
+  const { data: adminProfile } = await supabase
+    .from('profiles')
+    .select('role')
+    .eq('user_id', user.id)
+    .single();
+
+  if (!adminProfile || adminProfile.role !== 'admin') {
+    throw new Error('Only admins can view user profiles');
+  }
+
+  const adminClient = createAdminClient();
+  const { data: profile, error } = await adminClient
+    .from('profiles')
+    .select('*, departments(name)')
+    .eq('user_id', userId)
+    .single();
+
+  if (error) throw new Error(error.message);
+
+  // Get auth user email
+  const { data: authUser } = await adminClient.auth.admin.getUserById(userId);
+  const email = authUser?.user?.email;
+
+  // Get recent activity (audit logs referencing this user)
+  const { data: auditLogs } = await adminClient
+    .from('audit_logs')
+    .select('*, admin:profiles!audit_logs_admin_id_fkey(first_name, last_name)')
+    .or(`details->>deleted_user_id.eq.${userId},details->>user_id.eq.${userId}`)
+    .order('created_at', { ascending: false })
+    .limit(20);
+
+  return {
+    ...profile,
+    email,
+    recentActivity: auditLogs || [],
+  };
+}
+
+export async function adminResetUserPassword(userId: string) {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error('Unauthorized');
+
+  const { data: adminProfile } = await supabase
+    .from('profiles')
+    .select('role')
+    .eq('user_id', user.id)
+    .single();
+
+  if (!adminProfile || adminProfile.role !== 'admin') {
+    throw new Error('Only admins can reset passwords');
+  }
+
+  const adminClient = createAdminClient();
+  const { data: profile } = await adminClient
+    .from('profiles')
+    .select('email, first_name, last_name')
+    .eq('user_id', userId)
+    .single();
+
+  if (!profile) throw new Error('User not found');
+
+  const token = await generateInvitationToken(profile.email || `${userId}@placeholder.com`);
+  const link = `${process.env.NEXT_PUBLIC_APP_URL}/set-password?token=${token}`;
+
+  return { link, token };
+}
+
+export async function updateUserStatus(userId: string, status: 'active' | 'deactivated') {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error('Unauthorized');
+
+  const { data: adminProfile } = await supabase
+    .from('profiles')
+    .select('role, department_id')
+    .eq('user_id', user.id)
+    .single();
+
+  if (!adminProfile || adminProfile.role !== 'admin') {
+    throw new Error('Only admins can change account status');
+  }
+
+  const adminClient = createAdminClient();
+  const { data: targetProfile } = await adminClient
+    .from('profiles')
+    .select('first_name, last_name, role')
+    .eq('user_id', userId)
+    .single();
+
+  if (!targetProfile) throw new Error('User not found');
+
+  const { error } = await adminClient
+    .from('profiles')
+    .update({ status })
+    .eq('user_id', userId);
+
+  if (error) throw new Error(error.message);
+
+  await createAuditLog(adminProfile.department_id, `User ${status === 'deactivated' ? 'deactivated' : 'reactivated'}`, {
+    target_user_id: userId,
+    target_user_name: `${targetProfile.first_name} ${targetProfile.last_name}`,
+    target_user_role: targetProfile.role,
+  });
+
+  revalidatePath('/admin/departments');
   return true;
 }

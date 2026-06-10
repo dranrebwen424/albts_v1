@@ -11,6 +11,7 @@ import {
   FileText,
   ClipboardList,
   Building2,
+  UserCircle,
   Menu,
   LogOut,
 } from 'lucide-react';
@@ -18,10 +19,13 @@ import {
 const navItems = [
   { label: 'Events', href: '/officer/events', icon: CalendarRange, roles: ['officer'] },
   { label: 'Reports', href: '/officer/reports', icon: FileText, roles: ['officer'] },
+  { label: 'Profile', href: '/officer/profile', icon: UserCircle, roles: ['officer'] },
   { label: 'Events', href: '/adviser/events', icon: CalendarRange, roles: ['adviser'] },
   { label: 'Pending', href: '/adviser/pending', icon: ClipboardList, roles: ['adviser'] },
   { label: 'Reports', href: '/adviser/reports', icon: FileText, roles: ['adviser'] },
+  { label: 'Profile', href: '/adviser/profile', icon: UserCircle, roles: ['adviser'] },
   { label: 'Departments', href: '/admin/departments', icon: Building2, roles: ['admin'] },
+  { label: 'Profile', href: '/admin/profile', icon: UserCircle, roles: ['admin'] },
 ];
 
 export function MobileNav() {

@@ -11,7 +11,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { UserPlus, Users, Trash2 } from 'lucide-react';
+import { UserPlus, Users, Trash2, ChevronRight } from 'lucide-react';
+import Link from 'next/link';
 import { toast } from 'sonner';
 import { Skeleton } from '@/components/ui/skeleton';
 
@@ -131,25 +132,28 @@ export default function UsersPage() {
           </CardContent>
         </Card>
       ) : users.map((u: any) => (
-        <Card key={u.id}>
-          <CardContent className="p-4 flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="h-9 w-9 rounded-full bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center text-sm font-medium">
-                {u.first_name?.charAt(0)}{u.last_name?.charAt(0)}
+        <Link key={u.id} href={`/admin/departments/${params.deptId}/users/${u.user_id}`}>
+          <Card className="cursor-pointer hover:shadow-md transition-shadow">
+            <CardContent className="p-4 flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="h-9 w-9 rounded-full bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center text-sm font-medium">
+                  {u.first_name?.charAt(0)}{u.last_name?.charAt(0)}
+                </div>
+                <div>
+                  <p className="text-sm font-medium">{u.first_name} {u.middle_name ? u.middle_name + ' ' : ''}{u.last_name}</p>
+                  <p className="text-xs text-neutral-500">{u.email || 'No email'}</p>
+                </div>
               </div>
-              <div>
-                <p className="text-sm font-medium">{u.first_name} {u.middle_name ? u.middle_name + ' ' : ''}{u.last_name}</p>
-                <p className="text-xs text-neutral-500">{u.email || 'No email'}</p>
+              <div className="flex items-center gap-2" onClick={e => e.stopPropagation()}>
+                <Badge variant={u.status === 'deactivated' ? 'destructive' : 'secondary'}>{u.role} {u.status === 'deactivated' ? '(Deactivated)' : ''}</Badge>
+                <Button variant="ghost" size="icon" className="h-8 w-8 text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20" onClick={() => handleDelete(u.user_id, `${u.first_name} ${u.last_name}`)}>
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+                <ChevronRight className="h-4 w-4 text-neutral-400" />
               </div>
-            </div>
-            <div className="flex items-center gap-2">
-              <Badge>{u.role}</Badge>
-              <Button variant="ghost" size="icon" className="h-8 w-8 text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20" onClick={() => handleDelete(u.user_id, `${u.first_name} ${u.last_name}`)}>
-                <Trash2 className="h-4 w-4" />
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+        </Link>
       ))}
     </div>
   );

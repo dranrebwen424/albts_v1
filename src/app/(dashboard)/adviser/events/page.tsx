@@ -4,7 +4,7 @@ import { useEffect } from 'react';
 import Link from 'next/link';
 import { useAuthStore } from '@/stores/auth';
 import { useEventsStore } from '@/stores/events';
-import { getEventsWithFsStatus } from '@/lib/actions';
+import { getEventsWithFsStatus, prefetchEventDetail } from '@/lib/actions';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Users, Wallet, FolderOpen } from 'lucide-react';
@@ -13,6 +13,7 @@ import { formatCurrency } from '@/lib/utils/format';
 export default function AdviserEventsPage() {
   const events = useEventsStore(s => s.events);
   const setEvents = useEventsStore(s => s.setEvents);
+  const setEventDetailCache = useEventsStore(s => s.setEventDetailCache);
   const profile = useAuthStore(s => s.profile);
 
   // Background refresh — store is already populated by sidebar prefetch
@@ -38,7 +39,12 @@ export default function AdviserEventsPage() {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {events.map((event) => (
-            <Link key={event.id} href={`/adviser/events/${event.id}`}>
+            <Link key={event.id} href={`/adviser/events/${event.id}`}
+              onMouseEnter={() => {
+                prefetchEventDetail(event.id).then(data =>
+                  setEventDetailCache(event.id, data)
+                ).catch(() => {});
+              }}>
               <Card className="h-full transition-all hover:shadow-md hover:-translate-y-0.5 cursor-pointer">
                 <CardHeader>
                   <div className="flex items-start justify-between">

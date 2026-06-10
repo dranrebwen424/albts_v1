@@ -947,3 +947,19 @@ export async function getFsDetailData(eventId: string) {
     fsRecord,
   };
 }
+
+// ─── Prefetch ───
+
+export async function prefetchEventDetail(eventId: string) {
+  const [event, receipts, forms, report] = await Promise.all([
+    getEvent(eventId),
+    getReceipts(eventId),
+    getNoReceiptForms(eventId),
+    getFinancialReport(eventId).catch(() => null),
+  ]);
+  return { event, receipts, forms, report };
+}
+
+export async function prefetchFsDetail(eventId: string) {
+  return getFsDetailData(eventId);
+}

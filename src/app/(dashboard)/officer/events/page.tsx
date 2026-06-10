@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useAuthStore } from '@/stores/auth';
 import { useEventsStore } from '@/stores/events';
-import { getEventsWithFsStatus, createEvent, getAllProfiles } from '@/lib/actions';
+import { getEventsWithFsStatus, createEvent, getAllProfiles, prefetchEventDetail } from '@/lib/actions';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -20,6 +20,7 @@ import type { Profile } from '@/types';
 export default function OfficerEventsPage() {
   const events = useEventsStore(s => s.events);
   const setEvents = useEventsStore(s => s.setEvents);
+  const setEventDetailCache = useEventsStore(s => s.setEventDetailCache);
   const profile = useAuthStore(s => s.profile) as Profile | null;
   const [showCreate, setShowCreate] = useState(false);
   const [form, setForm] = useState({ name: '', adviser_id: '', budget: '' });
@@ -112,7 +113,12 @@ export default function OfficerEventsPage() {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {events.map((event) => (
-            <Link key={event.id} href={`/officer/events/${event.id}`}>
+            <Link key={event.id} href={`/officer/events/${event.id}`}
+              onMouseEnter={() => {
+                prefetchEventDetail(event.id).then(data =>
+                  setEventDetailCache(event.id, data)
+                ).catch(() => {});
+              }}>
               <Card className="h-full transition-all hover:shadow-md hover:-translate-y-0.5 cursor-pointer">
                 <CardHeader>
                   <div className="flex items-start justify-between">

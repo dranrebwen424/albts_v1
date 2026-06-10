@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useAuthStore } from '@/stores/auth';
+import { useEventsStore } from '@/stores/events';
 import { getEvent, getReceipts, getNoReceiptForms, uploadReceipt, confirmReceipt, submitNoReceiptForm, resubmitNoReceiptForm, retryOcr } from '@/lib/actions';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -76,6 +77,14 @@ export default function EventDetailPage({ params }: { params: Promise<{ eventId:
       const p = await params;
       setEventId(p.eventId);
 
+      const cached = useEventsStore.getState().eventDetailCache[p.eventId];
+      if (cached) {
+        setEvent(cached.event);
+        setReceipts(cached.receipts);
+        setForms(cached.forms);
+        setLoading(false);
+      }
+
       const [eventData, receiptsData, formsData] = await Promise.all([
         getEvent(p.eventId),
         getReceipts(p.eventId),
@@ -86,7 +95,7 @@ export default function EventDetailPage({ params }: { params: Promise<{ eventId:
       setReceipts(receiptsData);
       setForms(formsData);
 
-      setLoading(false);
+      if (!cached) setLoading(false);
     };
     init();
   }, [params]);

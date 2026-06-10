@@ -1,9 +1,11 @@
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
-import { useParams } from 'next/navigation';
+import Image from 'next/image';
 import Link from 'next/link';
+import { useParams } from 'next/navigation';
 import { useAuthStore } from '@/stores/auth';
+import { useEventsStore } from '@/stores/events';
 import { getFsDetailData, generateFinancialReport, markEventDone } from '@/lib/actions';
 import { generateFinancialReport as downloadPdf } from '@/lib/pdf/generator';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -39,8 +41,13 @@ export default function OfficerReportDetailPage() {
 
   useEffect(() => {
     if (!profile) return;
-    loadData().finally(() => setLoading(false));
-  }, [profile, loadData]);
+    const cached = useEventsStore.getState().fsDetailCache[eventId];
+    if (cached) {
+      setData(cached);
+      setLoading(false);
+    }
+    loadData().finally(() => { if (!cached) setLoading(false); });
+  }, [profile, loadData, eventId]);
 
   const handleGenerateAndDownload = async () => {
     if (!data || !profile) return;

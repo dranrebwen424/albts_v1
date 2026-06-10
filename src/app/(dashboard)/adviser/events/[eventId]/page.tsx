@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useAuthStore } from '@/stores/auth';
+import { useEventsStore } from '@/stores/events';
 import { getEvent, getReceipts, getNoReceiptForms, approveNoReceiptForm, rejectNoReceiptForm, approveFinancialReport, getFinancialReport } from '@/lib/actions';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -40,6 +41,15 @@ export default function AdviserEventDetailPage({ params }: { params: Promise<{ e
       const p = await params;
       setEventId(p.eventId);
 
+      const cached = useEventsStore.getState().eventDetailCache[p.eventId];
+      if (cached) {
+        setEvent(cached.event);
+        setReceipts(cached.receipts);
+        setForms(cached.forms);
+        setReport(cached.report);
+        setLoading(false);
+      }
+
       const [eventData, receiptsData, formsData, report] = await Promise.all([
         getEvent(p.eventId),
         getReceipts(p.eventId),
@@ -52,7 +62,7 @@ export default function AdviserEventDetailPage({ params }: { params: Promise<{ e
       setForms(formsData);
       setReport(report);
 
-      setLoading(false);
+      if (!cached) setLoading(false);
     };
     init();
   }, [params]);

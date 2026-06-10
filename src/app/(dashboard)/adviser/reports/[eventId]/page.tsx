@@ -4,7 +4,8 @@ import { useEffect, useState, useCallback } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import { useAuthStore } from '@/stores/auth';
-import { getFsDetailData, approveFinancialReport, getFinancialReport } from '@/lib/actions';
+import { useEventsStore } from '@/stores/events';
+import { getFsDetailData, approveFinancialReport } from '@/lib/actions';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -37,8 +38,13 @@ export default function AdviserReportDetailPage() {
 
   useEffect(() => {
     if (!profile) return;
-    loadData().finally(() => setLoading(false));
-  }, [profile, loadData]);
+    const cached = useEventsStore.getState().fsDetailCache[eventId];
+    if (cached) {
+      setData(cached);
+      setLoading(false);
+    }
+    loadData().finally(() => { if (!cached) setLoading(false); });
+  }, [profile, loadData, eventId]);
 
   const handleApprove = async () => {
     if (!data?.fsRecord) return;

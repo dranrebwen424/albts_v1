@@ -72,14 +72,22 @@ export function CameraCapture({ onCapture, onClose }: CameraCaptureProps) {
 
         if (videoRef.current) {
           videoRef.current.setAttribute('playsinline', '');
+          videoRef.current.muted = true;
           videoRef.current.srcObject = stream;
           await new Promise<void>((resolve) => {
-            const onCanPlay = () => {
-              videoRef.current?.removeEventListener('canplay', onCanPlay);
-              resolve();
+            let started = false;
+            const onTimeUpdate = () => {
+              if (!started) {
+                started = true;
+                videoRef.current?.removeEventListener('timeupdate', onTimeUpdate);
+                requestAnimationFrame(() => requestAnimationFrame(() => resolve()));
+              }
             };
-            videoRef.current?.addEventListener('canplay', onCanPlay);
-            videoRef.current?.play();
+            videoRef.current?.addEventListener('timeupdate', onTimeUpdate);
+            videoRef.current?.play().catch(() => {
+              videoRef.current?.removeEventListener('timeupdate', onTimeUpdate);
+              resolve();
+            });
           });
         }
 

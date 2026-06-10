@@ -244,7 +244,7 @@ export function Sidebar() {
           <SheetHeader>
             <SheetTitle className="sr-only">Navigation</SheetTitle>
           </SheetHeader>
-          <div className="flex h-full flex-col pb-safe">
+          <div className="flex h-full flex-col">
             <div className="flex h-14 items-center border-b border-neutral-200 dark:border-neutral-800 px-4">
               <span className="text-sm font-semibold tracking-tight">ALBTS</span>
             </div>
@@ -277,7 +277,7 @@ export function Sidebar() {
                 })}
               </nav>
             </ScrollArea>
-            <div className="border-t border-neutral-200 dark:border-neutral-800 p-3">
+            <div className="border-t border-neutral-200 dark:border-neutral-800 p-3 pb-14">
               {profile && (
                 <div className="px-1 pb-3">
                   <div className="text-sm font-medium text-neutral-900 dark:text-white truncate">

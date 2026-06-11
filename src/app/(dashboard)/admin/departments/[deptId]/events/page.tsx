@@ -1,9 +1,10 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { useParams, useRouter } from 'next/navigation';
-import { useAuthStore } from '@/stores/auth';
-import { getEvents } from '@/lib/actions';
+import { useEffect, useState, useRef } from 'react';
+import { useParams } from 'next/navigation';
+import Link from 'next/link';
+import { useEventsStore } from '@/stores/events';
+import { getEvents, prefetchEventDetail } from '@/lib/actions';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Users, Wallet, ChevronRight } from 'lucide-react';
@@ -12,18 +13,29 @@ import { Skeleton } from '@/components/ui/skeleton';
 
 export default function AdminEventsPage() {
   const params = useParams();
-  const router = useRouter();
+  const deptId = params.deptId as string;
   const [events, setEvents] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const setEventDetailCache = useEventsStore(s => s.setEventDetailCache);
+  const prefetchedIds = useRef<Set<string>>(new Set());
 
   useEffect(() => {
     const init = async () => {
-      const e = await getEvents(params.deptId as string);
+      const e = await getEvents(deptId);
       setEvents(e);
+
+      e.forEach((event: any) => {
+        if (prefetchedIds.current.has(event.id)) return;
+        prefetchedIds.current.add(event.id);
+        prefetchEventDetail(event.id).then(data => {
+          setEventDetailCache(event.id, data);
+        }).catch(() => {});
+      });
+
       setLoading(false);
     };
     init();
-  }, [params.deptId]);
+  }, [deptId, setEventDetailCache]);
 
   if (loading) {
     return <div className="py-4 space-y-3">{[1,2,3].map(i => <Skeleton key={i} className="h-24 rounded-xl" />)}</div>;
@@ -34,7 +46,7 @@ export default function AdminEventsPage() {
       <p className="text-sm text-neutral-500">{events.length} event{events.length !== 1 ? 's' : ''}</p>
 
       {events.map(event => (
-        <button key={event.id} onClick={() => router.push(`/admin/departments/${params.deptId}/events/${event.id}`)} className="w-full text-left">
+        <Link key={event.id} href={`/admin/departments/${deptId}/events/${event.id}`} prefetch={true} className="block w-full text-left">
           <Card className="hover:shadow-md transition-all cursor-pointer">
             <CardContent className="p-4 flex items-center justify-between">
               <div>
@@ -51,7 +63,7 @@ export default function AdminEventsPage() {
               <ChevronRight className="h-4 w-4 text-neutral-400" />
             </CardContent>
           </Card>
-        </button>
+        </Link>
       ))}
     </div>
   );

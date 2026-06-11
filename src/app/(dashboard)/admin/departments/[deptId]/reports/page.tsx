@@ -1,9 +1,10 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { useParams, useRouter } from 'next/navigation';
-import { useAuthStore } from '@/stores/auth';
-import { getEvents, getReceipts, getNoReceiptForms } from '@/lib/actions';
+import { useEffect, useState, useRef } from 'react';
+import { useParams } from 'next/navigation';
+import Link from 'next/link';
+import { useEventsStore } from '@/stores/events';
+import { getEvents, getReceipts, getNoReceiptForms, prefetchFsDetail } from '@/lib/actions';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { formatCurrency } from '@/lib/utils/format';
 import { FileText, ChevronRight } from 'lucide-react';
@@ -11,13 +12,15 @@ import { Skeleton } from '@/components/ui/skeleton';
 
 export default function ReportsPage() {
   const params = useParams();
-  const router = useRouter();
+  const deptId = params.deptId as string;
   const [events, setEvents] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const setFsDetailCache = useEventsStore(s => s.setFsDetailCache);
+  const prefetchedIds = useRef<Set<string>>(new Set());
 
   useEffect(() => {
     const init = async () => {
-      const data = await getEvents(params.deptId as string);
+      const data = await getEvents(deptId);
       const enriched = await Promise.all(data.map(async (event: any) => {
         const [receipts, forms] = await Promise.all([
           getReceipts(event.id),
@@ -26,13 +29,22 @@ export default function ReportsPage() {
         const approvedReceipts = receipts.filter((r: any) => r.status === 'approved');
         const approvedForms = forms.filter((f: any) => f.status === 'approved');
         const totalExpenses = [...approvedReceipts, ...approvedForms].reduce((sum: number, item: any) => sum + (item.total || item.amount || 0), 0);
+
+        // Batch-prefetch FS detail data
+        if (!prefetchedIds.current.has(event.id)) {
+          prefetchedIds.current.add(event.id);
+          prefetchFsDetail(event.id).then(data => {
+            setFsDetailCache(event.id, data);
+          }).catch(() => {});
+        }
+
         return { ...event, totalExpenses, receiptCount: approvedReceipts.length, formCount: approvedForms.length };
       }));
       setEvents(enriched);
       setLoading(false);
     };
     init();
-  }, [params.deptId]);
+  }, [deptId, setFsDetailCache]);
 
   if (loading) return <div className="py-4 space-y-3">{[1,2,3].map(i => <Skeleton key={i} className="h-24 rounded-xl" />)}</div>;
 
@@ -46,7 +58,7 @@ export default function ReportsPage() {
           </CardContent>
         </Card>
       ) : events.map(event => (
-        <button key={event.id} onClick={() => router.push(`/admin/departments/${params.deptId}/reports/${event.id}`)} className="w-full text-left">
+        <Link key={event.id} href={`/admin/departments/${deptId}/reports/${event.id}`} prefetch={true} className="block w-full text-left">
           <Card className="hover:shadow-md transition-all cursor-pointer">
             <CardHeader className="pb-2">
               <div className="flex items-center justify-between">
@@ -75,7 +87,7 @@ export default function ReportsPage() {
               </div>
             </CardContent>
           </Card>
-        </button>
+        </Link>
       ))}
     </div>
   );

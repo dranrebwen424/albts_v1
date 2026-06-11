@@ -81,6 +81,7 @@ export default function UserDetailPage() {
     <div className="py-4 space-y-6 max-w-2xl">
       <Link
         href={`/admin/departments/${params.deptId}/users`}
+        prefetch={true}
         className="inline-flex items-center gap-1 text-sm text-neutral-500 hover:text-neutral-900 dark:hover:text-white"
       >
         <ArrowLeft className="h-4 w-4" /> Back to Users

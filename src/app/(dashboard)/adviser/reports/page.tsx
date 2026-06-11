@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef } from 'react';
+import { useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { useEventsStore } from '@/stores/events';
 import { prefetchFsDetail } from '@/lib/actions';
@@ -11,7 +11,18 @@ import { FileText, Users, Calendar, FolderOpen } from 'lucide-react';
 export default function AdviserReportsPage() {
   const events = useEventsStore(s => s.events);
   const setFsDetailCache = useEventsStore(s => s.setFsDetailCache);
-  const prefetchTimers = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map());
+  const prefetchedIds = useRef<Set<string>>(new Set());
+
+  // Batch-prefetch all FS details when list loads → instant navigation
+  useEffect(() => {
+    events.forEach(event => {
+      if (prefetchedIds.current.has(event.id)) return;
+      prefetchedIds.current.add(event.id);
+      prefetchFsDetail(event.id).then(data =>
+        setFsDetailCache(event.id, data)
+      ).catch(() => {});
+    });
+  }, [events, setFsDetailCache]);
 
   function getStatusInfo(event: any) {
     if (event.status === 'done') {
@@ -49,13 +60,9 @@ export default function AdviserReportsPage() {
             return (
               <Link key={event.id} href={`/adviser/reports/${event.id}`} prefetch={true}
                 onMouseEnter={() => {
-                  const existing = prefetchTimers.current.get(event.id);
-                  if (existing) clearTimeout(existing);
-                  prefetchTimers.current.set(event.id, setTimeout(() => {
-                    prefetchFsDetail(event.id).then(data =>
-                      setFsDetailCache(event.id, data)
-                    ).catch(() => {});
-                  }, 100));
+                  prefetchFsDetail(event.id).then(data =>
+                    setFsDetailCache(event.id, data)
+                  ).catch(() => {});
                 }}>
                 <Card className="h-full transition-all hover:shadow-md hover:-translate-y-0.5 cursor-pointer">
                   <CardHeader>

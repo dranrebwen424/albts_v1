@@ -26,7 +26,18 @@ export default function OfficerEventsPage() {
   const [form, setForm] = useState({ name: '', adviser_id: '', budget: '' });
   const [advisers, setAdvisers] = useState<any[]>([]);
   const [creating, setCreating] = useState(false);
-  const prefetchTimers = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map());
+  const prefetchedIds = useRef<Set<string>>(new Set());
+
+  // Batch-prefetch all event details when events list loads → instant navigation
+  useEffect(() => {
+    events.forEach(event => {
+      if (prefetchedIds.current.has(event.id)) return;
+      prefetchedIds.current.add(event.id);
+      prefetchEventDetail(event.id).then(data =>
+        setEventDetailCache(event.id, data)
+      ).catch(() => {});
+    });
+  }, [events, setEventDetailCache]);
 
   // Fetch advisers for create dialog
   useEffect(() => {
@@ -56,6 +67,19 @@ export default function OfficerEventsPage() {
       setCreating(false);
     }
   };
+
+  // Prefetch new event details after creation
+  useEffect(() => {
+    if (events.length > 0) {
+      events.forEach(event => {
+        if (prefetchedIds.current.has(event.id)) return;
+        prefetchedIds.current.add(event.id);
+        prefetchEventDetail(event.id).then(data =>
+          setEventDetailCache(event.id, data)
+        ).catch(() => {});
+      });
+    }
+  }, [events.length]);
 
   return (
     <div className="space-y-6">
@@ -117,13 +141,9 @@ export default function OfficerEventsPage() {
           {events.map((event) => (
             <Link key={event.id} href={`/officer/events/${event.id}`} prefetch={true}
               onMouseEnter={() => {
-                const existing = prefetchTimers.current.get(event.id);
-                if (existing) clearTimeout(existing);
-                prefetchTimers.current.set(event.id, setTimeout(() => {
-                  prefetchEventDetail(event.id).then(data =>
-                    setEventDetailCache(event.id, data)
-                  ).catch(() => {});
-                }, 100));
+                prefetchEventDetail(event.id).then(data =>
+                  setEventDetailCache(event.id, data)
+                ).catch(() => {});
               }}>
               <Card className="h-full transition-all hover:shadow-md hover:-translate-y-0.5 cursor-pointer">
                 <CardHeader>

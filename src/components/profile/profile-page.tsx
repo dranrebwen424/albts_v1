@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { getMyProfile } from '@/lib/actions';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -102,9 +103,11 @@ export function ProfilePage() {
           <CardTitle className="text-sm font-medium">Security</CardTitle>
         </CardHeader>
         <CardContent>
-          <Button variant="outline" onClick={() => router.push('/change-password')}>
-            <KeyRound className="h-4 w-4 mr-2" /> Change Password
-          </Button>
+          <Link href="/change-password" prefetch={true}>
+            <Button variant="outline">
+              <KeyRound className="h-4 w-4 mr-2" /> Change Password
+            </Button>
+          </Link>
         </CardContent>
       </Card>
     </div>

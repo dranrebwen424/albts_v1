@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useCallback } from 'react';
+import { useEffect, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { Sidebar } from '@/components/layout/sidebar';
 import { MobileNav } from '@/components/layout/mobile-nav';
@@ -14,9 +14,11 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const { collapsed, setIsMobile, isMobile } = useSidebarStore();
   const { setProfile } = useAuthStore();
+  const resizeTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
 
   const handleResize = useCallback(() => {
-    setIsMobile(window.innerWidth < 1024);
+    clearTimeout(resizeTimer.current);
+    resizeTimer.current = setTimeout(() => setIsMobile(window.innerWidth < 1024), 150);
   }, [setIsMobile]);
 
   useEffect(() => {

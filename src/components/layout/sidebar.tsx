@@ -78,7 +78,9 @@ export function Sidebar() {
 
   useEffect(() => {
     if (!profile?.user_id) return;
-    const fetch = () => getNotifications(profile.user_id).then(setNotifications).catch(() => {});
+    const fetch = () => {
+      if (document.visibilityState === 'visible') getNotifications(profile.user_id).then(setNotifications).catch(() => {});
+    };
     fetch();
     const interval = setInterval(fetch, 30000);
     return () => clearInterval(interval);
@@ -89,7 +91,9 @@ export function Sidebar() {
 
   useEffect(() => {
     if (!profile?.department_id) return;
-    const fetch = () => getEventsWithFsStatus(profile.department_id).then(setEvents).catch(() => {});
+    const fetch = () => {
+      if (document.visibilityState === 'visible') getEventsWithFsStatus(profile.department_id).then(setEvents).catch(() => {});
+    };
     fetch();
     const interval = setInterval(fetch, 60000);
     return () => clearInterval(interval);
@@ -120,6 +124,7 @@ export function Sidebar() {
               <Link
                 key={item.href}
                 href={item.href}
+                prefetch={true}
                 className={cn(
                   'flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors relative',
                   isActive
@@ -202,6 +207,7 @@ export function Sidebar() {
                     <Link
                       key={item.href}
                       href={item.href}
+                      prefetch={true}
                       onClick={() => setMobileOpen(false)}
                       className={cn(
                         'flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors relative',

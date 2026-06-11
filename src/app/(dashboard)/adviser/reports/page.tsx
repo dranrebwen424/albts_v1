@@ -1,25 +1,17 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useRef } from 'react';
 import Link from 'next/link';
-import { useAuthStore } from '@/stores/auth';
 import { useEventsStore } from '@/stores/events';
-import { getEventsWithFsStatus, prefetchFsDetail } from '@/lib/actions';
+import { prefetchFsDetail } from '@/lib/actions';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { FileText, Users, Calendar, FolderOpen } from 'lucide-react';
 
 export default function AdviserReportsPage() {
   const events = useEventsStore(s => s.events);
-  const setEvents = useEventsStore(s => s.setEvents);
   const setFsDetailCache = useEventsStore(s => s.setFsDetailCache);
-  const profile = useAuthStore(s => s.profile);
-
-  // Background refresh — store is already populated by sidebar prefetch
-  useEffect(() => {
-    if (!profile) return;
-    getEventsWithFsStatus(profile.department_id).then(setEvents).catch(() => {});
-  }, [profile, setEvents]);
+  const prefetchTimers = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map());
 
   function getStatusInfo(event: any) {
     if (event.status === 'done') {
@@ -55,11 +47,15 @@ export default function AdviserReportsPage() {
           {events.map((event) => {
             const status = getStatusInfo(event);
             return (
-              <Link key={event.id} href={`/adviser/reports/${event.id}`}
+              <Link key={event.id} href={`/adviser/reports/${event.id}`} prefetch={true}
                 onMouseEnter={() => {
-                  prefetchFsDetail(event.id).then(data =>
-                    setFsDetailCache(event.id, data)
-                  ).catch(() => {});
+                  const existing = prefetchTimers.current.get(event.id);
+                  if (existing) clearTimeout(existing);
+                  prefetchTimers.current.set(event.id, setTimeout(() => {
+                    prefetchFsDetail(event.id).then(data =>
+                      setFsDetailCache(event.id, data)
+                    ).catch(() => {});
+                  }, 100));
                 }}>
                 <Card className="h-full transition-all hover:shadow-md hover:-translate-y-0.5 cursor-pointer">
                   <CardHeader>

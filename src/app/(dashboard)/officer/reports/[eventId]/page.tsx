@@ -150,7 +150,7 @@ export default function OfficerReportDetailPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
-          <Link href="/officer/reports">
+          <Link href="/officer/reports" prefetch={true}>
             <Button variant="ghost" size="icon">
               <ArrowLeft className="h-4 w-4" />
             </Button>
@@ -164,7 +164,7 @@ export default function OfficerReportDetailPage() {
         </div>
         <div className="flex items-center gap-2">
           {getFsBadge()}
-          <Link href={`/officer/events/${eventId}`}>
+          <Link href={`/officer/events/${eventId}`} prefetch={true}>
             <Button variant="outline" size="sm">
               <ArrowLeft className="h-3.5 w-3.5 mr-1.5" /> Back to Event
             </Button>

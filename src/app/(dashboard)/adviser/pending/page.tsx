@@ -36,9 +36,11 @@ export default function PendingApprovalsPage() {
 
   useEffect(() => { loadForms(); }, [profile]);
 
-  // Background polling to sync with event detail page changes
+  // Background polling to sync with event detail page changes — pause when hidden
   useEffect(() => {
-    const interval = setInterval(loadForms, 30000);
+    const interval = setInterval(() => {
+      if (document.visibilityState === 'visible') loadForms();
+    }, 30000);
     return () => clearInterval(interval);
   }, [profile]);
 

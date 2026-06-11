@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import Link from 'next/link';
 import { useAuthStore } from '@/stores/auth';
 import { useEventsStore } from '@/stores/events';
@@ -25,12 +25,8 @@ export default function OfficerEventsPage() {
   const [showCreate, setShowCreate] = useState(false);
   const [form, setForm] = useState({ name: '', adviser_id: '', budget: '' });
   const [advisers, setAdvisers] = useState<any[]>([]);
-
-  // Background refresh — store is already populated by sidebar prefetch
-  useEffect(() => {
-    if (!profile) return;
-    getEventsWithFsStatus(profile.department_id).then(setEvents).catch(() => {});
-  }, [profile, setEvents]);
+  const [creating, setCreating] = useState(false);
+  const prefetchTimers = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map());
 
   // Fetch advisers for create dialog
   useEffect(() => {
@@ -41,10 +37,12 @@ export default function OfficerEventsPage() {
   }, [profile]);
 
   const handleCreate = async () => {
+    if (creating) return;
     if (!form.name || !form.adviser_id || !form.budget) {
       toast.error('Please fill all fields');
       return;
     }
+    setCreating(true);
     try {
       await createEvent(profile!.department_id, form.name, profile!.user_id, form.adviser_id, Number(form.budget));
       toast.success('Event created');
@@ -54,6 +52,8 @@ export default function OfficerEventsPage() {
       setEvents(data);
     } catch (err: any) {
       toast.error(err.message);
+    } finally {
+      setCreating(false);
     }
   };
 
@@ -97,7 +97,9 @@ export default function OfficerEventsPage() {
                 <Label>Budget</Label>
                 <Input type="number" value={form.budget} onChange={e => setForm({...form, budget: e.target.value})} placeholder="0.00" />
               </div>
-              <Button className="w-full" onClick={handleCreate}>Create Event</Button>
+              <Button className="w-full" onClick={handleCreate} disabled={creating}>
+                {creating ? 'Creating...' : 'Create Event'}
+              </Button>
             </div>
           </DialogContent>
         </Dialog>
@@ -113,11 +115,15 @@ export default function OfficerEventsPage() {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {events.map((event) => (
-            <Link key={event.id} href={`/officer/events/${event.id}`}
+            <Link key={event.id} href={`/officer/events/${event.id}`} prefetch={true}
               onMouseEnter={() => {
-                prefetchEventDetail(event.id).then(data =>
-                  setEventDetailCache(event.id, data)
-                ).catch(() => {});
+                const existing = prefetchTimers.current.get(event.id);
+                if (existing) clearTimeout(existing);
+                prefetchTimers.current.set(event.id, setTimeout(() => {
+                  prefetchEventDetail(event.id).then(data =>
+                    setEventDetailCache(event.id, data)
+                  ).catch(() => {});
+                }, 100));
               }}>
               <Card className="h-full transition-all hover:shadow-md hover:-translate-y-0.5 cursor-pointer">
                 <CardHeader>

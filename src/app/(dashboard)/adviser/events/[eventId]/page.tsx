@@ -70,10 +70,11 @@ export default function AdviserEventDetailPage({ params }: { params: Promise<{ e
     init();
   }, [params]);
 
-  // Background polling to sync with pending page changes
+  // Background polling to sync with pending page changes — pause when hidden
   useEffect(() => {
     if (!eventId) return;
     const interval = setInterval(async () => {
+      if (document.visibilityState !== 'visible') return;
       const [f, r] = await Promise.all([
         getNoReceiptForms(eventId),
         getFinancialReport(eventId).catch(() => null),
@@ -159,7 +160,7 @@ export default function AdviserEventDetailPage({ params }: { params: Promise<{ e
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-4">
-        <Link href="/adviser/events" className="text-neutral-500 hover:text-neutral-900 dark:hover:text-white">
+        <Link href="/adviser/events" prefetch={true} className="text-neutral-500 hover:text-neutral-900 dark:hover:text-white">
           <ArrowLeft className="h-5 w-5" />
         </Link>
         <div className="flex-1">
@@ -409,7 +410,7 @@ export default function AdviserEventDetailPage({ params }: { params: Promise<{ e
           </CardHeader>
           <CardContent>
             <div className="flex items-center justify-between">
-              <Link href={`/adviser/reports/${eventId}`}>
+              <Link href={`/adviser/reports/${eventId}`} prefetch={true}>
                 <Button variant="secondary" size="sm">
                   <FileText className="h-3.5 w-3.5 mr-1.5" /> View Financial Report
                 </Button>

@@ -77,7 +77,7 @@ export default function AdminEventDetailPage() {
     <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center gap-4">
-        <Link href={`/admin/departments/${deptId}/events`} className="text-neutral-500 hover:text-neutral-900 dark:hover:text-white">
+        <Link href={`/admin/departments/${deptId}/events`} prefetch={true} className="text-neutral-500 hover:text-neutral-900 dark:hover:text-white">
           <ArrowLeft className="h-5 w-5" />
         </Link>
         <div className="flex-1">
@@ -233,7 +233,7 @@ export default function AdminEventDetailPage() {
 
       {/* Footer Links */}
       <div className="flex items-center gap-3">
-        <Link href={`/admin/departments/${deptId}/reports/${eventId}`}>
+        <Link href={`/admin/departments/${deptId}/reports/${eventId}`} prefetch={true}>
           <Button variant="outline" size="sm">
             <FileText className="h-3.5 w-3.5 mr-1.5" /> View Financial Report
           </Button>

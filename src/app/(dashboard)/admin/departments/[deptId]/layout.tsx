@@ -41,7 +41,7 @@ export default function DepartmentLayout({ children }: { children: React.ReactNo
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-4">
-        <Link href="/admin/departments" className="text-neutral-500 hover:text-neutral-900 dark:hover:text-white">
+        <Link href="/admin/departments" prefetch={true} className="text-neutral-500 hover:text-neutral-900 dark:hover:text-white">
           <ArrowLeft className="h-5 w-5" />
         </Link>
         <div>

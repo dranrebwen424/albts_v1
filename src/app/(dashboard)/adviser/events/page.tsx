@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { useAuthStore } from '@/stores/auth';
 import { useEventsStore } from '@/stores/events';
@@ -15,12 +15,7 @@ export default function AdviserEventsPage() {
   const setEvents = useEventsStore(s => s.setEvents);
   const setEventDetailCache = useEventsStore(s => s.setEventDetailCache);
   const profile = useAuthStore(s => s.profile);
-
-  // Background refresh — store is already populated by sidebar prefetch
-  useEffect(() => {
-    if (!profile) return;
-    getEventsWithFsStatus(profile.department_id).then(setEvents).catch(() => {});
-  }, [profile, setEvents]);
+  const prefetchTimers = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map());
 
   return (
     <div className="space-y-6">
@@ -39,11 +34,15 @@ export default function AdviserEventsPage() {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {events.map((event) => (
-            <Link key={event.id} href={`/adviser/events/${event.id}`}
+            <Link key={event.id} href={`/adviser/events/${event.id}`} prefetch={true}
               onMouseEnter={() => {
-                prefetchEventDetail(event.id).then(data =>
-                  setEventDetailCache(event.id, data)
-                ).catch(() => {});
+                const existing = prefetchTimers.current.get(event.id);
+                if (existing) clearTimeout(existing);
+                prefetchTimers.current.set(event.id, setTimeout(() => {
+                  prefetchEventDetail(event.id).then(data =>
+                    setEventDetailCache(event.id, data)
+                  ).catch(() => {});
+                }, 100));
               }}>
               <Card className="h-full transition-all hover:shadow-md hover:-translate-y-0.5 cursor-pointer">
                 <CardHeader>

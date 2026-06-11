@@ -19,6 +19,7 @@ export default function AdminDepartmentsPage() {
   const [showCreate, setShowCreate] = useState(false);
   const [newName, setNewName] = useState('');
   const [newCode, setNewCode] = useState('');
+  const [creating, setCreating] = useState(false);
   useEffect(() => {
     const init = async () => {
       const data = await getDepartments();
@@ -29,10 +30,12 @@ export default function AdminDepartmentsPage() {
   }, []);
 
   const handleCreate = async () => {
+    if (creating) return;
     if (!newName.trim() || !newCode.trim()) {
       toast.error('Please fill in all fields');
       return;
     }
+    setCreating(true);
     try {
       await createDepartment(newName, newCode);
       toast.success('Department created');
@@ -43,6 +46,8 @@ export default function AdminDepartmentsPage() {
       setDepartments(data);
     } catch (err: any) {
       toast.error(err.message);
+    } finally {
+      setCreating(false);
     }
   };
 
@@ -84,7 +89,9 @@ export default function AdminDepartmentsPage() {
                 <Label>Code</Label>
                 <Input value={newCode} onChange={e => setNewCode(e.target.value)} placeholder="e.g., BSCS" />
               </div>
-              <Button className="w-full" onClick={handleCreate}>Create</Button>
+              <Button className="w-full" onClick={handleCreate} disabled={creating}>
+                {creating ? 'Creating...' : 'Create'}
+              </Button>
             </div>
           </DialogContent>
         </Dialog>
@@ -92,7 +99,7 @@ export default function AdminDepartmentsPage() {
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {departments.map((dept) => (
-          <Link key={dept.id} href={`/admin/departments/${dept.id}/events`}>
+          <Link key={dept.id} href={`/admin/departments/${dept.id}/events`} prefetch={true}>
             <Card className="h-full transition-all hover:shadow-md hover:-translate-y-0.5 cursor-pointer">
               <CardHeader>
                 <div className="flex items-center gap-3">

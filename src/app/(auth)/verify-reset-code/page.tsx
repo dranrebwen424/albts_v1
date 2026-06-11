@@ -112,7 +112,7 @@ function VerifyCodeForm() {
             {loading ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Verifying...</> : 'Verify Code'}
           </Button>
           <div className="text-center">
-            <Link href="/forgot-password" className="text-xs text-neutral-500 hover:text-neutral-900 dark:hover:text-neutral-300 inline-flex items-center gap-1">
+            <Link href="/forgot-password" prefetch={true} className="text-xs text-neutral-500 hover:text-neutral-900 dark:hover:text-neutral-300 inline-flex items-center gap-1">
               <ArrowLeft className="h-3 w-3" /> Try a different email
             </Link>
           </div>

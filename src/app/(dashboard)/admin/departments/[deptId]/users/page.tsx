@@ -22,6 +22,7 @@ export default function UsersPage() {
   const [loading, setLoading] = useState(true);
   const [showCreate, setShowCreate] = useState(false);
   const [form, setForm] = useState({ first_name: '', middle_name: '', last_name: '', email: '', role: 'officer' });
+  const [creating, setCreating] = useState(false);
 
   useEffect(() => {
     const init = async () => {
@@ -33,10 +34,12 @@ export default function UsersPage() {
   }, [params.deptId]);
 
   const handleCreate = async () => {
+    if (creating) return;
     if (!form.first_name || !form.last_name || !form.email) {
       toast.error('Please fill required fields');
       return;
     }
+    setCreating(true);
     try {
       const res = await fetch('/api/auth/create-user', {
         method: 'POST',
@@ -56,6 +59,8 @@ export default function UsersPage() {
       setUsers(u);
     } catch (err: any) {
       toast.error(err.message);
+    } finally {
+      setCreating(false);
     }
   };
 
@@ -118,7 +123,9 @@ export default function UsersPage() {
                   </SelectContent>
                 </Select>
               </div>
-              <Button className="w-full" onClick={handleCreate}>Create User</Button>
+              <Button className="w-full" onClick={handleCreate} disabled={creating}>
+                {creating ? 'Creating...' : 'Create User'}
+              </Button>
             </div>
           </DialogContent>
         </Dialog>
@@ -132,7 +139,7 @@ export default function UsersPage() {
           </CardContent>
         </Card>
       ) : users.map((u: any) => (
-        <Link key={u.id} href={`/admin/departments/${params.deptId}/users/${u.user_id}`}>
+        <Link key={u.id} href={`/admin/departments/${params.deptId}/users/${u.user_id}`} prefetch={true}>
           <Card className="cursor-pointer hover:shadow-md transition-shadow">
             <CardContent className="p-4 flex items-center justify-between">
               <div className="flex items-center gap-3">

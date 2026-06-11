@@ -117,7 +117,7 @@ export default function LoginPage() {
                 </button>
               </div>
               <div className="flex justify-end">
-                <Link href="/forgot-password" className="text-xs text-neutral-500 hover:text-neutral-900 dark:hover:text-neutral-300">
+                <Link href="/forgot-password" prefetch={true} className="text-xs text-neutral-500 hover:text-neutral-900 dark:hover:text-neutral-300">
                   Forgot password?
                 </Link>
               </div>

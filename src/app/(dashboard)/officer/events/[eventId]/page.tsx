@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
+import dynamic from 'next/dynamic';
 import { useAuthStore } from '@/stores/auth';
 import { useEventsStore } from '@/stores/events';
 import { getEvent, getReceipts, getNoReceiptForms, uploadReceipt, confirmReceipt, submitNoReceiptForm, resubmitNoReceiptForm, retryOcr } from '@/lib/actions';
@@ -24,8 +25,8 @@ import { PieChart, Pie, Cell, ResponsiveContainer } from 'recharts';
 import { toast } from 'sonner';
 import { useDropzone } from 'react-dropzone';
 import { Skeleton } from '@/components/ui/skeleton';
-import { CameraCapture } from '@/components/camera/camera-capture';
-import { UploadSheet } from '@/components/camera/upload-sheet';
+const CameraCapture = dynamic(() => import('@/components/camera/camera-capture').then(m => m.CameraCapture), { ssr: false });
+const UploadSheet = dynamic(() => import('@/components/camera/upload-sheet').then(m => m.UploadSheet), { ssr: false });
 import type { Event, Receipt, NoReceiptForm } from '@/types';
 
 const COLORS = ['#0a0a0a', '#e5e5e5', '#22c55e'];
@@ -262,7 +263,11 @@ export default function EventDetailPage({ params }: { params: Promise<{ eventId:
   const pendingForms = forms.filter(f => f.status === 'pending').length;
   const rejectedForms = forms.filter(f => f.status === 'rejected').length;
 
+  const [submittingForm, setSubmittingForm] = useState(false);
+
   const handleSubmitForm = async () => {
+    if (submittingForm) return;
+    setSubmittingForm(true);
     try {
       let amount = 0;
       if (expenseType === 'transport') {
@@ -304,14 +309,20 @@ export default function EventDetailPage({ params }: { params: Promise<{ eventId:
       setForms(f);
     } catch (err: any) {
       toast.error(err.message || 'Failed to submit form');
+    } finally {
+      setSubmittingForm(false);
     }
   };
 
+  const [resubmitting, setResubmitting] = useState(false);
+
   const handleResubmit = async () => {
+    if (resubmitting) return;
     if (!resubmitTarget || !resubmitExplanation.trim()) {
       toast.error('Please provide an explanation');
       return;
     }
+    setResubmitting(true);
     try {
       await resubmitNoReceiptForm(resubmitTarget.id, eventId, resubmitExplanation);
       toast.success('Form resubmitted for review');
@@ -321,6 +332,8 @@ export default function EventDetailPage({ params }: { params: Promise<{ eventId:
       setForms(f);
     } catch (err: any) {
       toast.error(err.message || 'Failed to resubmit form');
+    } finally {
+      setResubmitting(false);
     }
   };
 
@@ -344,7 +357,7 @@ export default function EventDetailPage({ params }: { params: Promise<{ eventId:
     <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center gap-4">
-        <Link href="/officer/events" className="text-neutral-500 hover:text-neutral-900 dark:hover:text-white">
+        <Link href="/officer/events" prefetch={true} className="text-neutral-500 hover:text-neutral-900 dark:hover:text-white">
           <ArrowLeft className="h-5 w-5" />
         </Link>
         <div className="flex-1">
@@ -842,8 +855,8 @@ export default function EventDetailPage({ params }: { params: Promise<{ eventId:
                       </span>
                     </label>
 
-                    <Button onClick={handleSubmitForm} disabled={!formData.certification} className="w-full">
-                      Submit for Review
+                    <Button onClick={handleSubmitForm} disabled={!formData.certification || submittingForm} className="w-full">
+                      {submittingForm ? 'Submitting...' : 'Submit for Review'}
                     </Button>
                   </div>
                 )}
@@ -925,8 +938,8 @@ Rejection reason: <span className="min-w-0 break-words">{form.rejection_reason}<
                 rows={4}
               />
             </div>
-            <Button className="w-full" onClick={handleResubmit} disabled={!resubmitExplanation.trim()}>
-              Submit Explanation
+            <Button className="w-full" onClick={handleResubmit} disabled={!resubmitExplanation.trim() || resubmitting}>
+              {resubmitting ? 'Submitting...' : 'Submit Explanation'}
             </Button>
           </div>
         </DialogContent>
@@ -1120,7 +1133,7 @@ Rejection reason: <span className="min-w-0 break-words">{form.rejection_reason}<
             <CardTitle className="text-sm font-medium">Financial Report</CardTitle>
           </CardHeader>
           <CardContent>
-            <Link href={`/officer/reports/${eventId}`}>
+            <Link href={`/officer/reports/${eventId}`} prefetch={true}>
               <Button variant="secondary">
                 <FileText className="h-4 w-4 mr-2" /> View Financial Report
               </Button>

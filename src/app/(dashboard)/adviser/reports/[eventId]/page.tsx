@@ -81,7 +81,7 @@ export default function AdviserReportDetailPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
-          <Link href="/adviser/reports">
+          <Link href="/adviser/reports" prefetch={true}>
             <Button variant="ghost" size="icon">
               <ArrowLeft className="h-4 w-4" />
             </Button>
@@ -99,7 +99,7 @@ export default function AdviserReportDetailPage() {
               {data.fsRecord.status === 'approved' ? 'Approved' : 'Pending Approval'}
             </Badge>
           )}
-          <Link href={`/adviser/events/${eventId}`}>
+          <Link href={`/adviser/events/${eventId}`} prefetch={true}>
             <Button variant="outline" size="sm">
               <ArrowLeft className="h-3.5 w-3.5 mr-1.5" /> Back to Event
             </Button>

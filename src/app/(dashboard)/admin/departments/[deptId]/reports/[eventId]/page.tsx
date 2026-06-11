@@ -56,7 +56,7 @@ export default function AdminReportDetailPage() {
   if (!data) {
     return (
       <div className="space-y-6">
-        <Link href={`/admin/departments/${deptId}/reports`} className="text-sm text-neutral-500 hover:text-neutral-900 dark:hover:text-white flex items-center gap-1">
+        <Link href={`/admin/departments/${deptId}/reports`} prefetch={true} className="text-sm text-neutral-500 hover:text-neutral-900 dark:hover:text-white flex items-center gap-1">
           <ArrowLeft className="h-4 w-4" /> Back to Reports
         </Link>
         <p className="text-sm text-neutral-500">Failed to load report data.</p>
@@ -69,7 +69,7 @@ export default function AdminReportDetailPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
-          <Link href={`/admin/departments/${deptId}/reports`}>
+          <Link href={`/admin/departments/${deptId}/reports`} prefetch={true}>
             <Button variant="ghost" size="icon">
               <ArrowLeft className="h-4 w-4" />
             </Button>
@@ -87,7 +87,7 @@ export default function AdminReportDetailPage() {
               ? <Badge variant="success">Approved by Adviser</Badge>
               : <Badge variant="secondary">Pending Adviser Approval</Badge>
           )}
-          <Link href={`/admin/departments/${deptId}/events/${eventId}`}>
+          <Link href={`/admin/departments/${deptId}/events/${eventId}`} prefetch={true}>
             <Button variant="outline" size="sm">
               <ArrowLeft className="h-3.5 w-3.5 mr-1.5" /> Back to Event
             </Button>

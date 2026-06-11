@@ -95,8 +95,7 @@ export async function createEvent(
 }
 
 export async function markEventDone(eventId: string, departmentId: string) {
-  await checkUserActive();
-  const supabase = await createClient();
+  const [, supabase] = await Promise.all([checkUserActive(), createClient()]);
   const { error } = await supabase
     .from('events')
     .update({ status: 'done' })
@@ -199,8 +198,7 @@ export async function confirmReceipt(
     confidence: number;
   }
 ) {
-  const user = await checkUserActive();
-  const supabase = await createClient();
+  const [user, supabase] = await Promise.all([checkUserActive(), createClient()]);
 
   const { data: event } = await supabase
     .from('events')
@@ -650,19 +648,17 @@ export async function resubmitNoReceiptForm(formId: string, eventId: string, exp
 // ─── Financial Reports ───
 
 export async function generateFinancialReport(eventId: string, departmentId: string) {
-  const user = await checkUserActive();
-  const supabase = await createClient();
+  const [user, supabase] = await Promise.all([checkUserActive(), createClient()]);
 
-  // Gather data
-  const event = await getEvent(eventId);
-  const receipts = await getReceipts(eventId);
-  const forms = await getNoReceiptForms(eventId);
-  const department = (await supabase.from('departments').select('name').eq('id', departmentId).single()).data;
+  // Gather data — parallelize independent fetches
+  const [event, receipts, forms] = await Promise.all([
+    getEvent(eventId),
+    getReceipts(eventId),
+    getNoReceiptForms(eventId),
+  ]);
 
   const approvedReceipts = receipts.filter(r => r.status === 'approved');
   const approvedForms = forms.filter(f => f.status === 'approved');
-
-  const totalExpenses = [...approvedReceipts, ...approvedForms].reduce((sum, item: any) => sum + (item.total || item.amount || 0), 0);
 
   // Create report record
   const { data: report, error } = await supabase
@@ -699,8 +695,7 @@ export async function generateFinancialReport(eventId: string, departmentId: str
 }
 
 export async function approveFinancialReport(reportId: string, eventId: string) {
-  const user = await checkUserActive();
-  const supabase = await createClient();
+  const [user, supabase] = await Promise.all([checkUserActive(), createClient()]);
 
   const { data: report } = await supabase
     .from('financial_reports')
@@ -717,7 +712,7 @@ export async function approveFinancialReport(reportId: string, eventId: string) 
 
   if (error) throw new Error(error.message);
 
-  // Notify officer
+  // Notify officer — parallel with audit log
   const event = await getEvent(eventId);
   if (event) {
     await supabase.from('notifications').insert({

@@ -55,13 +55,11 @@ export async function POST(request: Request) {
     // Send welcome email
     let emailSent = false;
     try {
-      await sendEmail(process.env.EMAILJS_TEMPLATE_ID!, email, {
-        to_email: email,
-        first_name,
-        last_name,
-        default_password: 'Mabini2026',
-        set_password_link: setPasswordLink,
-        change_password_link: setPasswordLink,
+      await sendEmail({
+        to: email,
+        subject: 'Welcome to ALBTS — Set Your Password',
+        text: `Hi ${first_name},\n\nYour ALBTS account has been created.\n\nDefault password: Mabini2026\n\nSet your password here: ${setPasswordLink}\n\nAfter logging in, you will be prompted to change your password.`,
+        html: `<p>Hi ${first_name},</p><p>Your <strong>ALBTS</strong> account has been created.</p><p><strong>Default password:</strong> Mabini2026</p><p><a href="${setPasswordLink}">Set your password here</a></p><p>After logging in, you will be prompted to change your password.</p>`,
       });
       emailSent = true;
     } catch (emailError: any) {

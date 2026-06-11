@@ -1005,17 +1005,7 @@ export async function generateInvitationToken(email: string) {
 export async function sendResetCode(email: string) {
   const adminClient = createAdminClient();
 
-  // Check if user exists
-  const { data: users, error: listError } = await adminClient.auth.admin.listUsers();
-  if (listError) throw new Error('Failed to verify account');
-
-  const user = users.users.find(u => u.email === email);
-  if (!user) {
-    // Don't reveal if email exists — return success either way
-    return { sent: false };
-  }
-
-  // Remove any existing unused codes for this email
+  // Remove any existing unused codes for this email (don't reveal if user exists)
   await adminClient
     .from('password_reset_codes')
     .update({ used: true })
@@ -1040,12 +1030,11 @@ export async function sendResetCode(email: string) {
 
   // Send email with code
   try {
-    const resetTemplateId = process.env.EMAILJS_RESET_TEMPLATE_ID || process.env.EMAILJS_TEMPLATE_ID!;
-    await sendEmail(resetTemplateId, email, {
-      to_email: email,
-      first_name: user.user_metadata?.first_name || 'User',
-      last_name: user.user_metadata?.last_name || '',
-      reset_code: code,
+    await sendEmail({
+      to: email,
+      subject: 'Your ALBTS Password Reset Code',
+      text: `Your password reset code is: ${code}\n\nThis code expires in 15 minutes.\n\nIf you did not request this, please ignore this email.`,
+      html: `<p>Your password reset code is: <strong>${code}</strong></p><p>This code expires in 15 minutes.</p><p>If you did not request this, please ignore this email.</p>`,
     });
   } catch (e: any) {
     console.error('Send reset code email failed:', e?.message || e);

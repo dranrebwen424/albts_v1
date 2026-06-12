@@ -54,59 +54,71 @@ function SetPasswordForm() {
   };
 
   return (
-    <Card className="w-full max-w-sm">
-      <CardHeader className="space-y-1 text-center">
-        <CardTitle className="text-xl font-semibold tracking-tight">Set New Password</CardTitle>
-        <CardDescription>
-          Enter your new password
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="password">New Password</Label>
-            <Input
-              id="password"
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-              minLength={6}
-              disabled={loading}
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="confirmPassword">Confirm Password</Label>
-            <Input
-              id="confirmPassword"
-              type="password"
-              value={confirmPassword}
-              onChange={(e) => setConfirmPassword(e.target.value)}
-              required
-              minLength={6}
-              disabled={loading}
-              className={passwordMismatch ? 'border-red-500 focus-visible:ring-red-500' : ''}
-            />
-            {passwordMismatch && (
-              <p className="text-xs text-red-500">Passwords do not match</p>
-            )}
-          </div>
-          <Button type="submit" className="w-full" disabled={loading || passwordMismatch}>
-            {loading ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Saving...</> : 'Set Password'}
-          </Button>
-        </form>
-      </CardContent>
-    </Card>
+    <div className="w-full max-w-sm space-y-6 animate-fade-in">
+      <div className="text-center space-y-1">
+        <h1 className="text-[28px] font-[700] leading-[34px] tracking-[-0.05em] text-text-primary">
+          ALBTS
+        </h1>
+        <p className="text-[13px] leading-[18px] text-text-secondary">
+          Set your new password
+        </p>
+      </div>
+      <Card className="shadow-sm">
+        <CardHeader className="text-center">
+          <CardTitle>Set New Password</CardTitle>
+          <CardDescription>
+            Enter your new password
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={handleSubmit} className="space-y-5">
+            <div className="space-y-2">
+              <Label htmlFor="password">New Password</Label>
+              <Input
+                id="password"
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+                minLength={6}
+                disabled={loading}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="confirmPassword">Confirm Password</Label>
+              <Input
+                id="confirmPassword"
+                type="password"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                required
+                minLength={6}
+                disabled={loading}
+                className={passwordMismatch ? 'ring-2 ring-error' : ''}
+              />
+              {passwordMismatch && (
+                <p className="text-[11px] leading-[14px] text-error">Passwords do not match</p>
+              )}
+            </div>
+            <Button type="submit" className="w-full" disabled={loading || passwordMismatch}>
+              {loading ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Saving...</> : 'Set Password'}
+            </Button>
+          </form>
+        </CardContent>
+      </Card>
+    </div>
   );
 }
 
 export default function SetPasswordPage() {
   return (
-    <div className="flex min-h-screen items-center justify-center bg-neutral-50 dark:bg-neutral-900 p-4">
+    <div className="flex min-h-screen items-center justify-center bg-bg-app p-4">
       <Suspense fallback={
-        <Card className="w-full max-w-sm">
-          <CardContent className="py-8 text-center text-sm text-neutral-500">Loading...</CardContent>
-        </Card>
+        <div className="w-full max-w-sm animate-fade-in">
+          <Card className="shadow-sm">
+            <CardContent className="py-8 text-center text-[13px] text-text-secondary">Loading...</CardContent>
+          </Card>
+        </div>
       }>
         <SetPasswordForm />
       </Suspense>

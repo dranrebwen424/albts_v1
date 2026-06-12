@@ -2,7 +2,6 @@
 
 import { useEffect, useRef } from 'react';
 import { Camera, Image } from 'lucide-react';
-import { cn } from '@/lib/utils/cn';
 
 interface UploadSheetProps {
   open: boolean;
@@ -35,54 +34,49 @@ export function UploadSheet({ open, onClose, onTakePhoto, onBrowseFiles }: Uploa
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/50 animate-in fade-in">
+    <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/[0.12] animate-fade-in">
       <div
         ref={sheetRef}
-        className={cn(
-          'w-full max-w-lg bg-white dark:bg-neutral-950 rounded-t-2xl shadow-2xl',
-          'animate-in slide-in-from-bottom duration-300'
-        )}
+        className="w-full max-w-lg bg-surface-white rounded-t-3xl shadow-lg animate-slide-up"
       >
-        {/* Handle */}
         <div className="flex justify-center pt-3 pb-1">
-          <div className="h-1 w-10 rounded-full bg-neutral-300 dark:bg-neutral-700" />
+          <div className="h-1 w-10 rounded-full bg-divider" />
         </div>
 
         <div className="px-6 pb-8 pt-2 space-y-2">
-          <h3 className="text-sm font-semibold text-neutral-900 dark:text-white text-center mb-4">
+          <h3 className="text-[17px] leading-6 font-[590] tracking-[-0.02em] text-text-primary text-center mb-4">
             Upload Receipt
           </h3>
 
           <button
             onClick={() => { onTakePhoto(); onClose(); }}
-            className="w-full flex items-center gap-4 p-4 rounded-xl border border-neutral-200 dark:border-neutral-800 hover:bg-neutral-50 dark:hover:bg-neutral-900 transition-colors text-left"
+            className="w-full flex items-center gap-4 p-4 rounded-xl border border-divider hover:bg-surface-gray transition-all duration-300 ease-out text-left hover:shadow-sm"
           >
-            <div className="h-10 w-10 rounded-full bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center">
-              <Camera className="h-5 w-5 text-neutral-700 dark:text-neutral-300" />
+            <div className="h-10 w-10 rounded-full bg-surface-gray flex items-center justify-center">
+              <Camera className="h-5 w-5 text-text-body" />
             </div>
             <div>
-              <p className="text-sm font-medium text-neutral-900 dark:text-white">Take Photo</p>
-              <p className="text-xs text-neutral-500">Use your camera to capture the receipt</p>
+              <p className="text-[15px] leading-[22px] font-medium text-text-primary">Take Photo</p>
+              <p className="text-[13px] leading-[18px] text-text-secondary">Use your camera to capture the receipt</p>
             </div>
           </button>
 
           <button
             onClick={() => { onBrowseFiles(); onClose(); }}
-            className="w-full flex items-center gap-4 p-4 rounded-xl border border-neutral-200 dark:border-neutral-800 hover:bg-neutral-50 dark:hover:bg-neutral-900 transition-colors text-left"
+            className="w-full flex items-center gap-4 p-4 rounded-xl border border-divider hover:bg-surface-gray transition-all duration-300 ease-out text-left hover:shadow-sm"
           >
-            <div className="h-10 w-10 rounded-full bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center">
-              {/* eslint-disable-next-line jsx-a11y/alt-text */}
-              <Image className="h-5 w-5 text-neutral-700 dark:text-neutral-300" />
+            <div className="h-10 w-10 rounded-full bg-surface-gray flex items-center justify-center">
+              <Image className="h-5 w-5 text-text-body" />
             </div>
             <div>
-              <p className="text-sm font-medium text-neutral-900 dark:text-white">Browse Files</p>
-              <p className="text-xs text-neutral-500">Select from your device storage</p>
+              <p className="text-[15px] leading-[22px] font-medium text-text-primary">Browse Files</p>
+              <p className="text-[13px] leading-[18px] text-text-secondary">Select from your device storage</p>
             </div>
           </button>
 
           <button
             onClick={onClose}
-            className="w-full py-3 text-sm text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-300 transition-colors text-center"
+            className="w-full py-3 text-[15px] leading-[22px] text-text-secondary hover:text-text-primary transition-colors text-center"
           >
             Cancel
           </button>

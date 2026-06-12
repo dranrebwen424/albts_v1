@@ -11,11 +11,13 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { ResponsiveDialog } from '@/components/shared/responsive-dialog';
 import { CalendarRange, Users, Wallet, FolderOpen, Plus } from 'lucide-react';
 import { formatCurrency } from '@/lib/utils/format';
 import { toast } from 'sonner';
 import type { Profile } from '@/types';
+import { motion } from 'framer-motion';
+import { fadeSlideUp, staggerContainer } from '@/components/shared/page-transition';
 
 export default function OfficerEventsPage() {
   const events = useEventsStore(s => s.events);
@@ -90,43 +92,40 @@ export default function OfficerEventsPage() {
             Department events
           </p>
         </div>
-        <Dialog open={showCreate} onOpenChange={setShowCreate}>
-          <DialogTrigger asChild>
-            <Button>
-              <Plus className="h-4 w-4 mr-2" /> New Event
-            </Button>
-          </DialogTrigger>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Create Event</DialogTitle>
-              <DialogDescription>Set up a new department event</DialogDescription>
-            </DialogHeader>
-            <div className="space-y-4">
-              <div className="space-y-2">
-                <Label>Event Name</Label>
-                <Input value={form.name} onChange={e => setForm({...form, name: e.target.value})} placeholder="e.g., Freshmen Orientation" />
-              </div>
-              <div className="space-y-2">
-                <Label>Adviser</Label>
-                <Select value={form.adviser_id} onValueChange={v => setForm({...form, adviser_id: v})}>
-                  <SelectTrigger><SelectValue placeholder="Select adviser" /></SelectTrigger>
-                  <SelectContent>
-                    {advisers.map((a: any) => (
-                      <SelectItem key={a.id} value={a.user_id}>{a.first_name} {a.last_name}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <Label>Budget</Label>
-                <Input type="number" value={form.budget} onChange={e => setForm({...form, budget: e.target.value})} placeholder="0.00" />
-              </div>
-              <Button className="w-full" onClick={handleCreate} disabled={creating}>
-                {creating ? 'Creating...' : 'Create Event'}
-              </Button>
+        <Button onClick={() => setShowCreate(true)}>
+          <Plus className="h-4 w-4 mr-2" /> New Event
+        </Button>
+        <ResponsiveDialog
+          open={showCreate}
+          onOpenChange={setShowCreate}
+          title="Create Event"
+          description="Set up a new department event"
+        >
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label>Event Name</Label>
+              <Input value={form.name} onChange={e => setForm({...form, name: e.target.value})} placeholder="e.g., Freshmen Orientation" />
             </div>
-          </DialogContent>
-        </Dialog>
+            <div className="space-y-2">
+              <Label>Adviser</Label>
+              <Select value={form.adviser_id} onValueChange={v => setForm({...form, adviser_id: v})}>
+                <SelectTrigger><SelectValue placeholder="Select adviser" /></SelectTrigger>
+                <SelectContent>
+                  {advisers.map((a: any) => (
+                    <SelectItem key={a.id} value={a.user_id}>{a.first_name} {a.last_name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label>Budget</Label>
+              <Input type="number" value={form.budget} onChange={e => setForm({...form, budget: e.target.value})} placeholder="0.00" />
+            </div>
+            <Button className="w-full" onClick={handleCreate} disabled={creating}>
+              {creating ? 'Creating...' : 'Create Event'}
+            </Button>
+          </div>
+        </ResponsiveDialog>
       </div>
 
       {events.length === 0 ? (
@@ -137,9 +136,10 @@ export default function OfficerEventsPage() {
           </CardContent>
         </Card>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {events.map((event) => (
-            <Link key={event.id} href={`/officer/events/${event.id}`} prefetch={true}
+        <motion.div {...staggerContainer()} viewport={{ once: true, margin: '-30px' }} whileInView="animate" className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {events.map((event, index) => (
+            <motion.div {...fadeSlideUp(index)} key={event.id}>
+            <Link href={`/officer/events/${event.id}`} prefetch={true}
               onMouseEnter={() => {
                 prefetchEventDetail(event.id).then(data =>
                   setEventDetailCache(event.id, data)
@@ -166,8 +166,9 @@ export default function OfficerEventsPage() {
                 </CardContent>
               </Card>
             </Link>
+            </motion.div>
           ))}
-        </div>
+        </motion.div>
       )}
     </div>
   );

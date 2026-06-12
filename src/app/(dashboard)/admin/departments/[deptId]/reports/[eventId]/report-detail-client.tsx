@@ -22,10 +22,10 @@ export function AdminReportDetailClient({
   if (!data) {
     return (
       <div className="space-y-6">
-        <Link href={`/admin/departments/${deptId}/reports`} prefetch={true} className="text-sm text-neutral-500 hover:text-neutral-900 dark:hover:text-white flex items-center gap-1">
+        <Link href={`/admin/departments/${deptId}/reports`} prefetch={true} className="text-[13px] leading-[18px] text-text-secondary hover:text-text-primary flex items-center gap-1">
           <ArrowLeft className="h-4 w-4" /> Back to Reports
         </Link>
-        <p className="text-sm text-neutral-500">Failed to load report data.</p>
+        <p className="text-[13px] leading-[18px] text-text-secondary">Failed to load report data.</p>
       </div>
     );
   }
@@ -41,8 +41,8 @@ export function AdminReportDetailClient({
             </Button>
           </Link>
           <div>
-            <h1 className="text-2xl font-semibold tracking-tight">{data.event.name}</h1>
-            <p className="text-sm text-neutral-500 dark:text-neutral-400 mt-1">
+            <h1 className="text-[24px] leading-[30px] font-[650] tracking-[-0.04em]">{data.event.name}</h1>
+            <p className="text-[13px] leading-[18px] text-text-secondary mt-1">
               {data.departmentName} — {data.event.status === 'done' ? 'Completed' : 'Ongoing'}
             </p>
           </div>
@@ -63,52 +63,52 @@ export function AdminReportDetailClient({
 
       {/* Stat Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <Card>
+        <Card className="bg-surface-white rounded-xl shadow-sm">
           <CardContent className="p-4 flex items-center gap-3">
-            <Wallet className="h-8 w-8 text-blue-500" />
+            <Wallet className="h-8 w-8 text-primary" />
             <div>
-              <p className="text-xs text-neutral-500">Original Budget</p>
-              <p className="text-lg font-bold">{formatCurrency(data.event.budget + data.totalExpenses)}</p>
+              <p className="text-[11px] leading-[14px] text-text-secondary">Original Budget</p>
+              <p className="text-[17px] leading-6 font-[590] tracking-[-0.02em]">{formatCurrency(data.event.budget + data.totalExpenses)}</p>
             </div>
           </CardContent>
         </Card>
-        <Card>
+        <Card className="bg-surface-white rounded-xl shadow-sm">
           <CardContent className="p-4 flex items-center gap-3">
             <Receipt className="h-8 w-8 text-amber-500" />
             <div>
-              <p className="text-xs text-neutral-500">Total Expenses</p>
-              <p className="text-lg font-bold">{formatCurrency(data.totalExpenses)}</p>
+              <p className="text-[11px] leading-[14px] text-text-secondary">Total Expenses</p>
+              <p className="text-[17px] leading-6 font-[590] tracking-[-0.02em]">{formatCurrency(data.totalExpenses)}</p>
             </div>
           </CardContent>
         </Card>
-        <Card>
+        <Card className="bg-surface-white rounded-xl shadow-sm">
           <CardContent className="p-4 flex items-center gap-3">
-            <PieChart className="h-8 w-8 text-green-500" />
+            <PieChart className="h-8 w-8 text-primary" />
             <div>
-              <p className="text-xs text-neutral-500">Remaining Budget</p>
-              <p className="text-lg font-bold">{formatCurrency(data.remainingBudget)}</p>
+              <p className="text-[11px] leading-[14px] text-text-secondary">Remaining Budget</p>
+              <p className="text-[17px] leading-6 font-[590] tracking-[-0.02em]">{formatCurrency(data.remainingBudget)}</p>
             </div>
           </CardContent>
         </Card>
       </div>
 
       {/* Category Breakdown */}
-      <Card>
+      <Card className="bg-surface-white rounded-xl shadow-sm">
         <CardHeader>
-          <CardTitle className="text-base">Expense Breakdown by Category</CardTitle>
+          <CardTitle className="text-[17px] leading-6 font-[590] tracking-[-0.02em]">Expense Breakdown by Category</CardTitle>
         </CardHeader>
         <CardContent>
           {Object.keys(data.categoryBreakdown).length === 0 ? (
-            <p className="text-sm text-neutral-500">No expenses recorded.</p>
+            <p className="text-[13px] leading-[18px] text-text-secondary">No expenses recorded.</p>
           ) : (
             <div className="space-y-2">
               {Object.entries(data.categoryBreakdown).map(([category, amount]: [string, any]) => (
-                <div key={category} className="flex items-center justify-between text-sm py-1.5 border-b border-neutral-100 dark:border-neutral-800 last:border-0">
+                <div key={category} className="flex items-center justify-between text-[15px] leading-[22px] py-1.5 border-b border-divider last:border-0">
                   <span className="capitalize">{category}</span>
                   <span className="font-medium">{formatCurrency(amount as number)}</span>
                 </div>
               ))}
-              <div className="flex items-center justify-between text-sm font-bold pt-2">
+              <div className="flex items-center justify-between text-[15px] leading-[22px] font-bold pt-2">
                 <span>Total</span>
                 <span>{formatCurrency(data.totalExpenses)}</span>
               </div>
@@ -118,20 +118,20 @@ export function AdminReportDetailClient({
       </Card>
 
       {/* Approved Receipts */}
-      <Card>
+      <Card className="bg-surface-white rounded-xl shadow-sm">
         <CardHeader>
-          <CardTitle className="text-base">Approved Receipts ({data.approvedReceipts.length})</CardTitle>
+          <CardTitle className="text-[17px] leading-6 font-[590] tracking-[-0.02em]">Approved Receipts ({data.approvedReceipts.length})</CardTitle>
         </CardHeader>
         <CardContent>
           {data.approvedReceipts.length === 0 ? (
-            <p className="text-sm text-neutral-500">No approved receipts.</p>
+            <p className="text-[13px] leading-[18px] text-text-secondary">No approved receipts.</p>
           ) : (
             <div className="space-y-2">
               {data.approvedReceipts.map((receipt: any) => (
-                <div key={receipt.id} className="flex items-center justify-between text-sm py-1.5 border-b border-neutral-100 dark:border-neutral-800 last:border-0">
+                <div key={receipt.id} className="flex items-center justify-between text-[15px] leading-[22px] py-1.5 border-b border-divider last:border-0">
                   <div>
                     <p className="font-medium">{receipt.vendor || 'Unknown'}</p>
-                    <p className="text-xs text-neutral-500">{receipt.category}</p>
+                    <p className="text-[11px] leading-[14px] text-text-secondary">{receipt.category}</p>
                   </div>
                   <span className="font-medium">{formatCurrency(receipt.total || 0)}</span>
                 </div>
@@ -142,20 +142,20 @@ export function AdminReportDetailClient({
       </Card>
 
       {/* Approved No-Receipt Forms */}
-      <Card>
+      <Card className="bg-surface-white rounded-xl shadow-sm">
         <CardHeader>
-          <CardTitle className="text-base">Approved No-Receipt Forms ({data.approvedForms.length})</CardTitle>
+          <CardTitle className="text-[17px] leading-6 font-[590] tracking-[-0.02em]">Approved No-Receipt Forms ({data.approvedForms.length})</CardTitle>
         </CardHeader>
         <CardContent>
           {data.approvedForms.length === 0 ? (
-            <p className="text-sm text-neutral-500">No approved no-receipt forms.</p>
+            <p className="text-[13px] leading-[18px] text-text-secondary">No approved no-receipt forms.</p>
           ) : (
             <div className="space-y-2">
               {data.approvedForms.map((form: any) => (
-                <div key={form.id} className="flex items-center justify-between text-sm py-1.5 border-b border-neutral-100 dark:border-neutral-800 last:border-0">
+                <div key={form.id} className="flex items-center justify-between text-[15px] leading-[22px] py-1.5 border-b border-divider last:border-0">
                   <div>
                     <p className="font-medium">{form.expense_name || form.expense_type}</p>
-                    <p className="text-xs text-neutral-500 capitalize">{form.expense_type}</p>
+                    <p className="text-[11px] leading-[14px] text-text-secondary capitalize">{form.expense_type}</p>
                   </div>
                   <span className="font-medium">{formatCurrency(form.amount || 0)}</span>
                 </div>

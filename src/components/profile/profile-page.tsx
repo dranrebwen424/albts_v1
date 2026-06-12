@@ -25,7 +25,7 @@ export function ProfilePage() {
 
   if (loading) {
     return (
-      <div className="space-y-6 max-w-2xl">
+      <div className="space-y-6 max-w-2xl animate-fade-in">
         <Skeleton className="h-8 w-48" />
         <Skeleton className="h-64 rounded-xl" />
       </div>
@@ -37,20 +37,22 @@ export function ProfilePage() {
   const initials = `${profile.first_name?.charAt(0) || ''}${profile.last_name?.charAt(0) || ''}`;
 
   return (
-    <div className="space-y-6 max-w-2xl">
-      <h1 className="text-2xl font-semibold tracking-tight">My Profile</h1>
+    <div className="space-y-6 max-w-2xl animate-fade-in">
+      <h1 className="text-[24px] leading-[30px] font-[650] tracking-[-0.04em] text-text-primary">
+        My Profile
+      </h1>
 
-      <Card>
+      <Card className="shadow-sm">
         <CardContent className="p-6">
-          <div className="flex items-start gap-6">
-            <div className="h-16 w-16 rounded-full bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center text-xl font-semibold flex-shrink-0">
+          <div className="flex items-start gap-5">
+            <div className="h-16 w-16 rounded-full bg-primary-tint-bg flex items-center justify-center text-[17px] leading-6 font-[590] text-primary flex-shrink-0">
               {initials}
             </div>
             <div className="flex-1 min-w-0">
-              <h2 className="text-lg font-semibold">
+              <h2 className="text-[17px] leading-6 font-[590] tracking-[-0.02em] text-text-primary">
                 {profile.first_name} {profile.middle_name ? profile.middle_name + ' ' : ''}{profile.last_name}
               </h2>
-              <p className="text-sm text-neutral-500">{profile.email}</p>
+              <p className="text-[13px] leading-[18px] text-text-secondary mt-0.5">{profile.email}</p>
               <div className="flex flex-wrap gap-2 mt-3">
                 <Badge variant="secondary" className="capitalize">{profile.role}</Badge>
                 {profile.status === 'deactivated' && (
@@ -62,45 +64,53 @@ export function ProfilePage() {
         </CardContent>
       </Card>
 
-      <Card>
+      <Card className="shadow-sm">
         <CardHeader>
-          <CardTitle className="text-sm font-medium">Account Details</CardTitle>
+          <CardTitle>Account Details</CardTitle>
         </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="flex items-center gap-3 text-sm">
-            <Building2 className="h-4 w-4 text-neutral-400" />
+        <CardContent className="space-y-5">
+          <div className="flex items-center gap-3">
+            <div className="h-8 w-8 rounded-lg bg-surface-gray flex items-center justify-center">
+              <Building2 className="h-4 w-4 text-text-secondary" />
+            </div>
             <div>
-              <p className="text-xs text-neutral-500">Department</p>
-              <p className="font-medium">{profile.departments?.name || (profile.department_id ? 'Assigned' : 'Not assigned')}</p>
+              <p className="text-[11px] leading-[14px] text-text-secondary">Department</p>
+              <p className="text-[15px] leading-[22px] font-medium text-text-primary">{profile.departments?.name || (profile.department_id ? 'Assigned' : 'Not assigned')}</p>
             </div>
           </div>
-          <div className="flex items-center gap-3 text-sm">
-            <Shield className="h-4 w-4 text-neutral-400" />
+          <div className="flex items-center gap-3">
+            <div className="h-8 w-8 rounded-lg bg-surface-gray flex items-center justify-center">
+              <Shield className="h-4 w-4 text-text-secondary" />
+            </div>
             <div>
-              <p className="text-xs text-neutral-500">Role</p>
-              <p className="font-medium capitalize">{profile.role}</p>
+              <p className="text-[11px] leading-[14px] text-text-secondary">Role</p>
+              <p className="text-[15px] leading-[22px] font-medium text-text-primary capitalize">{profile.role}</p>
             </div>
           </div>
-          <div className="flex items-center gap-3 text-sm">
-            <Calendar className="h-4 w-4 text-neutral-400" />
+          <div className="flex items-center gap-3">
+            <div className="h-8 w-8 rounded-lg bg-surface-gray flex items-center justify-center">
+              <Calendar className="h-4 w-4 text-text-secondary" />
+            </div>
             <div>
-              <p className="text-xs text-neutral-500">Member Since</p>
-              <p className="font-medium">{profile.created_at ? formatDate(profile.created_at) : 'N/A'}</p>
+              <p className="text-[11px] leading-[14px] text-text-secondary">Member Since</p>
+              <p className="text-[15px] leading-[22px] font-medium text-text-primary">{profile.created_at ? formatDate(profile.created_at) : 'N/A'}</p>
             </div>
           </div>
-          <div className="flex items-center gap-3 text-sm">
-            <User className="h-4 w-4 text-neutral-400" />
+          <div className="flex items-center gap-3">
+            <div className="h-8 w-8 rounded-lg bg-surface-gray flex items-center justify-center">
+              <User className="h-4 w-4 text-text-secondary" />
+            </div>
             <div>
-              <p className="text-xs text-neutral-500">Status</p>
-              <p className="font-medium capitalize">{profile.status || 'Active'}</p>
+              <p className="text-[11px] leading-[14px] text-text-secondary">Status</p>
+              <p className="text-[15px] leading-[22px] font-medium text-text-primary capitalize">{profile.status || 'Active'}</p>
             </div>
           </div>
         </CardContent>
       </Card>
 
-      <Card>
+      <Card className="shadow-sm">
         <CardHeader>
-          <CardTitle className="text-sm font-medium">Security</CardTitle>
+          <CardTitle>Security</CardTitle>
         </CardHeader>
         <CardContent>
           <Link href="/change-password" prefetch={true}>

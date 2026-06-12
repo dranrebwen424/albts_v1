@@ -38,39 +38,43 @@ export default function ForgotPasswordPage() {
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-neutral-50 dark:bg-neutral-900 p-4">
-      <Card className="w-full max-w-sm">
-        <CardHeader className="space-y-1 text-center">
-          <CardTitle className="text-xl font-semibold tracking-tight">Forgot Password</CardTitle>
-          <CardDescription>
-            Enter your email and we'll send you a reset code
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
-              <Input
-                id="email"
-                type="email"
-                placeholder="gmail@example.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-                disabled={loading}
-              />
-            </div>
-            <Button type="submit" className="w-full" disabled={loading}>
-              {loading ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Sending...</> : 'Send Reset Code'}
-            </Button>
-            <div className="text-center">
-              <Link href="/login" prefetch={true} className="text-xs text-neutral-500 hover:text-neutral-900 dark:hover:text-neutral-300 inline-flex items-center gap-1">
-                <ArrowLeft className="h-3 w-3" /> Back to login
-              </Link>
-            </div>
-          </form>
-        </CardContent>
-      </Card>
+    <div className="flex min-h-screen items-center justify-center bg-bg-app p-4">
+      <div className="w-full max-w-sm space-y-6 animate-fade-in">
+        <div className="text-center space-y-1">
+          <h1 className="text-[28px] font-[700] leading-[34px] tracking-[-0.05em] text-text-primary">
+            ALBTS
+          </h1>
+          <p className="text-[13px] leading-[18px] text-text-secondary">
+            Reset your password
+          </p>
+        </div>
+        <Card className="shadow-sm">
+          <CardContent className="p-6">
+            <form onSubmit={handleSubmit} className="space-y-5">
+              <div className="space-y-2">
+                <Label htmlFor="email">Email</Label>
+                <Input
+                  id="email"
+                  type="email"
+                  placeholder="gmail@example.com"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                  disabled={loading}
+                />
+              </div>
+              <Button type="submit" className="w-full" disabled={loading}>
+                {loading ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Sending...</> : 'Send Reset Code'}
+              </Button>
+              <div className="text-center">
+                <Link href="/login" prefetch={true} className="text-[11px] leading-[14px] text-text-secondary hover:text-text-primary transition-colors inline-flex items-center gap-1">
+                  <ArrowLeft className="h-3 w-3" /> Back to login
+                </Link>
+              </div>
+            </form>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 }

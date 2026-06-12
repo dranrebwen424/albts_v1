@@ -9,15 +9,15 @@ const Avatar = React.forwardRef<
   <div
     ref={ref}
     className={cn(
-      "relative flex h-9 w-9 shrink-0 overflow-hidden rounded-full bg-neutral-200 dark:bg-neutral-800 items-center justify-center text-sm font-medium",
+      "relative flex h-10 w-10 shrink-0 overflow-hidden rounded-full bg-surface-gray items-center justify-center text-sm font-medium text-text-secondary",
       className
     )}
     {...props}
   >
     {src ? (
-      <Image src={src} alt={fallback} fill className="object-cover" sizes="36px" />
+      <Image src={src} alt={fallback} fill className="object-cover" sizes="40px" />
     ) : (
-      <span className="text-neutral-600 dark:text-neutral-400">
+      <span className="text-text-secondary">
         {fallback.charAt(0).toUpperCase()}
       </span>
     )}

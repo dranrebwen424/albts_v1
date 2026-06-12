@@ -14,7 +14,7 @@ export default async function AdminEventDetailPage({ params }: { params: Promise
     getNoReceiptForms(eventId).catch(() => [] as any[]),
   ]);
 
-  if (!event) return <div className="py-8 text-sm text-neutral-500">Event not found.</div>;
+  if (!event) return <div className="py-8 text-[13px] leading-[18px] text-text-secondary">Event not found.</div>;
 
   const totalExpenses = [...receipts.filter(r => r.status === 'approved'), ...forms.filter(f => f.status === 'approved')]
     .reduce((sum: number, item: any) => sum + (item.total || item.amount || 0), 0);
@@ -23,13 +23,13 @@ export default async function AdminEventDetailPage({ params }: { params: Promise
     <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center gap-4">
-        <Link href={`/admin/departments/${deptId}/events`} prefetch={true} className="text-neutral-500 hover:text-neutral-900 dark:hover:text-white">
+        <Link href={`/admin/departments/${deptId}/events`} prefetch={true} className="text-text-secondary hover:text-text-primary transition-colors">
           <ArrowLeft className="h-5 w-5" />
         </Link>
         <div className="flex-1">
-          <h1 className="text-2xl font-semibold tracking-tight">{event.name}</h1>
-          <p className="text-sm text-neutral-500 dark:text-neutral-400">
-            Budget: {formatCurrency(event.budget + totalExpenses)} | Used: {formatCurrency(totalExpenses)} | Remaining: <span className={event.budget < 0 ? 'text-red-500 font-semibold' : ''}>{formatCurrency(event.budget)}</span>
+          <h1 className="text-[24px] leading-[30px] font-[650] tracking-[-0.04em]">{event.name}</h1>
+          <p className="text-[13px] leading-[18px] text-text-secondary">
+            Budget: {formatCurrency(event.budget + totalExpenses)} | Used: {formatCurrency(totalExpenses)} | Remaining: <span className={event.budget < 0 ? 'text-error font-semibold' : ''}>{formatCurrency(event.budget)}</span>
           </p>
         </div>
         <Badge variant={event.status === 'ongoing' ? 'warning' : 'success'}>

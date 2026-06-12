@@ -9,6 +9,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Users, Wallet, FolderOpen } from 'lucide-react';
 import { formatCurrency } from '@/lib/utils/format';
+import { motion } from 'framer-motion';
+import { fadeSlideUp, staggerContainer } from '@/components/shared/page-transition';
 
 export default function AdviserEventsPage() {
   const events = useEventsStore(s => s.events);
@@ -43,9 +45,10 @@ export default function AdviserEventsPage() {
           </CardContent>
         </Card>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {events.map((event) => (
-            <Link key={event.id} href={`/adviser/events/${event.id}`} prefetch={true}
+        <motion.div {...staggerContainer()} viewport={{ once: true, margin: '-30px' }} whileInView="animate" className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {events.map((event, index) => (
+            <motion.div {...fadeSlideUp(index)} key={event.id}>
+            <Link href={`/adviser/events/${event.id}`} prefetch={true}
               onMouseEnter={() => {
                 prefetchEventDetail(event.id).then(data =>
                   setEventDetailCache(event.id, data)
@@ -72,8 +75,9 @@ export default function AdviserEventsPage() {
                 </CardContent>
               </Card>
             </Link>
+            </motion.div>
           ))}
-        </div>
+        </motion.div>
       )}
     </div>
   );

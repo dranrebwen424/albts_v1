@@ -10,6 +10,8 @@ import { Button } from '@/components/ui/button';
 import { Bell, ExternalLink } from 'lucide-react';
 import { cn } from '@/lib/utils/cn';
 import type { Notification } from '@/types';
+import { motion } from 'framer-motion';
+import { fadeSlideUp, staggerContainer } from '@/components/shared/page-transition';
 
 function getRelativeTime(dateStr: string): string {
   const now = Date.now();
@@ -42,7 +44,6 @@ export function NotificationsPage({ role }: { role: 'officer' | 'adviser' }) {
   const profile = useAuthStore((s) => s.profile);
   const { notifications, unreadCount, setNotifications, markRead, markAllRead } = useNotifStore();
 
-  // Background refresh on mount
   useEffect(() => {
     if (!profile?.user_id) return;
     getNotifications(profile.user_id).then(setNotifications).catch(() => {});
@@ -69,42 +70,44 @@ export function NotificationsPage({ role }: { role: 'officer' | 'adviser' }) {
   const unreadList = notifications.filter((n) => !n.read);
 
   return (
-    <div className="max-w-2xl mx-auto space-y-4">
+    <div className="max-w-2xl mx-auto space-y-6">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <Bell className="h-5 w-5 text-neutral-500" />
-          <h1 className="text-lg font-semibold">Notifications</h1>
+          <Bell className="h-6 w-6 text-text-secondary" />
+          <h1 className="text-[24px] leading-[30px] font-[650] tracking-[-0.04em] text-text-primary">
+            Notifications
+          </h1>
           {unreadCount > 0 && (
-            <span className="flex items-center justify-center h-5 min-w-5 px-1.5 rounded-full text-[10px] font-semibold bg-red-500 text-white">
+            <span className="flex items-center justify-center h-5 min-w-5 px-1.5 rounded-full text-[10px] font-semibold bg-error text-white">
               {unreadCount > 99 ? '99+' : unreadCount}
             </span>
           )}
         </div>
         {unreadCount > 0 && (
-          <Button variant="ghost" size="sm" onClick={handleMarkAllRead} className="text-xs h-8">
+          <Button variant="ghost" size="sm" onClick={handleMarkAllRead} className="h-8">
             Mark all read
           </Button>
         )}
       </div>
 
       {notifications.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-16 text-neutral-400">
-          <Bell className="h-10 w-10 mb-3" />
-          <p className="text-sm">No notifications yet</p>
+        <div className="flex flex-col items-center justify-center py-16 animate-fade-in">
+          <Bell className="h-12 w-12 text-text-placeholder mb-4" />
+          <p className="text-[15px] leading-[22px] text-text-secondary">No notifications yet</p>
         </div>
       ) : (
-        <div className="space-y-1">
-          {notifications.map((n) => {
+        <motion.div {...staggerContainer()} viewport={{ once: true, margin: '-30px' }} whileInView="animate" className="space-y-2">
+          {notifications.map((n, index) => {
             const link = getNotifLink(n, role);
             return (
+              <motion.div {...fadeSlideUp(index)} key={n.id}>
               <button
-                key={n.id}
                 onClick={() => handleClick(n)}
                 className={cn(
-                  'w-full text-left px-4 py-3.5 rounded-xl transition-colors border',
+                  'w-full text-left p-4 rounded-xl transition-all duration-300 ease-out',
                   n.read
-                    ? 'border-transparent hover:bg-neutral-50 dark:hover:bg-neutral-900'
-                    : 'border-neutral-200 dark:border-neutral-700 bg-neutral-50 dark:bg-neutral-900 hover:bg-neutral-100 dark:hover:bg-neutral-800',
+                    ? 'bg-surface-white shadow-sm hover:shadow-md'
+                    : 'bg-primary-tint-bg shadow-sm hover:shadow-md',
                   link ? 'cursor-pointer' : 'cursor-default'
                 )}
               >
@@ -112,45 +115,46 @@ export function NotificationsPage({ role }: { role: 'officer' | 'adviser' }) {
                   <div
                     className={cn(
                       'mt-1.5 h-2 w-2 rounded-full shrink-0',
-                      n.read ? 'bg-neutral-300 dark:bg-neutral-600' : 'bg-blue-500'
+                      n.read ? 'bg-divider' : 'bg-primary'
                     )}
                   />
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
                       <p
                         className={cn(
-                          'text-sm truncate',
-                          n.read ? 'text-neutral-600 dark:text-neutral-400' : 'font-semibold text-neutral-900 dark:text-white'
+                          'text-[15px] leading-[22px] truncate',
+                          n.read ? 'text-text-body' : 'font-[590] text-text-primary'
                         )}
                       >
                         {n.title}
                       </p>
                       {link && (
-                        <ExternalLink className="h-3 w-3 shrink-0 text-neutral-400" />
+                        <ExternalLink className="h-3 w-3 shrink-0 text-text-secondary" />
                       )}
                     </div>
                     {n.events?.name && (
-                      <p className="text-xs text-neutral-500 mt-0.5 font-medium">
+                      <p className="text-[13px] leading-[18px] text-text-secondary mt-0.5 font-medium">
                         {n.events.name}
                       </p>
                     )}
                     <p
                       className={cn(
-                        'text-xs mt-0.5 line-clamp-2',
-                        n.read ? 'text-neutral-400' : 'text-neutral-500 dark:text-neutral-400'
+                        'text-[13px] leading-[18px] mt-0.5 line-clamp-2',
+                        n.read ? 'text-text-placeholder' : 'text-text-secondary'
                       )}
                     >
                       {n.message}
                     </p>
-                    <p className="text-[11px] text-neutral-400 mt-1.5">
+                    <p className="text-[11px] leading-[14px] text-text-placeholder mt-1.5">
                       {getRelativeTime(n.created_at)}
                     </p>
                   </div>
                 </div>
               </button>
+              </motion.div>
             );
           })}
-        </div>
+        </motion.div>
       )}
     </div>
   );

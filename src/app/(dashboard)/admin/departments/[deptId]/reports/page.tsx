@@ -9,6 +9,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { formatCurrency } from '@/lib/utils/format';
 import { FileText, ChevronRight } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
+import { motion } from 'framer-motion';
+import { fadeSlideUp, staggerContainer } from '@/components/shared/page-transition';
 
 export default function ReportsPage() {
   const params = useParams();
@@ -49,46 +51,48 @@ export default function ReportsPage() {
   if (loading) return <div className="py-4 space-y-3">{[1,2,3].map(i => <Skeleton key={i} className="h-24 rounded-xl" />)}</div>;
 
   return (
-    <div className="py-4 space-y-4">
+    <motion.div variants={staggerContainer()} initial="initial" whileInView="animate" viewport={{ once: true, margin: '-30px' }} className="py-4 space-y-4">
       {events.length === 0 ? (
-        <Card>
-          <CardContent className="text-center py-8 text-sm text-neutral-500 flex flex-col items-center gap-2">
-            <FileText className="h-8 w-8 text-neutral-300" />
+        <Card className="bg-surface-white rounded-xl shadow-sm">
+          <CardContent className="text-center py-8 text-[13px] leading-[18px] text-text-secondary flex flex-col items-center gap-2">
+            <FileText className="h-8 w-8 text-text-placeholder" />
             No reports available
           </CardContent>
         </Card>
-      ) : events.map(event => (
-        <Link key={event.id} href={`/admin/departments/${deptId}/reports/${event.id}`} prefetch={true} className="block w-full text-left">
-          <Card className="hover:shadow-md transition-all cursor-pointer">
-            <CardHeader className="pb-2">
-              <div className="flex items-center justify-between">
-                <CardTitle className="text-base">{event.name}</CardTitle>
-                <ChevronRight className="h-4 w-4 text-neutral-400" />
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-                <div>
-                  <p className="text-xs text-neutral-500">Total Budget</p>
-                  <p className="font-semibold">{formatCurrency(event.budget + event.totalExpenses)}</p>
+      ) : events.map((event, index) => (
+        <motion.div {...fadeSlideUp(index)} key={event.id}>
+          <Link href={`/admin/departments/${deptId}/reports/${event.id}`} prefetch={true} className="block w-full text-left">
+            <Card className="hover:shadow-md transition-all cursor-pointer bg-surface-white rounded-xl shadow-sm">
+              <CardHeader className="pb-2">
+                <div className="flex items-center justify-between">
+                  <CardTitle className="text-[17px] leading-6 font-[590] tracking-[-0.02em]">{event.name}</CardTitle>
+                  <ChevronRight className="h-4 w-4 text-text-placeholder" />
                 </div>
-                <div>
-                  <p className="text-xs text-neutral-500">Total Expenses</p>
-                  <p className="font-semibold">{formatCurrency(event.totalExpenses)}</p>
+              </CardHeader>
+              <CardContent>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-[15px] leading-[22px]">
+                  <div>
+                    <p className="text-[11px] leading-[14px] text-text-secondary">Total Budget</p>
+                    <p className="text-[15px] leading-[22px] font-semibold">{formatCurrency(event.budget + event.totalExpenses)}</p>
+                  </div>
+                  <div>
+                    <p className="text-[11px] leading-[14px] text-text-secondary">Total Expenses</p>
+                    <p className="text-[15px] leading-[22px] font-semibold">{formatCurrency(event.totalExpenses)}</p>
+                  </div>
+                  <div>
+                    <p className="text-[11px] leading-[14px] text-text-secondary">Remaining</p>
+                    <p className="text-[15px] leading-[22px] font-semibold">{formatCurrency(event.budget)}</p>
+                  </div>
+                  <div>
+                    <p className="text-[11px] leading-[14px] text-text-secondary">Approved Items</p>
+                    <p className="text-[15px] leading-[22px] font-semibold">{event.receiptCount} receipts, {event.formCount} forms</p>
+                  </div>
                 </div>
-                <div>
-                  <p className="text-xs text-neutral-500">Remaining</p>
-                  <p className="font-semibold">{formatCurrency(event.budget)}</p>
-                </div>
-                <div>
-                  <p className="text-xs text-neutral-500">Approved Items</p>
-                  <p className="font-semibold">{event.receiptCount} receipts, {event.formCount} forms</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </Link>
+              </CardContent>
+            </Card>
+          </Link>
+        </motion.div>
       ))}
-    </div>
+    </motion.div>
   );
 }

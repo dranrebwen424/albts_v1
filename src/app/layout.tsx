@@ -1,11 +1,6 @@
 import type { Metadata } from 'next';
-import { Inter, Instrument_Serif } from 'next/font/google';
+import { Instrument_Serif } from 'next/font/google';
 import './globals.css';
-
-const inter = Inter({
-  variable: '--font-inter',
-  subsets: ['latin'],
-});
 
 const instrumentSerif = Instrument_Serif({
   variable: '--font-instrument-serif',
@@ -28,8 +23,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={`${inter.variable} ${instrumentSerif.variable} h-full antialiased`}>
-      <body className="min-h-full font-sans">{children}</body>
+    <html lang="en" className={`${instrumentSerif.variable} h-full antialiased`}>
+      <body className="min-h-full font-sans bg-bg-app text-text-primary">{children}</body>
     </html>
   );
 }

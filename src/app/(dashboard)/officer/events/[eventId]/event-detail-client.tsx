@@ -1,9 +1,10 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import dynamic from 'next/dynamic';
+import { motion, AnimatePresence } from 'framer-motion';
 import { getEvent, getReceipts, getNoReceiptForms, uploadReceipt, confirmReceipt, submitNoReceiptForm, resubmitNoReceiptForm, retryOcr } from '@/lib/actions';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -13,7 +14,7 @@ import { Separator } from '@/components/ui/separator';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { ResponsiveDialog } from '@/components/shared/responsive-dialog';
 import { Progress } from '@/components/ui/progress';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { cn } from '@/lib/utils/cn';
@@ -303,7 +304,32 @@ export function EventDetailClient({
     }
   };
 
-  if (!event) return <div>Event not found</div>;
+  function AnimatedNumber({ value, className }: { value: number; className?: string }) {
+    const [animated, setAnimated] = useState(0);
+    const animRef = useRef<number | null>(null);
+
+    useEffect(() => {
+      if (animRef.current) cancelAnimationFrame(animRef.current);
+      const startTime = performance.now();
+      const startVal = 0;
+      const duration = 800;
+
+      const animate = (now: number) => {
+        const elapsed = now - startTime;
+        const progress = Math.min(elapsed / duration, 1);
+        const eased = 1 - Math.pow(1 - progress, 3);
+        setAnimated(Math.round(startVal + (value - startVal) * eased));
+        if (progress < 1) animRef.current = requestAnimationFrame(animate);
+      };
+
+      animRef.current = requestAnimationFrame(animate);
+      return () => { if (animRef.current) cancelAnimationFrame(animRef.current); };
+    }, [value]);
+
+    return <span className={className}>{animated}</span>;
+  }
+
+  if (!event) return <div className="text-text-body text-[15px] leading-[22px]">Event not found</div>;
 
   const isViewOnly = event.status === 'done';
 
@@ -312,83 +338,112 @@ export function EventDetailClient({
       {/* KPI Dashboard */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {/* Budget Overview */}
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">Budget Overview</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="flex items-center gap-4">
-              <div className="h-24 w-24">
+        <motion.div
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0, type: 'spring', stiffness: 260, damping: 20 }}
+        >
+          <Card className="h-full">
+            <CardHeader className="pb-3 px-5 pt-5">
+              <CardTitle className="text-[13px] leading-[18px] font-medium text-text-secondary">Budget Overview</CardTitle>
+            </CardHeader>
+            <CardContent className="!p-5">
+              <div className="flex items-start gap-5">
                 <BudgetChart used={totalExpenses} remaining={event?.budget || 0} />
-              </div>
-              <div className="space-y-1 text-xs">
-                <div className="flex items-center gap-2">
-                  <div className="h-2 w-2 rounded-full bg-neutral-900 dark:bg-white" />
-                  <span>Expenses: {formatCurrency(totalExpenses)}</span>
+                <div className="space-y-2.5 min-w-0">
+                  <div className="flex items-center gap-2">
+                    <div className="h-2.5 w-2.5 rounded-full bg-primary shrink-0" />
+                    <span className="text-text-secondary text-[13px] leading-[18px]">Expenses</span>
+                    <span className="ml-auto font-[590] text-text-primary text-[15px] leading-[22px]">{formatCurrency(totalExpenses)}</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="h-2.5 w-2.5 rounded-full bg-divider shrink-0" />
+                    <span className="text-text-secondary text-[13px] leading-[18px]">Remaining</span>
+                    <span className={cn('ml-auto font-[590] text-[15px] leading-[22px]', event?.budget < 0 ? 'text-error' : 'text-text-primary')}>
+                      {formatCurrency(event?.budget || 0)}
+                    </span>
+                  </div>
                 </div>
-                <div className="flex items-center gap-2">
-                  <div className="h-2 w-2 rounded-full bg-neutral-200 dark:bg-neutral-700" />
-                  <span>Remaining: <span className={event.budget < 0 ? 'text-red-500 font-semibold' : ''}>{formatCurrency(event.budget)}</span></span>
-                </div>
               </div>
-            </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+        </motion.div>
 
-        {/* Receipt KPIs */}
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">Receipts</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-semibold mb-3">{receipts.length}</div>
-            <div className="flex gap-3 text-xs">
-              <Badge variant="approved">{approvedReceipts} Approved</Badge>
-              <Badge variant="pending">{pendingReceipts} Pending</Badge>
-              <Badge variant="rejected">{rejectedReceipts} Rejected</Badge>
-            </div>
-          </CardContent>
-        </Card>
+        {/* Receipts */}
+        <motion.div
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.08, type: 'spring', stiffness: 260, damping: 20 }}
+        >
+          <Card className="h-full">
+            <CardHeader className="pb-1 px-5 pt-5">
+              <CardTitle className="text-[13px] leading-[18px] font-medium text-text-secondary">Receipts</CardTitle>
+            </CardHeader>
+            <CardContent className="!p-5">
+              <AnimatedNumber value={receipts.length} className="block text-[28px] leading-[34px] font-[650] tracking-[-0.03em] text-text-primary mb-4" />
+              <div className="flex flex-wrap gap-2">
+                <span className="inline-flex items-center px-2.5 py-1 rounded-full text-[12px] leading-[16px] font-medium bg-primary-tint-bg text-primary-tint-text">{approvedReceipts} Approved</span>
+                <span className="inline-flex items-center px-2.5 py-1 rounded-full text-[12px] leading-[16px] font-medium bg-amber-50 text-amber-700">{pendingReceipts} Pending</span>
+                <span className="inline-flex items-center px-2.5 py-1 rounded-full text-[12px] leading-[16px] font-medium bg-red-50 text-error">{rejectedReceipts} Rejected</span>
+              </div>
+            </CardContent>
+          </Card>
+        </motion.div>
 
-        {/* No-Receipt KPIs */}
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">No-Receipt Forms</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-semibold mb-3">{forms.length}</div>
-            <div className="flex gap-3 text-xs">
-              <Badge variant="approved">{approvedForms} Approved</Badge>
-              <Badge variant="pending">{pendingForms} Pending</Badge>
-              <Badge variant="rejected">{rejectedForms} Rejected</Badge>
-            </div>
-          </CardContent>
-        </Card>
+        {/* No-Receipt Forms */}
+        <motion.div
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.16, type: 'spring', stiffness: 260, damping: 20 }}
+        >
+          <Card className="h-full">
+            <CardHeader className="pb-1 px-5 pt-5">
+              <CardTitle className="text-[13px] leading-[18px] font-medium text-text-secondary">No-Receipt Forms</CardTitle>
+            </CardHeader>
+            <CardContent className="!p-5">
+              <AnimatedNumber value={forms.length} className="block text-[28px] leading-[34px] font-[650] tracking-[-0.03em] text-text-primary mb-4" />
+              <div className="flex flex-wrap gap-2">
+                <span className="inline-flex items-center px-2.5 py-1 rounded-full text-[12px] leading-[16px] font-medium bg-primary-tint-bg text-primary-tint-text">{approvedForms} Approved</span>
+                <span className="inline-flex items-center px-2.5 py-1 rounded-full text-[12px] leading-[16px] font-medium bg-amber-50 text-amber-700">{pendingForms} Pending</span>
+                <span className="inline-flex items-center px-2.5 py-1 rounded-full text-[12px] leading-[16px] font-medium bg-red-50 text-error">{rejectedForms} Rejected</span>
+              </div>
+            </CardContent>
+          </Card>
+        </motion.div>
       </div>
 
       {/* Main Content Tabs */}
       <Tabs defaultValue="receipts">
-        <TabsList>
-          <TabsTrigger value="receipts" className="flex items-center gap-2">
+        <TabsList className="bg-surface-gray p-1 rounded-lg">
+          <TabsTrigger value="receipts" className="flex items-center gap-2 data-[state=active]:bg-surface-white data-[state=active]:shadow-sm data-[state=active]:rounded-md transition-all duration-300 ease-out">
             <ReceiptIcon className="h-4 w-4" /> Receipts
           </TabsTrigger>
-          <TabsTrigger value="forms" className="flex items-center gap-2">
+          <TabsTrigger value="forms" className="flex items-center gap-2 data-[state=active]:bg-surface-white data-[state=active]:shadow-sm data-[state=active]:rounded-md transition-all duration-300 ease-out">
             <FileText className="h-4 w-4" /> No-Receipt Forms
           </TabsTrigger>
         </TabsList>
 
         {/* Receipts Tab */}
         <TabsContent value="receipts" className="space-y-4">
+          <motion.div
+            key="receipts"
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.15, ease: 'easeOut' }}
+          >
           {!isViewOnly && (
             <>
               {/* Desktop dropzone */}
-              <div {...getRootProps()} className="hidden lg:block border-2 border-dashed border-neutral-300 dark:border-neutral-700 rounded-xl p-8 text-center cursor-pointer hover:border-neutral-500 transition-colors">
+              <div
+                {...getRootProps()}
+                className={`hidden lg:block border-2 border-dashed rounded-xl p-8 text-center cursor-pointer transition-all duration-300 ease-out ${isDragActive ? 'border-primary scale-[1.01] bg-primary-tint-bg/30' : 'border-divider hover:border-primary'}`}
+              >
                 <input {...getInputProps()} />
-                <Upload className="h-8 w-8 mx-auto mb-2 text-neutral-400" />
-                <p className="text-sm text-neutral-500 dark:text-neutral-400">
+                <Upload className="h-8 w-8 mx-auto mb-2 text-text-placeholder" />
+                <p className="text-[15px] leading-[22px] text-text-placeholder">
                   {isDragActive ? 'Drop receipt here' : 'Drop receipt image or click to upload'}
                 </p>
-                <p className="text-xs text-neutral-400 mt-1">PNG, JPG, JPEG, WEBP</p>
+                <p className="text-[13px] leading-[18px] text-text-placeholder mt-1">PNG, JPG, JPEG, WEBP</p>
               </div>
 
               {/* Mobile upload button */}
@@ -396,12 +451,12 @@ export function EventDetailClient({
                 <button
                   onClick={() => setShowUploadSheet(true)}
                   disabled={uploading}
-                  className="w-full flex items-center justify-center gap-3 border-2 border-dashed border-neutral-300 dark:border-neutral-700 rounded-xl p-6 text-center hover:border-neutral-500 transition-colors disabled:opacity-50"
+                  className="w-full flex items-center justify-center gap-3 border-2 border-dashed border-divider rounded-xl p-6 text-center hover:border-primary transition-colors disabled:opacity-50"
                 >
-                  <Camera className="h-6 w-6 text-neutral-400" />
+                  <Camera className="h-6 w-6 text-text-placeholder" />
                   <div className="text-left">
-                    <p className="text-sm font-medium text-neutral-700 dark:text-neutral-300">Upload Receipt</p>
-                    <p className="text-xs text-neutral-400">Take a photo or browse files</p>
+                    <p className="text-[15px] leading-[22px] font-medium text-text-body">Upload Receipt</p>
+                    <p className="text-[13px] leading-[18px] text-text-placeholder">Take a photo or browse files</p>
                   </div>
                 </button>
               </div>
@@ -435,67 +490,95 @@ export function EventDetailClient({
             </>
           )}
 
-          {receipts.length === 0 ? (
-            <Card>
-              <CardContent className="text-center py-8 text-sm text-neutral-500">
-                No receipts uploaded yet
-              </CardContent>
-            </Card>
-          ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-              {receipts.map((receipt) => (
-                <button key={receipt.id} onClick={() => setSelectedReceipt(receipt)} className="text-left">
-                  <Card className="hover:shadow-md transition-all">
-                    <CardContent className="p-4">
-                      <div className="flex items-start gap-3">
-                        <div className="h-12 w-12 rounded-lg bg-neutral-100 dark:bg-neutral-800 overflow-hidden flex-shrink-0 relative">
-                          {receipt.image_url ? (
-                            <Image src={receipt.image_url} alt="" fill className="object-cover" sizes="48px" />
-                          ) : (
-                            <div className="h-full w-full flex items-center justify-center">
-                              <ImageIcon className="h-5 w-5 text-neutral-400" />
+          <AnimatePresence mode="wait">
+            {receipts.length === 0 ? (
+              <motion.div
+                key="empty-receipts"
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -8 }}
+                transition={{ type: 'spring', stiffness: 260, damping: 20 }}
+              >
+                <Card className="bg-surface-white rounded-xl shadow-sm">
+                  <CardContent className="text-center py-8 text-[15px] leading-[22px] text-text-secondary">
+                    No receipts uploaded yet
+                  </CardContent>
+                </Card>
+              </motion.div>
+            ) : (
+              <motion.div
+                key="receipt-grid"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+              >
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                  {receipts.map((receipt, index) => (
+                    <motion.div
+                      key={receipt.id}
+                      initial={{ opacity: 0, y: 12 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: index * 0.04, type: 'spring', stiffness: 260, damping: 20 }}
+                    >
+                      <button onClick={() => setSelectedReceipt(receipt)} className="text-left w-full">
+                        <Card className="bg-surface-white rounded-xl shadow-sm hover:shadow-md transition-all duration-300 ease-out">
+                          <CardContent className="p-4">
+                            <div className="flex items-start gap-3">
+                              <div className="h-12 w-12 rounded-lg bg-surface-gray overflow-hidden flex-shrink-0 relative">
+                                {receipt.image_url ? (
+                                  <Image src={receipt.image_url} alt="" fill className="object-cover" sizes="48px" />
+                                ) : (
+                                  <div className="h-full w-full flex items-center justify-center">
+                                    <ImageIcon className="h-5 w-5 text-text-placeholder" />
+                                  </div>
+                                )}
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <p className="text-[15px] leading-[22px] font-medium truncate text-text-primary">{receipt.vendor || 'Unknown Vendor'}</p>
+                                <p className="text-[13px] leading-[18px] text-text-secondary break-words">{receipt.category}</p>
+                                <div className="flex items-center justify-between mt-1">
+                                  <span className="text-[15px] leading-[22px] font-semibold text-text-primary">{formatCurrency(receipt.total)}</span>
+                                  <Badge variant={receipt.status as any} className={cn(
+                                    'text-[11px] leading-[14px] px-1.5 py-0',
+                                    receipt.status === 'approved' && 'bg-primary-tint-bg text-primary-tint-text border-0',
+                                    receipt.status === 'pending' && 'bg-amber-50 text-amber-700 border-0',
+                                    receipt.status === 'rejected' && 'bg-red-50 text-error border-0',
+                                  )}>
+                                    {receipt.status}
+                                  </Badge>
+                                </div>
+                              </div>
                             </div>
-                          )}
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium truncate">{receipt.vendor || 'Unknown Vendor'}</p>
-                          <p className="text-xs text-neutral-500 break-words">{receipt.category}</p>
-                          <div className="flex items-center justify-between mt-1">
-                            <span className="text-sm font-semibold">{formatCurrency(receipt.total)}</span>
-                            <Badge variant={receipt.status as any} className="text-[10px] px-1.5 py-0">
-                              {receipt.status}
-                            </Badge>
-                          </div>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                </button>
-              ))}
-            </div>
-          )}
+                          </CardContent>
+                        </Card>
+                      </button>
+                    </motion.div>
+                  ))}
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+          </motion.div>
         </TabsContent>
 
         {/* No-Receipt Forms Tab */}
         <TabsContent value="forms" className="space-y-4">
+          <motion.div
+            key="forms"
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.15, ease: 'easeOut' }}
+          >
           {!isViewOnly && (
-            <Dialog open={showForm} onOpenChange={setShowForm}>
-              <DialogTrigger asChild>
-                <Button>
-                  <Plus className="h-4 w-4 mr-2" /> New No-Receipt Form
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="max-w-[calc(100vw-32px)] sm:max-w-2xl max-h-[85vh] overflow-y-auto">
-                <DialogHeader>
-                  <DialogTitle>No-Receipt Form</DialogTitle>
-                  <DialogDescription>
-                    Submit an expense without a receipt
-                  </DialogDescription>
-                </DialogHeader>
+            <>
+            <Button className="bg-primary text-white hover:bg-primary/90 transition-all duration-300 ease-out" onClick={() => setShowForm(true)}>
+                <Plus className="h-4 w-4 mr-2" /> New No-Receipt Form
+              </Button>
+              <ResponsiveDialog open={showForm} onOpenChange={setShowForm} title="No-Receipt Form" description="Submit an expense without a receipt">
 
                 {formStep === 1 && (
                   <div className="space-y-4">
-                    <Label>Expense Type</Label>
+                    <Label className="text-[13px] leading-[18px] text-text-secondary">Expense Type</Label>
                     <div className="grid grid-cols-2 gap-3">
                       {[
                         { value: 'transport', label: 'Transport', icon: '🚌' },
@@ -507,10 +590,10 @@ export function EventDetailClient({
                         <button
                           key={type.value}
                           onClick={() => { setExpenseType(type.value); setFormStep(2); }}
-                          className="flex flex-col items-center gap-2 p-6 rounded-xl border border-neutral-200 dark:border-neutral-800 hover:border-neutral-900 dark:hover:border-white hover:bg-neutral-50 dark:hover:bg-neutral-900 transition-all"
+                          className="flex flex-col items-center gap-2 p-6 rounded-xl border border-divider hover:border-primary hover:bg-primary-tint-bg transition-all duration-300 ease-out"
                         >
                           <span className="text-2xl">{type.icon}</span>
-                          <span className="text-sm font-medium">{type.label}</span>
+                          <span className="text-[15px] leading-[22px] font-medium text-text-primary">{type.label}</span>
                         </button>
                       ))}
                     </div>
@@ -519,21 +602,21 @@ export function EventDetailClient({
 
                 {formStep === 2 && expenseType && (
                   <div className="space-y-4">
-                    <Button variant="ghost" size="sm" onClick={() => setFormStep(1)} className="mb-2">
+                    <Button variant="ghost" size="sm" onClick={() => setFormStep(1)} className="mb-2 transition-all duration-300 ease-out">
                       <ArrowLeft className="h-4 w-4 mr-1" /> Back
                     </Button>
 
                     <div className="space-y-2">
-                      <Label>Activity/Event Name</Label>
-                      <Input value={formData.expense_name || ''} onChange={e => setFormData({...formData, expense_name: e.target.value})} placeholder="e.g., Team building lunch" />
+                      <Label className="text-[13px] leading-[18px] text-text-secondary">Activity/Event Name</Label>
+                      <Input value={formData.expense_name || ''} onChange={e => setFormData({...formData, expense_name: e.target.value})} placeholder="e.g., Team building lunch" className="border-divider" />
                     </div>
                     <div className="space-y-2">
-                      <Label>Date Incurred</Label>
-                      <Input type="date" value={formData.date_incurred || ''} onChange={e => setFormData({...formData, date_incurred: e.target.value})} />
+                      <Label className="text-[13px] leading-[18px] text-text-secondary">Date Incurred</Label>
+                      <Input type="date" value={formData.date_incurred || ''} onChange={e => setFormData({...formData, date_incurred: e.target.value})} className="border-divider" />
                     </div>
                     <div className="space-y-2">
-                      <Label>Brief Description</Label>
-                      <Textarea value={formData.description || ''} onChange={e => setFormData({...formData, description: e.target.value})} placeholder="Describe the expense..." />
+                      <Label className="text-[13px] leading-[18px] text-text-secondary">Brief Description</Label>
+                      <Textarea value={formData.description || ''} onChange={e => setFormData({...formData, description: e.target.value})} placeholder="Describe the expense..." className="border-divider" />
                     </div>
 
                     {/* Type-specific fields */}
@@ -541,27 +624,27 @@ export function EventDetailClient({
                       <>
                         <div className="grid grid-cols-2 gap-3">
                           <div className="space-y-2">
-                            <Label>Mode of Transport</Label>
-                            <Input value={formData.mode || ''} onChange={e => setFormData({...formData, mode: e.target.value})} placeholder="e.g., Jeepney" />
+                            <Label className="text-[13px] leading-[18px] text-text-secondary">Mode of Transport</Label>
+                            <Input value={formData.mode || ''} onChange={e => setFormData({...formData, mode: e.target.value})} placeholder="e.g., Jeepney" className="border-divider" />
                           </div>
                           <div className="space-y-2">
-                            <Label>Route</Label>
-                            <Input value={formData.route || ''} onChange={e => setFormData({...formData, route: e.target.value})} placeholder="e.g., SM to Campus" />
+                            <Label className="text-[13px] leading-[18px] text-text-secondary">Route</Label>
+                            <Input value={formData.route || ''} onChange={e => setFormData({...formData, route: e.target.value})} placeholder="e.g., SM to Campus" className="border-divider" />
                           </div>
                         </div>
                         <div className="grid grid-cols-3 gap-3">
                           <div className="space-y-2">
-                            <Label>Fare per Person</Label>
-                            <Input type="number" value={formData.fare_per_person || ''} onChange={e => setFormData({...formData, fare_per_person: Number(e.target.value)})} />
+                            <Label className="text-[13px] leading-[18px] text-text-secondary">Fare per Person</Label>
+                            <Input type="number" value={formData.fare_per_person || ''} onChange={e => setFormData({...formData, fare_per_person: Number(e.target.value)})} className="border-divider" />
                           </div>
                           <div className="space-y-2">
-                            <Label>No. of Persons</Label>
-                            <Input type="number" value={formData.persons || ''} onChange={e => setFormData({...formData, persons: Number(e.target.value)})} />
+                            <Label className="text-[13px] leading-[18px] text-text-secondary">No. of Persons</Label>
+                            <Input type="number" value={formData.persons || ''} onChange={e => setFormData({...formData, persons: Number(e.target.value)})} className="border-divider" />
                           </div>
                           <div className="space-y-2">
-                            <Label>No. of Trips</Label>
-                            <Input type="number" value={formData.trips || ''} onChange={e => setFormData({...formData, trips: Number(e.target.value)})} />
-                            <p className="text-[10px] text-neutral-400">Round trip = 2 trips</p>
+                            <Label className="text-[13px] leading-[18px] text-text-secondary">No. of Trips</Label>
+                            <Input type="number" value={formData.trips || ''} onChange={e => setFormData({...formData, trips: Number(e.target.value)})} className="border-divider" />
+                            <p className="text-[11px] leading-[14px] text-text-placeholder">Round trip = 2 trips</p>
                           </div>
                         </div>
                       </>
@@ -571,26 +654,26 @@ export function EventDetailClient({
                       <>
                         <div className="grid grid-cols-2 gap-3">
                           <div className="space-y-2">
-                            <Label>Meal Type</Label>
-                            <Input value={formData.meal_type || ''} onChange={e => setFormData({...formData, meal_type: e.target.value})} placeholder="e.g., Lunch" />
+                            <Label className="text-[13px] leading-[18px] text-text-secondary">Meal Type</Label>
+                            <Input value={formData.meal_type || ''} onChange={e => setFormData({...formData, meal_type: e.target.value})} placeholder="e.g., Lunch" className="border-divider" />
                           </div>
                           <div className="space-y-2">
-                            <Label>Vendor/Stall</Label>
-                            <Input value={formData.vendor || ''} onChange={e => setFormData({...formData, vendor: e.target.value})} />
+                            <Label className="text-[13px] leading-[18px] text-text-secondary">Vendor/Stall</Label>
+                            <Input value={formData.vendor || ''} onChange={e => setFormData({...formData, vendor: e.target.value})} className="border-divider" />
                           </div>
                         </div>
                         <div className="grid grid-cols-3 gap-3">
                           <div className="space-y-2">
-                            <Label>Cost per Person</Label>
-                            <Input type="number" value={formData.cost_per_person || ''} onChange={e => setFormData({...formData, cost_per_person: Number(e.target.value)})} />
+                            <Label className="text-[13px] leading-[18px] text-text-secondary">Cost per Person</Label>
+                            <Input type="number" value={formData.cost_per_person || ''} onChange={e => setFormData({...formData, cost_per_person: Number(e.target.value)})} className="border-divider" />
                           </div>
                           <div className="space-y-2">
-                            <Label>No. of Persons</Label>
-                            <Input type="number" value={formData.persons || ''} onChange={e => setFormData({...formData, persons: Number(e.target.value)})} />
+                            <Label className="text-[13px] leading-[18px] text-text-secondary">No. of Persons</Label>
+                            <Input type="number" value={formData.persons || ''} onChange={e => setFormData({...formData, persons: Number(e.target.value)})} className="border-divider" />
                           </div>
                           <div className="space-y-2">
-                            <Label>No. of Meals</Label>
-                            <Input type="number" value={formData.meals || ''} onChange={e => setFormData({...formData, meals: Number(e.target.value)})} />
+                            <Label className="text-[13px] leading-[18px] text-text-secondary">No. of Meals</Label>
+                            <Input type="number" value={formData.meals || ''} onChange={e => setFormData({...formData, meals: Number(e.target.value)})} className="border-divider" />
                           </div>
                         </div>
                       </>
@@ -599,40 +682,40 @@ export function EventDetailClient({
                     {expenseType === 'supplies' && (
                       <div className="space-y-3">
                         <div className="flex items-center justify-between">
-                          <Label>Items</Label>
-                          <Button type="button" variant="ghost" size="sm" onClick={() => setFormData({...formData, items: [...(formData.items || []), { item_name: '', unit_cost: 0, qty: 1, total: 0 }]})}>
+                          <Label className="text-[13px] leading-[18px] text-text-secondary">Items</Label>
+                          <Button type="button" variant="ghost" size="sm" onClick={() => setFormData({...formData, items: [...(formData.items || []), { item_name: '', unit_cost: 0, qty: 1, total: 0 }]})} className="transition-all duration-300 ease-out">
                             <Plus className="h-3 w-3 mr-1" /> Add Item
                           </Button>
                         </div>
                         {(formData.items || []).map((item: any, i: number) => (
                           <div key={i} className="grid grid-cols-4 gap-2 items-end">
                             <div className="space-y-1 col-span-2">
-                              <Label className="text-xs">Item Name</Label>
+                              <Label className="text-[11px] leading-[14px] text-text-secondary">Item Name</Label>
                               <Input size={1} value={item.item_name} onChange={e => {
                                 const items = [...(formData.items || [])];
                                 items[i].item_name = e.target.value;
                                 setFormData({...formData, items});
-                              }} />
+                              }} className="border-divider" />
                             </div>
                             <div className="space-y-1">
-                              <Label className="text-xs">Unit Cost</Label>
+                              <Label className="text-[11px] leading-[14px] text-text-secondary">Unit Cost</Label>
                               <Input type="number" value={item.unit_cost || ''} onChange={e => {
                                 const items = [...(formData.items || [])];
                                 items[i].unit_cost = Number(e.target.value);
                                 items[i].total = items[i].unit_cost * items[i].qty;
                                 setFormData({...formData, items});
-                              }} />
+                              }} className="border-divider" />
                             </div>
                             <div className="space-y-1">
-                              <Label className="text-xs">QTY</Label>
+                              <Label className="text-[11px] leading-[14px] text-text-secondary">QTY</Label>
                               <div className="flex gap-1">
                                 <Input type="number" value={item.qty || 1} onChange={e => {
                                   const items = [...(formData.items || [])];
                                   items[i].qty = Number(e.target.value);
                                   items[i].total = items[i].unit_cost * items[i].qty;
                                   setFormData({...formData, items});
-                                }} />
-                                <Button variant="ghost" size="icon" className="h-9 w-9 flex-shrink-0" onClick={() => {
+                                }} className="border-divider" />
+                                <Button variant="ghost" size="icon" className="h-9 w-9 flex-shrink-0 transition-all duration-300 ease-out" onClick={() => {
                                   const items = formData.items.filter((_: any, idx: number) => idx !== i);
                                   setFormData({...formData, items});
                                 }}>
@@ -649,28 +732,28 @@ export function EventDetailClient({
                       <>
                         <div className="grid grid-cols-2 gap-3">
                           <div className="space-y-2">
-                            <Label>Service Type</Label>
-                            <Input value={formData.service_type || ''} onChange={e => setFormData({...formData, service_type: e.target.value})} />
+                            <Label className="text-[13px] leading-[18px] text-text-secondary">Service Type</Label>
+                            <Input value={formData.service_type || ''} onChange={e => setFormData({...formData, service_type: e.target.value})} className="border-divider" />
                           </div>
                           <div className="space-y-2">
-                            <Label>Vendor Name</Label>
-                            <Input value={formData.vendor_name || ''} onChange={e => setFormData({...formData, vendor_name: e.target.value})} />
+                            <Label className="text-[13px] leading-[18px] text-text-secondary">Vendor Name</Label>
+                            <Input value={formData.vendor_name || ''} onChange={e => setFormData({...formData, vendor_name: e.target.value})} className="border-divider" />
                           </div>
                         </div>
                         <div className="grid grid-cols-3 gap-3">
                           <div className="space-y-2">
-                            <Label>Rate</Label>
-                            <Input type="number" value={formData.rate || ''} onChange={e => setFormData({...formData, rate: Number(e.target.value)})} />
+                            <Label className="text-[13px] leading-[18px] text-text-secondary">Rate</Label>
+                            <Input type="number" value={formData.rate || ''} onChange={e => setFormData({...formData, rate: Number(e.target.value)})} className="border-divider" />
                           </div>
                           <div className="space-y-2">
-                            <Label>No. of Persons</Label>
-                            <Input type="number" value={formData.persons || ''} onChange={e => setFormData({...formData, persons: Number(e.target.value)})} />
+                            <Label className="text-[13px] leading-[18px] text-text-secondary">No. of Persons</Label>
+                            <Input type="number" value={formData.persons || ''} onChange={e => setFormData({...formData, persons: Number(e.target.value)})} className="border-divider" />
                           </div>
                           <div className="space-y-2">
-                            <Label>Duration</Label>
+                            <Label className="text-[13px] leading-[18px] text-text-secondary">Duration</Label>
                             <div className="flex gap-1">
-                              <Input type="number" value={formData.duration || ''} onChange={e => setFormData({...formData, duration: Number(e.target.value)})} />
-                              <select className="h-9 rounded-lg border border-neutral-300 dark:border-neutral-700 bg-transparent text-xs px-1" value={formData.duration_unit || 'days'} onChange={e => setFormData({...formData, duration_unit: e.target.value})}>
+                              <Input type="number" value={formData.duration || ''} onChange={e => setFormData({...formData, duration: Number(e.target.value)})} className="border-divider" />
+                              <select className="h-9 rounded-lg border border-divider bg-transparent text-[13px] leading-[18px] px-1" value={formData.duration_unit || 'days'} onChange={e => setFormData({...formData, duration_unit: e.target.value})}>
                                 <option value="days">Days</option>
                                 <option value="hours">Hours</option>
                               </select>
@@ -682,16 +765,16 @@ export function EventDetailClient({
 
                     {expenseType === 'other' && (
                       <div className="space-y-2">
-                        <Label>Expense Name</Label>
-                        <Input value={formData.expense_name || ''} onChange={e => setFormData({...formData, expense_name: e.target.value})} />
+                        <Label className="text-[13px] leading-[18px] text-text-secondary">Expense Name</Label>
+                        <Input value={formData.expense_name || ''} onChange={e => setFormData({...formData, expense_name: e.target.value})} className="border-divider" />
                         <div className="grid grid-cols-2 gap-3">
                           <div className="space-y-2">
-                            <Label>Unit Cost</Label>
-                            <Input type="number" value={formData.unit_cost || ''} onChange={e => setFormData({...formData, unit_cost: Number(e.target.value)})} />
+                            <Label className="text-[13px] leading-[18px] text-text-secondary">Unit Cost</Label>
+                            <Input type="number" value={formData.unit_cost || ''} onChange={e => setFormData({...formData, unit_cost: Number(e.target.value)})} className="border-divider" />
                           </div>
                           <div className="space-y-2">
-                            <Label>Quantity</Label>
-                            <Input type="number" value={formData.qty || 1} onChange={e => setFormData({...formData, qty: Number(e.target.value)})} />
+                            <Label className="text-[13px] leading-[18px] text-text-secondary">Quantity</Label>
+                            <Input type="number" value={formData.qty || 1} onChange={e => setFormData({...formData, qty: Number(e.target.value)})} className="border-divider" />
                           </div>
                         </div>
                       </div>
@@ -699,40 +782,40 @@ export function EventDetailClient({
 
                     {/* Formula Breakdown */}
                     {(expenseType === 'transport' || expenseType === 'food' || expenseType === 'labor') && (
-                      <div className="bg-neutral-50 dark:bg-neutral-900 rounded-lg p-4 text-sm">
-                        <p className="font-medium mb-1">Formula Breakdown</p>
+                      <div className="bg-surface-gray rounded-xl p-4 text-[15px] leading-[22px]">
+                        <p className="font-medium mb-1 text-text-primary">Formula Breakdown</p>
                         {expenseType === 'transport' && (
-                          <p className="text-neutral-600 dark:text-neutral-400">
-                            ₱{(formData.fare_per_person || 0).toFixed(2)} × {formData.persons || 0} persons × {formData.trips || 0} trips = <span className="font-semibold text-neutral-900 dark:text-white">{formatCurrency((formData.fare_per_person || 0) * (formData.persons || 0) * (formData.trips || 0))}</span>
+                          <p className="text-text-secondary">
+                            ₱{(formData.fare_per_person || 0).toFixed(2)} × {formData.persons || 0} persons × {formData.trips || 0} trips = <span className="font-semibold text-text-primary">{formatCurrency((formData.fare_per_person || 0) * (formData.persons || 0) * (formData.trips || 0))}</span>
                           </p>
                         )}
                         {expenseType === 'food' && (
-                          <p className="text-neutral-600 dark:text-neutral-400">
-                            ₱{(formData.cost_per_person || 0).toFixed(2)} × {formData.persons || 0} persons × {formData.meals || 0} meals = <span className="font-semibold text-neutral-900 dark:text-white">{formatCurrency((formData.cost_per_person || 0) * (formData.persons || 0) * (formData.meals || 0))}</span>
+                          <p className="text-text-secondary">
+                            ₱{(formData.cost_per_person || 0).toFixed(2)} × {formData.persons || 0} persons × {formData.meals || 0} meals = <span className="font-semibold text-text-primary">{formatCurrency((formData.cost_per_person || 0) * (formData.persons || 0) * (formData.meals || 0))}</span>
                           </p>
                         )}
                         {expenseType === 'labor' && (
-                          <p className="text-neutral-600 dark:text-neutral-400">
-                            ₱{(formData.rate || 0).toFixed(2)} × {formData.persons || 0} persons × {formData.duration || 0} {formData.duration_unit || 'days'} = <span className="font-semibold text-neutral-900 dark:text-white">{formatCurrency((formData.rate || 0) * (formData.persons || 0) * (formData.duration || 0))}</span>
+                          <p className="text-text-secondary">
+                            ₱{(formData.rate || 0).toFixed(2)} × {formData.persons || 0} persons × {formData.duration || 0} {formData.duration_unit || 'days'} = <span className="font-semibold text-text-primary">{formatCurrency((formData.rate || 0) * (formData.persons || 0) * (formData.duration || 0))}</span>
                           </p>
                         )}
                       </div>
                     )}
 
                     {expenseType === 'supplies' && (
-                      <div className="bg-neutral-50 dark:bg-neutral-900 rounded-lg p-4 text-sm">
-                        <p className="font-medium mb-1">Total: {formatCurrency((formData.items || []).reduce((sum: number, i: any) => sum + (i.unit_cost || 0) * (i.qty || 0), 0))}</p>
+                      <div className="bg-surface-gray rounded-xl p-4 text-[15px] leading-[22px]">
+                        <p className="font-medium text-text-primary">Total: {formatCurrency((formData.items || []).reduce((sum: number, i: any) => sum + (i.unit_cost || 0) * (i.qty || 0), 0))}</p>
                       </div>
                     )}
 
                     {expenseType === 'other' && (
-                      <div className="bg-neutral-50 dark:bg-neutral-900 rounded-lg p-4 text-sm">
-                        <p className="font-medium mb-1">Total: {formatCurrency((formData.unit_cost || 0) * (formData.qty || 1))}</p>
+                      <div className="bg-surface-gray rounded-xl p-4 text-[15px] leading-[22px]">
+                        <p className="font-medium text-text-primary">Total: {formatCurrency((formData.unit_cost || 0) * (formData.qty || 1))}</p>
                       </div>
                     )}
 
                     <Separator />
-                    <Button type="button" variant="secondary" onClick={() => setFormStep(3)}>
+                    <Button type="button" variant="secondary" onClick={() => setFormStep(3)} className="transition-all duration-300 ease-out">
                       Next: Witnesses & Certification
                     </Button>
                   </div>
@@ -740,37 +823,37 @@ export function EventDetailClient({
 
                 {formStep === 3 && (
                   <div className="space-y-4">
-                    <Button variant="ghost" size="sm" onClick={() => setFormStep(2)} className="mb-2">
+                    <Button variant="ghost" size="sm" onClick={() => setFormStep(2)} className="mb-2 transition-all duration-300 ease-out">
                       <ArrowLeft className="h-4 w-4 mr-1" /> Back
                     </Button>
 
                     {/* Witnesses */}
                     <div className="space-y-3">
                       <div className="flex items-center justify-between">
-                        <Label>Witnesses</Label>
-                        <Button type="button" variant="ghost" size="sm" onClick={() => setFormData({...formData, witnesses: [...(formData.witnesses || []), { name: '', role: '' }]})}>
+                        <Label className="text-[13px] leading-[18px] text-text-secondary">Witnesses</Label>
+                        <Button type="button" variant="ghost" size="sm" onClick={() => setFormData({...formData, witnesses: [...(formData.witnesses || []), { name: '', role: '' }]})} className="transition-all duration-300 ease-out">
                           <Plus className="h-3 w-3 mr-1" /> Add Witness
                         </Button>
                       </div>
                       {(formData.witnesses || []).map((w: any, i: number) => (
                         <div key={i} className="flex gap-2 items-end">
                           <div className="flex-1 space-y-1">
-                            <Label className="text-xs">Full Name</Label>
+                            <Label className="text-[11px] leading-[14px] text-text-secondary">Full Name</Label>
                             <Input value={w.name} onChange={e => {
                               const ws = [...formData.witnesses];
                               ws[i].name = e.target.value;
                               setFormData({...formData, witnesses: ws});
-                            }} placeholder="Full name of witness" />
+                            }} placeholder="Full name of witness" className="border-divider" />
                           </div>
                           <div className="flex-1 space-y-1">
-                            <Label className="text-xs">Role/Position (optional)</Label>
+                            <Label className="text-[11px] leading-[14px] text-text-secondary">Role/Position (optional)</Label>
                             <Input value={w.role || ''} onChange={e => {
                               const ws = [...formData.witnesses];
                               ws[i].role = e.target.value;
                               setFormData({...formData, witnesses: ws});
-                            }} placeholder="e.g., Class president" />
+                            }} placeholder="e.g., Class president" className="border-divider" />
                           </div>
-                          <Button variant="ghost" size="icon" className="h-9 w-9 flex-shrink-0 mb-0" onClick={() => setFormData({...formData, witnesses: formData.witnesses.filter((_: any, idx: number) => idx !== i)})}>
+                          <Button variant="ghost" size="icon" className="h-9 w-9 flex-shrink-0 mb-0 transition-all duration-300 ease-out" onClick={() => setFormData({...formData, witnesses: formData.witnesses.filter((_: any, idx: number) => idx !== i)})}>
                             <Trash2 className="h-3 w-3" />
                           </Button>
                         </div>
@@ -778,145 +861,168 @@ export function EventDetailClient({
                     </div>
 
                     {/* Certification */}
-                    <label className="flex items-start gap-3 p-4 rounded-lg border border-neutral-200 dark:border-neutral-800 cursor-pointer">
+                    <label className="flex items-start gap-3 p-4 rounded-xl border border-divider cursor-pointer transition-all duration-300 ease-out">
                       <input type="checkbox" className="mt-1 h-4 w-4" checked={formData.certification || false} onChange={e => setFormData({...formData, certification: e.target.checked})} />
-                      <span className="text-sm text-neutral-600 dark:text-neutral-400">
+                      <span className="text-[15px] leading-[22px] text-text-secondary">
                         I certify that the above is true and correct and that no receipt was issued for this expense.
                       </span>
                     </label>
 
-                    <Button onClick={handleSubmitForm} disabled={!formData.certification || submittingForm} className="w-full">
+                    <Button onClick={handleSubmitForm} disabled={!formData.certification || submittingForm} className="w-full bg-primary text-white hover:bg-primary/90 transition-all duration-300 ease-out">
                       {submittingForm ? 'Submitting...' : 'Submit for Review'}
                     </Button>
                   </div>
                 )}
-              </DialogContent>
-            </Dialog>
+              </ResponsiveDialog>
+            </>
           )}
 
-          {forms.length === 0 ? (
-            <Card>
-              <CardContent className="text-center py-8 text-sm text-neutral-500">
-                No no-receipt forms yet
-              </CardContent>
-            </Card>
-          ) : (
-            <div className="space-y-3">
-              {forms.map((form) => (
-                <div key={form.id} onClick={() => setSelectedForm(form)} role="button" tabIndex={0} onKeyDown={(e) => e.key === 'Enter' && setSelectedForm(form)} className="w-full text-left">
-                  <Card className="hover:shadow-md transition-all cursor-pointer">
-                    <CardContent className="p-4">
-                      <div className="flex items-start justify-between">
-                        <div className="min-w-0 flex-1">
-                          <div className="flex items-center gap-2">
-                            <span className="text-sm font-medium">{form.expense_name}</span>
-                            <Badge variant={form.status as any}>{form.status}</Badge>
-                          </div>
-                          <p className="text-xs text-neutral-500 mt-1 whitespace-pre-wrap break-words">{form.description}</p>
-                          <div className="flex items-center gap-3 mt-2 text-xs text-neutral-500">
-                            <span>{formatCurrency(form.amount)}</span>
-                            <span>{form.expense_type}</span>
-                            <span>{formatDate(form.created_at)}</span>
-                          </div>
-                          {form.rejection_reason && (
-                            <div className="mt-2 text-xs text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 rounded-lg p-2">
-Rejection reason: <span className="min-w-0 break-words">{form.rejection_reason}</span>
-                          </div>
-                        )}
-                        {form.rejection_reason && form.status === 'pending' && (
-                          <Button size="sm" variant="outline" className="mt-2" onClick={(e) => { e.stopPropagation(); setResubmitTarget(form); setResubmitExplanation(''); }}>
-                            Resubmit with Explanation
-                          </Button>
-                        )}
-                        </div>
-                        {form.transaction_hash && (
-                          <Badge variant="success" className="flex items-center gap-1 text-[10px]">
-                            <Shield className="h-3 w-3" /> Verified
-                          </Badge>
-                        )}
+          <AnimatePresence mode="wait">
+            {forms.length === 0 ? (
+              <motion.div
+                key="empty-forms"
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -8 }}
+                transition={{ type: 'spring', stiffness: 260, damping: 20 }}
+              >
+                <Card className="bg-surface-white rounded-xl shadow-sm">
+                  <CardContent className="text-center py-8 text-[15px] leading-[22px] text-text-secondary">
+                    No no-receipt forms yet
+                  </CardContent>
+                </Card>
+              </motion.div>
+            ) : (
+              <motion.div
+                key="form-list"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+              >
+                <div className="space-y-3">
+                  {forms.map((form, index) => (
+                    <motion.div
+                      key={form.id}
+                      initial={{ opacity: 0, y: 12 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: index * 0.04, type: 'spring', stiffness: 260, damping: 20 }}
+                    >
+                      <div onClick={() => setSelectedForm(form)} role="button" tabIndex={0} onKeyDown={(e) => e.key === 'Enter' && setSelectedForm(form)} className="w-full text-left">
+                        <Card className="bg-surface-white rounded-xl shadow-sm hover:shadow-md transition-all duration-300 ease-out cursor-pointer">
+                          <CardContent className="p-4">
+                            <div className="flex items-start justify-between">
+                              <div className="min-w-0 flex-1">
+                                <div className="flex items-center gap-2">
+                                  <span className="text-[15px] leading-[22px] font-medium text-text-primary">{form.expense_name}</span>
+                                  <Badge variant={form.status as any} className={cn(
+                                    'text-[11px] leading-[14px]',
+                                    form.status === 'approved' && 'bg-primary-tint-bg text-primary-tint-text border-0',
+                                    form.status === 'pending' && 'bg-amber-50 text-amber-700 border-0',
+                                    form.status === 'rejected' && 'bg-red-50 text-error border-0',
+                                  )}>{form.status}</Badge>
+                                </div>
+                                <p className="text-[13px] leading-[18px] text-text-secondary mt-1 whitespace-pre-wrap break-words">{form.description}</p>
+                                <div className="flex items-center gap-3 mt-2 text-[13px] leading-[18px] text-text-secondary">
+                                  <span>{formatCurrency(form.amount)}</span>
+                                  <span>{form.expense_type}</span>
+                                  <span>{formatDate(form.created_at)}</span>
+                                </div>
+                                {form.rejection_reason && (
+                                  <div className="mt-2 text-[13px] leading-[18px] text-error bg-error/10 rounded-xl p-2">
+  Rejection reason: <span className="min-w-0 break-words">{form.rejection_reason}</span>
+                                </div>
+                              )}
+                              {form.rejection_reason && form.status === 'pending' && (
+                                <Button size="sm" variant="outline" className="mt-2 transition-all duration-300 ease-out" onClick={(e) => { e.stopPropagation(); setResubmitTarget(form); setResubmitExplanation(''); }}>
+                                  Resubmit with Explanation
+                                </Button>
+                              )}
+                              </div>
+                              {form.transaction_hash && (
+                                <Badge className="bg-primary-tint-bg text-primary-tint-text flex items-center gap-1 text-[11px] leading-[14px] border-0">
+                                  <Shield className="h-3 w-3" /> Verified
+                                </Badge>
+                              )}
+                            </div>
+                          </CardContent>
+                        </Card>
                       </div>
-                    </CardContent>
-                  </Card>
+                    </motion.div>
+                  ))}
                 </div>
-              ))}
-            </div>
-          )}
+              </motion.div>
+            )}
+          </AnimatePresence>
+          </motion.div>
         </TabsContent>
       </Tabs>
 
       {/* Resubmit Dialog */}
-      <Dialog open={!!resubmitTarget} onOpenChange={(open) => { if (!open) { setResubmitTarget(null); setResubmitExplanation(''); } }}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Resubmit No-Receipt Form</DialogTitle>
-            <DialogDescription>
-              Provide an explanation for why this expense should be approved.
-            </DialogDescription>
-          </DialogHeader>
+      <ResponsiveDialog open={!!resubmitTarget} onOpenChange={(open) => { if (!open) { setResubmitTarget(null); setResubmitExplanation(''); } }} title="Resubmit No-Receipt Form" description="Provide an explanation for why this expense should be approved.">
           <div className="space-y-4">
             {resubmitTarget?.rejection_reason && (
-              <div className="text-xs text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 rounded-lg p-2">
+              <div className="text-[13px] leading-[18px] text-error bg-error/10 rounded-xl p-2">
                 Previous rejection reason: {resubmitTarget.rejection_reason}
               </div>
             )}
             <div className="space-y-2">
-              <Label>Your Explanation</Label>
+              <Label className="text-[13px] leading-[18px] text-text-secondary">Your Explanation</Label>
               <Textarea
                 value={resubmitExplanation}
                 onChange={e => setResubmitExplanation(e.target.value)}
                 placeholder="Explain why this expense should be reconsidered..."
                 rows={4}
+                className="border-divider"
               />
             </div>
-            <Button className="w-full" onClick={handleResubmit} disabled={!resubmitExplanation.trim() || resubmitting}>
+            <Button className="w-full bg-primary text-white hover:bg-primary/90 transition-all duration-300 ease-out" onClick={handleResubmit} disabled={!resubmitExplanation.trim() || resubmitting}>
               {resubmitting ? 'Submitting...' : 'Submit Explanation'}
             </Button>
           </div>
-        </DialogContent>
-      </Dialog>
+      </ResponsiveDialog>
 
       {/* Form Detail Modal */}
-      <Dialog open={!!selectedForm} onOpenChange={(open) => !open && setSelectedForm(null)}>
-        <DialogContent className="max-w-[calc(100vw-32px)] sm:max-w-3xl max-h-[95vh] overflow-y-auto">
+      <ResponsiveDialog open={!!selectedForm} onOpenChange={(open) => !open && setSelectedForm(null)} title={selectedForm?.expense_name || ''} description="No-Receipt Form Details">
           {selectedForm && (
             <>
-              <DialogHeader>
-                <DialogTitle>{selectedForm.expense_name}</DialogTitle>
-                <DialogDescription>No-Receipt Form Details</DialogDescription>
-              </DialogHeader>
               <div className="space-y-4 min-w-0">
-                <div className="grid grid-cols-2 gap-3 text-sm">
+                <div className="grid grid-cols-2 gap-3 text-[15px] leading-[22px]">
                   <div className="min-w-0">
-                    <p className="text-xs text-neutral-500">Expense Type</p>
-                    <p className="font-medium capitalize break-words">{selectedForm.expense_type}</p>
+                    <p className="text-[13px] leading-[18px] text-text-secondary">Expense Type</p>
+                    <p className="font-medium capitalize break-words text-text-primary">{selectedForm.expense_type}</p>
                   </div>
                   <div className="min-w-0">
-                    <p className="text-xs text-neutral-500">Amount</p>
-                    <p className="font-medium">{formatCurrency(selectedForm.amount)}</p>
+                    <p className="text-[13px] leading-[18px] text-text-secondary">Amount</p>
+                    <p className="font-medium text-text-primary">{formatCurrency(selectedForm.amount)}</p>
                   </div>
                   <div className="min-w-0">
-                    <p className="text-xs text-neutral-500">Date Incurred</p>
-                    <p className="font-medium">{formatDate(selectedForm.date_incurred)}</p>
+                    <p className="text-[13px] leading-[18px] text-text-secondary">Date Incurred</p>
+                    <p className="font-medium text-text-primary">{formatDate(selectedForm.date_incurred)}</p>
                   </div>
                   <div className="min-w-0">
-                    <p className="text-xs text-neutral-500">Status</p>
-                    <Badge variant={selectedForm.status as any}>{selectedForm.status}</Badge>
+                    <p className="text-[13px] leading-[18px] text-text-secondary">Status</p>
+                    <Badge variant={selectedForm.status as any} className={cn(
+                      'text-[11px] leading-[14px]',
+                      selectedForm.status === 'approved' && 'bg-primary-tint-bg text-primary-tint-text border-0',
+                      selectedForm.status === 'pending' && 'bg-amber-50 text-amber-700 border-0',
+                      selectedForm.status === 'rejected' && 'bg-red-50 text-error border-0',
+                    )}>{selectedForm.status}</Badge>
                   </div>
                 </div>
 
                 <Separator />
 
                 <div>
-                  <p className="text-xs text-neutral-500 mb-1">Description</p>
-                  <p className="text-sm whitespace-pre-wrap break-words">{selectedForm.description}</p>
+                  <p className="text-[13px] leading-[18px] text-text-secondary mb-1">Description</p>
+                  <p className="text-[15px] leading-[22px] text-text-body whitespace-pre-wrap break-words">{selectedForm.description}</p>
                 </div>
 
                 {selectedForm.formula_breakdown && (
                   <>
                     <Separator />
                     <div>
-                      <p className="text-xs text-neutral-500 mb-1">Formula Breakdown</p>
-                      <p className="text-sm text-neutral-600 dark:text-neutral-400 whitespace-pre-wrap break-words">{selectedForm.formula_breakdown}</p>
+                      <p className="text-[13px] leading-[18px] text-text-secondary mb-1">Formula Breakdown</p>
+                      <p className="text-[15px] leading-[22px] text-text-secondary whitespace-pre-wrap break-words">{selectedForm.formula_breakdown}</p>
                     </div>
                   </>
                 )}
@@ -926,13 +1032,13 @@ Rejection reason: <span className="min-w-0 break-words">{form.rejection_reason}<
                   <>
                     <Separator />
                     <div>
-                      <p className="text-xs text-neutral-500 mb-2 font-semibold">Transport Details</p>
-                      <div className="grid grid-cols-2 gap-2 text-sm">
-                        <div className="min-w-0 break-words"><p className="text-xs text-neutral-400">Mode</p><p>{selectedForm.transport_data.mode}</p></div>
-                        <div className="min-w-0 break-words"><p className="text-xs text-neutral-400">Route</p><p>{selectedForm.transport_data.route}</p></div>
-                        <div><p className="text-xs text-neutral-400">Fare/Person</p><p>{formatCurrency(selectedForm.transport_data.fare_per_person)}</p></div>
-                        <div><p className="text-xs text-neutral-400">Persons</p><p>{selectedForm.transport_data.persons}</p></div>
-                        <div><p className="text-xs text-neutral-400">Trips</p><p>{selectedForm.transport_data.trips}</p></div>
+                      <p className="text-[13px] leading-[18px] text-text-secondary mb-2 font-semibold">Transport Details</p>
+                      <div className="grid grid-cols-2 gap-2 text-[15px] leading-[22px]">
+                        <div className="min-w-0 break-words"><p className="text-[13px] leading-[18px] text-text-placeholder">Mode</p><p className="text-text-body">{selectedForm.transport_data.mode}</p></div>
+                        <div className="min-w-0 break-words"><p className="text-[13px] leading-[18px] text-text-placeholder">Route</p><p className="text-text-body">{selectedForm.transport_data.route}</p></div>
+                        <div><p className="text-[13px] leading-[18px] text-text-placeholder">Fare/Person</p><p className="text-text-body">{formatCurrency(selectedForm.transport_data.fare_per_person)}</p></div>
+                        <div><p className="text-[13px] leading-[18px] text-text-placeholder">Persons</p><p className="text-text-body">{selectedForm.transport_data.persons}</p></div>
+                        <div><p className="text-[13px] leading-[18px] text-text-placeholder">Trips</p><p className="text-text-body">{selectedForm.transport_data.trips}</p></div>
                       </div>
                     </div>
                   </>
@@ -942,13 +1048,13 @@ Rejection reason: <span className="min-w-0 break-words">{form.rejection_reason}<
                   <>
                     <Separator />
                     <div>
-                      <p className="text-xs text-neutral-500 mb-2 font-semibold">Food / Meals Details</p>
-                      <div className="grid grid-cols-2 gap-2 text-sm">
-                        <div className="min-w-0 break-words"><p className="text-xs text-neutral-400">Meal Type</p><p>{selectedForm.food_data.meal_type}</p></div>
-                        <div className="min-w-0 break-words"><p className="text-xs text-neutral-400">Vendor</p><p>{selectedForm.food_data.vendor}</p></div>
-                        <div><p className="text-xs text-neutral-400">Cost/Person</p><p>{formatCurrency(selectedForm.food_data.cost_per_person)}</p></div>
-                        <div><p className="text-xs text-neutral-400">Persons</p><p>{selectedForm.food_data.persons}</p></div>
-                        <div><p className="text-xs text-neutral-400">Meals</p><p>{selectedForm.food_data.meals}</p></div>
+                      <p className="text-[13px] leading-[18px] text-text-secondary mb-2 font-semibold">Food / Meals Details</p>
+                      <div className="grid grid-cols-2 gap-2 text-[15px] leading-[22px]">
+                        <div className="min-w-0 break-words"><p className="text-[13px] leading-[18px] text-text-placeholder">Meal Type</p><p className="text-text-body">{selectedForm.food_data.meal_type}</p></div>
+                        <div className="min-w-0 break-words"><p className="text-[13px] leading-[18px] text-text-placeholder">Vendor</p><p className="text-text-body">{selectedForm.food_data.vendor}</p></div>
+                        <div><p className="text-[13px] leading-[18px] text-text-placeholder">Cost/Person</p><p className="text-text-body">{formatCurrency(selectedForm.food_data.cost_per_person)}</p></div>
+                        <div><p className="text-[13px] leading-[18px] text-text-placeholder">Persons</p><p className="text-text-body">{selectedForm.food_data.persons}</p></div>
+                        <div><p className="text-[13px] leading-[18px] text-text-placeholder">Meals</p><p className="text-text-body">{selectedForm.food_data.meals}</p></div>
                       </div>
                     </div>
                   </>
@@ -958,14 +1064,14 @@ Rejection reason: <span className="min-w-0 break-words">{form.rejection_reason}<
                   <>
                     <Separator />
                     <div>
-                      <p className="text-xs text-neutral-500 mb-2 font-semibold">Supplies Items</p>
-                      <div className="space-y-1 text-sm">
+                      <p className="text-[13px] leading-[18px] text-text-secondary mb-2 font-semibold">Supplies Items</p>
+                      <div className="space-y-1 text-[15px] leading-[22px]">
                         {selectedForm.supplies_data.map((item: any, i: number) => (
-                          <div key={i} className="flex justify-between text-xs border-b border-neutral-100 dark:border-neutral-800 pb-1">
-                            <span className="flex-1 min-w-0 break-words">{item.item_name}</span>
-                            <span className="w-16 text-right">{item.qty}x</span>
-                            <span className="w-20 text-right">{formatCurrency(item.unit_cost)}</span>
-                            <span className="w-20 text-right font-medium">{formatCurrency(item.total)}</span>
+                          <div key={i} className="flex justify-between text-[13px] leading-[18px] border-b border-divider pb-1">
+                            <span className="flex-1 min-w-0 break-words text-text-body">{item.item_name}</span>
+                            <span className="w-16 text-right text-text-secondary">{item.qty}x</span>
+                            <span className="w-20 text-right text-text-secondary">{formatCurrency(item.unit_cost)}</span>
+                            <span className="w-20 text-right font-medium text-text-primary">{formatCurrency(item.total)}</span>
                           </div>
                         ))}
                       </div>
@@ -977,13 +1083,13 @@ Rejection reason: <span className="min-w-0 break-words">{form.rejection_reason}<
                   <>
                     <Separator />
                     <div>
-                      <p className="text-xs text-neutral-500 mb-2 font-semibold">Labor / Service Details</p>
-                      <div className="grid grid-cols-2 gap-2 text-sm">
-                        <div className="min-w-0 break-words"><p className="text-xs text-neutral-400">Service Type</p><p>{selectedForm.labor_data.service_type}</p></div>
-                        <div className="min-w-0 break-words"><p className="text-xs text-neutral-400">Vendor</p><p>{selectedForm.labor_data.vendor_name || selectedForm.labor_data.vendor}</p></div>
-                        <div><p className="text-xs text-neutral-400">Rate</p><p>{formatCurrency(selectedForm.labor_data.rate)}</p></div>
-                        <div><p className="text-xs text-neutral-400">Persons</p><p>{selectedForm.labor_data.persons}</p></div>
-                        <div><p className="text-xs text-neutral-400">Duration</p><p>{selectedForm.labor_data.duration} {selectedForm.labor_data.duration_unit}</p></div>
+                      <p className="text-[13px] leading-[18px] text-text-secondary mb-2 font-semibold">Labor / Service Details</p>
+                      <div className="grid grid-cols-2 gap-2 text-[15px] leading-[22px]">
+                        <div className="min-w-0 break-words"><p className="text-[13px] leading-[18px] text-text-placeholder">Service Type</p><p className="text-text-body">{selectedForm.labor_data.service_type}</p></div>
+                        <div className="min-w-0 break-words"><p className="text-[13px] leading-[18px] text-text-placeholder">Vendor</p><p className="text-text-body">{selectedForm.labor_data.vendor_name || selectedForm.labor_data.vendor}</p></div>
+                        <div><p className="text-[13px] leading-[18px] text-text-placeholder">Rate</p><p className="text-text-body">{formatCurrency(selectedForm.labor_data.rate)}</p></div>
+                        <div><p className="text-[13px] leading-[18px] text-text-placeholder">Persons</p><p className="text-text-body">{selectedForm.labor_data.persons}</p></div>
+                        <div><p className="text-[13px] leading-[18px] text-text-placeholder">Duration</p><p className="text-text-body">{selectedForm.labor_data.duration} {selectedForm.labor_data.duration_unit}</p></div>
                       </div>
                     </div>
                   </>
@@ -993,11 +1099,11 @@ Rejection reason: <span className="min-w-0 break-words">{form.rejection_reason}<
                   <>
                     <Separator />
                     <div>
-                      <p className="text-xs text-neutral-500 mb-2 font-semibold">Other Details</p>
-                      <div className="grid grid-cols-2 gap-2 text-sm">
-                        <div className="min-w-0 break-words"><p className="text-xs text-neutral-400">Item</p><p>{selectedForm.other_data.expense_name}</p></div>
-                        <div><p className="text-xs text-neutral-400">Unit Cost</p><p>{formatCurrency(selectedForm.other_data.unit_cost)}</p></div>
-                        <div><p className="text-xs text-neutral-400">Quantity</p><p>{selectedForm.other_data.qty}</p></div>
+                      <p className="text-[13px] leading-[18px] text-text-secondary mb-2 font-semibold">Other Details</p>
+                      <div className="grid grid-cols-2 gap-2 text-[15px] leading-[22px]">
+                        <div className="min-w-0 break-words"><p className="text-[13px] leading-[18px] text-text-placeholder">Item</p><p className="text-text-body">{selectedForm.other_data.expense_name}</p></div>
+                        <div><p className="text-[13px] leading-[18px] text-text-placeholder">Unit Cost</p><p className="text-text-body">{formatCurrency(selectedForm.other_data.unit_cost)}</p></div>
+                        <div><p className="text-[13px] leading-[18px] text-text-placeholder">Quantity</p><p className="text-text-body">{selectedForm.other_data.qty}</p></div>
                       </div>
                     </div>
                   </>
@@ -1008,12 +1114,12 @@ Rejection reason: <span className="min-w-0 break-words">{form.rejection_reason}<
                   <>
                     <Separator />
                     <div>
-                      <p className="text-xs text-neutral-500 mb-2 font-semibold">Witnesses</p>
-                      <div className="space-y-1 text-sm">
+                      <p className="text-[13px] leading-[18px] text-text-secondary mb-2 font-semibold">Witnesses</p>
+                      <div className="space-y-1 text-[15px] leading-[22px]">
                         {selectedForm.witnesses.filter((w: any) => !w._marker).map((w: any, i: number) => (
-                          <div key={i} className="text-xs">
-                            <span className="font-medium">{w.name}</span>
-                            {w.role && <span className="text-neutral-500"> — {w.role}</span>}
+                          <div key={i} className="text-[13px] leading-[18px]">
+                            <span className="font-medium text-text-primary">{w.name}</span>
+                            {w.role && <span className="text-text-secondary"> — {w.role}</span>}
                           </div>
                         ))}
                       </div>
@@ -1024,17 +1130,17 @@ Rejection reason: <span className="min-w-0 break-words">{form.rejection_reason}<
                 {/* Certification */}
                 <Separator />
                 <div className="flex items-center gap-2">
-                  <div className={cn('h-4 w-4 rounded border flex items-center justify-center', selectedForm.certification ? 'bg-neutral-900 dark:bg-white' : 'border-neutral-300 dark:border-neutral-700')}>
-                    {selectedForm.certification && <CheckCircle className="h-3 w-3 text-white dark:text-neutral-900" />}
+                  <div className={cn('h-4 w-4 rounded border flex items-center justify-center', selectedForm.certification ? 'bg-primary text-white' : 'border-divider')}>
+                    {selectedForm.certification && <CheckCircle className="h-3 w-3 text-white" />}
                   </div>
-                  <span className="text-xs text-neutral-500">Certified true and correct</span>
+                  <span className="text-[13px] leading-[18px] text-text-secondary">Certified true and correct</span>
                 </div>
 
                 {/* Rejection */}
                 {selectedForm.rejection_reason && (
                   <>
                     <Separator />
-                    <div className="text-xs text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 rounded-lg p-3">
+                    <div className="text-[13px] leading-[18px] text-error bg-error/10 rounded-xl p-3">
                       <p className="font-medium mb-1">Rejection Reason</p>
                       <p className="whitespace-pre-wrap break-words">{selectedForm.rejection_reason}</p>
                     </div>
@@ -1045,7 +1151,7 @@ Rejection reason: <span className="min-w-0 break-words">{form.rejection_reason}<
                 {selectedForm.transaction_hash && (
                   <>
                     <Separator />
-                    <Badge variant="success" className="flex items-center gap-1">
+                    <Badge className="bg-primary-tint-bg text-primary-tint-text flex items-center gap-1 border-0">
                       <Shield className="h-3 w-3" /> Blockchain Verified
                     </Badge>
                   </>
@@ -1053,18 +1159,17 @@ Rejection reason: <span className="min-w-0 break-words">{form.rejection_reason}<
               </div>
             </>
           )}
-        </DialogContent>
-      </Dialog>
+      </ResponsiveDialog>
 
       {/* Financial Report Section */}
       {receipts.filter(r => r.status === 'approved').length > 0 || forms.filter(f => f.status === 'approved').length > 0 ? (
-        <Card>
+        <Card className="bg-surface-white rounded-xl shadow-sm">
           <CardHeader>
-            <CardTitle className="text-sm font-medium">Financial Report</CardTitle>
+            <CardTitle className="text-[17px] leading-6 font-[590] tracking-[-0.02em]">Financial Report</CardTitle>
           </CardHeader>
           <CardContent>
             <Link href={`/officer/reports/${eventId}`} prefetch={true}>
-              <Button variant="secondary">
+              <Button variant="secondary" className="transition-all duration-300 ease-out">
                 <FileText className="h-4 w-4 mr-2" /> View Financial Report
               </Button>
             </Link>
@@ -1073,77 +1178,62 @@ Rejection reason: <span className="min-w-0 break-words">{form.rejection_reason}<
       ) : null}
 
       {/* OCR Error Dialog */}
-      <Dialog open={!!showOcrError} onOpenChange={(open) => { if (!open) setShowOcrError(null); }}>
-        <DialogContent className="max-w-[calc(100vw-32px)] sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>We couldn't read the receipt right now</DialogTitle>
-            <DialogDescription>
-              The receipt image could not be read. Try taking a clearer photo with better lighting, or tap Retry to try again.
-            </DialogDescription>
-          </DialogHeader>
+      <ResponsiveDialog open={!!showOcrError} onOpenChange={(open) => { if (!open) setShowOcrError(null); }} title="We couldn't read the receipt right now" description="The receipt image could not be read. Try taking a clearer photo with better lighting, or tap Retry to try again.">
           {showOcrError && (
             <div className="space-y-4">
-              <div className="relative w-full h-36 rounded-lg overflow-hidden bg-neutral-100 dark:bg-neutral-900">
+              <div className="relative w-full h-36 rounded-xl overflow-hidden bg-surface-gray">
                 <Image src={showOcrError.imageUrl} alt="Receipt" fill className="object-contain" sizes="(max-width: 768px) 100vw, 50vw" />
               </div>
               <div className="flex flex-col gap-2">
-                <Button onClick={handleRetake}>
+                <Button onClick={handleRetake} className="bg-primary text-white hover:bg-primary/90 transition-all duration-300 ease-out">
                   <Camera className="h-4 w-4 mr-2" /> Take Photo Again
                 </Button>
-                <Button onClick={handleRetryOcr} disabled={ocrRetrying || ocrErrorCooldown}>
+                <Button onClick={handleRetryOcr} disabled={ocrRetrying || ocrErrorCooldown} className="bg-primary text-white hover:bg-primary/90 transition-all duration-300 ease-out">
                   {ocrRetrying ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <RefreshCw className="h-4 w-4 mr-2" />}
                   {ocrRetrying ? 'Reading receipt...' : ocrErrorCooldown ? 'Please wait...' : 'Retry OCR'}
                 </Button>
-                <Button variant="outline" onClick={handleEnterManually}>
+                <Button variant="outline" onClick={handleEnterManually} className="transition-all duration-300 ease-out">
                   <FileText className="h-4 w-4 mr-2" /> Enter Manually
                 </Button>
               </div>
             </div>
           )}
-        </DialogContent>
-      </Dialog>
+      </ResponsiveDialog>
 
       {/* Receipt Review Modal */}
-      <Dialog open={!!reviewReceipt} onOpenChange={(open) => { if (!open) { setReviewReceipt(false); setEditingReceipt(null); } }}>
-        <DialogContent className="max-w-[calc(100vw-32px)] sm:max-w-3xl max-h-[85vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>{reviewParsed ? 'Review Receipt Data' : 'Manual Receipt Entry'}</DialogTitle>
-            <DialogDescription>
-              {reviewParsed ? 'Verify the OCR-parsed data below and confirm to deduct from budget.' : 'OCR parsing failed. Please fill in the receipt details manually.'}
-            </DialogDescription>
-          </DialogHeader>
+      <ResponsiveDialog open={!!reviewReceipt} onOpenChange={(open) => { if (!open) { setReviewReceipt(false); setEditingReceipt(null); } }} title={reviewParsed ? 'Review Receipt Data' : 'Manual Receipt Entry'} description={reviewParsed ? 'Verify the OCR-parsed data below and confirm to deduct from budget.' : 'OCR parsing failed. Please fill in the receipt details manually.'}>
           {editingReceipt && (
             <div className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="relative w-full h-48">
-                  <Image src={reviewImageUrl} alt="Receipt" fill className="rounded-lg object-cover" sizes="(max-width: 768px) 100vw, 50vw" />
+                  <Image src={reviewImageUrl} alt="Receipt" fill className="rounded-xl object-cover" sizes="(max-width: 768px) 100vw, 50vw" />
                 </div>
                 <div className="space-y-3">
                   <div className="space-y-1">
-                    <Label className="text-xs">Vendor / Store Name</Label>
-                    <Input value={editingReceipt.vendor || ''} onChange={e => setEditingReceipt({...editingReceipt, vendor: e.target.value})} />
+                    <Label className="text-[13px] leading-[18px] text-text-secondary">Vendor / Store Name</Label>
+                    <Input value={editingReceipt.vendor || ''} onChange={e => setEditingReceipt({...editingReceipt, vendor: e.target.value})} className="border-divider" />
                   </div>
                   <div className="grid grid-cols-2 gap-2">
                     <div className="space-y-1">
-                      <Label className="text-xs">SI/OR Number</Label>
-                      <Input value={editingReceipt.si_or_number || ''} onChange={e => setEditingReceipt({...editingReceipt, si_or_number: e.target.value})} />
+                      <Label className="text-[13px] leading-[18px] text-text-secondary">SI/OR Number</Label>
+                      <Input value={editingReceipt.si_or_number || ''} onChange={e => setEditingReceipt({...editingReceipt, si_or_number: e.target.value})} className="border-divider" />
                     </div>
                     <div className="space-y-1">
-                      <Label className="text-xs">Category</Label>
-                      <Input value={editingReceipt.category || ''} onChange={e => setEditingReceipt({...editingReceipt, category: e.target.value})} placeholder="e.g., Hardware, Office Supplies" />
+                      <Label className="text-[13px] leading-[18px] text-text-secondary">Category</Label>
+                      <Input value={editingReceipt.category || ''} onChange={e => setEditingReceipt({...editingReceipt, category: e.target.value})} placeholder="e.g., Hardware, Office Supplies" className="border-divider" />
                       {editingReceipt.category_reasoning && (
-                        <p className="text-[10px] text-neutral-400 mt-0.5 italic">OCR: {editingReceipt.category_reasoning}</p>
+                        <p className="text-[11px] leading-[14px] text-text-placeholder mt-0.5 italic">OCR: {editingReceipt.category_reasoning}</p>
                       )}
                     </div>
                   </div>
                   <div className="grid grid-cols-2 gap-2">
                     <div className="space-y-1">
-                      <Label className="text-xs">Date</Label>
-                      <Input value={editingReceipt.date || ''} onChange={e => setEditingReceipt({...editingReceipt, date: e.target.value})} placeholder="MM/DD/YYYY" />
+                      <Label className="text-[13px] leading-[18px] text-text-secondary">Date</Label>
+                      <Input value={editingReceipt.date || ''} onChange={e => setEditingReceipt({...editingReceipt, date: e.target.value})} placeholder="MM/DD/YYYY" className="border-divider" />
                     </div>
                     <div className="space-y-1">
-                      <Label className="text-xs">Time</Label>
-                      <Input value={editingReceipt.time || ''} onChange={e => setEditingReceipt({...editingReceipt, time: e.target.value})} placeholder="HH:MM" />
+                      <Label className="text-[13px] leading-[18px] text-text-secondary">Time</Label>
+                      <Input value={editingReceipt.time || ''} onChange={e => setEditingReceipt({...editingReceipt, time: e.target.value})} placeholder="HH:MM" className="border-divider" />
                     </div>
                   </div>
                 </div>
@@ -1154,40 +1244,40 @@ Rejection reason: <span className="min-w-0 break-words">{form.rejection_reason}<
               {/* Items */}
               <div>
                 <div className="flex items-center justify-between mb-2">
-                  <Label className="text-xs">Line Items</Label>
-                  <Button type="button" variant="ghost" size="sm" onClick={() => setEditingReceipt({...editingReceipt, items: [...(editingReceipt.items || []), { name: '', qty: 1, unit_price: 0, total: 0 }]})}>
+                  <Label className="text-[13px] leading-[18px] text-text-secondary">Line Items</Label>
+                  <Button type="button" variant="ghost" size="sm" onClick={() => setEditingReceipt({...editingReceipt, items: [...(editingReceipt.items || []), { name: '', qty: 1, unit_price: 0, total: 0 }]})} className="transition-all duration-300 ease-out">
                     <Plus className="h-3 w-3 mr-1" /> Add Item
                   </Button>
                 </div>
                 {(editingReceipt.items || []).map((item: any, i: number) => (
                   <div key={i} className="grid grid-cols-5 gap-2 mb-2 items-end">
                     <div className="col-span-2 space-y-1">
-                      <Label className="text-[10px]">Item</Label>
+                      <Label className="text-[11px] leading-[14px] text-text-secondary">Item</Label>
                       <Input size={1} value={item.name} onChange={e => {
                         const items = [...(editingReceipt.items || [])];
                         items[i].name = e.target.value;
                         setEditingReceipt({...editingReceipt, items});
-                      }} />
+                      }} className="border-divider" />
                     </div>
                     <div className="space-y-1">
-                      <Label className="text-[10px]">QTY</Label>
+                      <Label className="text-[11px] leading-[14px] text-text-secondary">QTY</Label>
                       <Input type="number" value={item.qty || 1} onChange={e => {
                         const items = [...(editingReceipt.items || [])];
                         items[i].qty = Number(e.target.value);
                         items[i].total = items[i].qty * (items[i].unit_price || 0);
                         setEditingReceipt({...editingReceipt, items});
-                      }} />
+                      }} className="border-divider" />
                     </div>
                     <div className="space-y-1">
-                      <Label className="text-[10px]">Price</Label>
+                      <Label className="text-[11px] leading-[14px] text-text-secondary">Price</Label>
                       <Input type="number" value={item.unit_price || 0} onChange={e => {
                         const items = [...(editingReceipt.items || [])];
                         items[i].unit_price = Number(e.target.value);
                         items[i].total = items[i].qty * items[i].unit_price;
                         setEditingReceipt({...editingReceipt, items});
-                      }} />
+                      }} className="border-divider" />
                     </div>
-                    <Button variant="ghost" size="icon" className="h-9 w-9" onClick={() => setEditingReceipt({...editingReceipt, items: editingReceipt.items.filter((_: any, idx: number) => idx !== i)})}>
+                    <Button variant="ghost" size="icon" className="h-9 w-9 transition-all duration-300 ease-out" onClick={() => setEditingReceipt({...editingReceipt, items: editingReceipt.items.filter((_: any, idx: number) => idx !== i)})}>
                       <Trash2 className="h-3 w-3" />
                     </Button>
                   </div>
@@ -1195,111 +1285,111 @@ Rejection reason: <span className="min-w-0 break-words">{form.rejection_reason}<
               </div>
 
               {(editingReceipt.subtotal !== undefined || editingReceipt.discount !== undefined) && (
-                <div className="space-y-1 bg-neutral-50 dark:bg-neutral-900 p-3 rounded-lg">
-                  <div className="flex justify-between text-sm">
-                    <span>Subtotal</span>
-                    <span>{formatCurrency(editingReceipt.subtotal || 0)}</span>
+                <div className="space-y-1 bg-surface-gray p-3 rounded-xl">
+                  <div className="flex justify-between text-[15px] leading-[22px]">
+                    <span className="text-text-body">Subtotal</span>
+                    <span className="text-text-primary">{formatCurrency(editingReceipt.subtotal || 0)}</span>
                   </div>
                   {editingReceipt.discount > 0 && (
-                    <div className="flex justify-between text-sm text-green-600 dark:text-green-400">
+                    <div className="flex justify-between text-[15px] leading-[22px] text-primary-tint-text">
                       <span>Discount</span>
                       <span>-{formatCurrency(editingReceipt.discount)}</span>
                     </div>
                   )}
-                  <div className="flex justify-between text-sm font-bold border-t border-neutral-200 dark:border-neutral-700 pt-1 mt-1">
-                    <span>Amount Due (OCR)</span>
-                    <span>{formatCurrency(editingReceipt.total || 0)}</span>
+                  <div className="flex justify-between text-[15px] leading-[22px] font-bold border-t border-divider pt-1 mt-1">
+                    <span className="text-text-primary">Amount Due (OCR)</span>
+                    <span className="text-text-primary">{formatCurrency(editingReceipt.total || 0)}</span>
                   </div>
                   {editingReceipt.discount > 0 && (
-                    <p className="text-[10px] text-neutral-400 mt-1">Total above is the final amount due. Verify the line item totals below match.</p>
+                    <p className="text-[11px] leading-[14px] text-text-placeholder mt-1">Total above is the final amount due. Verify the line item totals below match.</p>
                   )}
                 </div>
               )}
 
-              <div className="flex items-center justify-between bg-neutral-100 dark:bg-neutral-800 p-3 rounded-lg">
-                <span className="text-sm font-medium">Total from Items</span>
-                <span className="text-lg font-bold">
+              <div className="flex items-center justify-between bg-surface-gray p-3 rounded-xl">
+                <span className="text-[15px] leading-[22px] font-medium text-text-primary">Total from Items</span>
+                <span className="text-lg font-bold text-text-primary">
                   {formatCurrency((editingReceipt.items || []).reduce((sum: number, i: any) => sum + (i.total || 0), 0))}
                 </span>
               </div>
 
               <div className="flex items-center justify-end gap-3 pt-2">
-                <Button variant="outline" onClick={() => { setReviewReceipt(false); setEditingReceipt(null); }}>
+                <Button variant="outline" onClick={() => { setReviewReceipt(false); setEditingReceipt(null); }} className="transition-all duration-300 ease-out">
                   Cancel
                 </Button>
-                <Button onClick={handleConfirmReceipt} disabled={confirmingReceipt}>
+                <Button onClick={handleConfirmReceipt} disabled={confirmingReceipt} className="bg-primary text-white hover:bg-primary/90 transition-all duration-300 ease-out">
                   {confirmingReceipt ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Saving...</> : 'Confirm & Deduct from Budget'}
                 </Button>
               </div>
             </div>
           )}
-        </DialogContent>
-      </Dialog>
+      </ResponsiveDialog>
 
       {/* Processing overlay */}
       {processingReceipt && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-          <div className="flex flex-col items-center gap-4 rounded-xl bg-white p-8 shadow-lg dark:bg-neutral-900">
-            <Loader2 className="h-10 w-10 animate-spin text-neutral-600 dark:text-neutral-400" />
-            <p className="text-sm font-medium text-neutral-700 dark:text-neutral-300">Processing receipt...</p>
+          <div className="flex flex-col items-center gap-4 rounded-2xl bg-surface-white p-8 shadow-lg">
+            <Loader2 className="h-10 w-10 animate-spin text-text-secondary" />
+            <p className="text-[15px] leading-[22px] font-medium text-text-body">Processing receipt...</p>
           </div>
         </div>
       )}
 
       {/* Receipt Detail Modal */}
-      <Dialog open={!!selectedReceipt} onOpenChange={(open) => !open && setSelectedReceipt(null)}>
-        <DialogContent className="max-w-[calc(100vw-32px)] sm:max-w-2xl">
+      <ResponsiveDialog open={!!selectedReceipt} onOpenChange={(open) => !open && setSelectedReceipt(null)} title={selectedReceipt?.vendor || 'Receipt Details'}>
           {selectedReceipt && (
             <>
-              <DialogHeader>
-                <DialogTitle>{selectedReceipt.vendor || 'Receipt Details'}</DialogTitle>
-              </DialogHeader>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="relative w-full h-64">
                   {selectedReceipt.image_url && (
-                    <Image src={selectedReceipt.image_url} alt="Receipt" fill className="rounded-lg object-cover" sizes="(max-width: 768px) 100vw, 50vw" />
+                    <Image src={selectedReceipt.image_url} alt="Receipt" fill className="rounded-xl object-cover" sizes="(max-width: 768px) 100vw, 50vw" />
                   )}
                 </div>
                 <div className="space-y-3">
                   <div>
-                    <p className="text-xs text-neutral-500">Vendor</p>
-                    <p className="text-sm font-medium">{selectedReceipt.vendor || 'N/A'}</p>
+                    <p className="text-[13px] leading-[18px] text-text-secondary">Vendor</p>
+                    <p className="text-[15px] leading-[22px] font-medium text-text-primary">{selectedReceipt.vendor || 'N/A'}</p>
                   </div>
                   <div>
-                    <p className="text-xs text-neutral-500">SI/OR Number</p>
-                    <p className="text-sm font-medium">{selectedReceipt.si_or_number || 'N/A'}</p>
+                    <p className="text-[13px] leading-[18px] text-text-secondary">SI/OR Number</p>
+                    <p className="text-[15px] leading-[22px] font-medium text-text-primary">{selectedReceipt.si_or_number || 'N/A'}</p>
                   </div>
                   <div className="grid grid-cols-2 gap-2">
                     <div>
-                      <p className="text-xs text-neutral-500">Date</p>
-                      <p className="text-sm font-medium">{selectedReceipt.date || 'N/A'}</p>
+                      <p className="text-[13px] leading-[18px] text-text-secondary">Date</p>
+                      <p className="text-[15px] leading-[22px] font-medium text-text-primary">{selectedReceipt.date || 'N/A'}</p>
                     </div>
                     <div>
-                      <p className="text-xs text-neutral-500">Time</p>
-                      <p className="text-sm font-medium">{selectedReceipt.time || 'N/A'}</p>
+                      <p className="text-[13px] leading-[18px] text-text-secondary">Time</p>
+                      <p className="text-[15px] leading-[22px] font-medium text-text-primary">{selectedReceipt.time || 'N/A'}</p>
                     </div>
                   </div>
                   <div>
-                    <p className="text-xs text-neutral-500">Category</p>
-                    <Badge>{selectedReceipt.category} — {selectedReceipt.confidence || 0}%</Badge>
+                    <p className="text-[13px] leading-[18px] text-text-secondary">Category</p>
+                    <Badge className="bg-primary-tint-bg text-primary-tint-text border-0">{selectedReceipt.category} — {selectedReceipt.confidence || 0}%</Badge>
                   </div>
                   <Separator />
                   {selectedReceipt.items?.map((item: any, i: number) => (
-                    <div key={i} className="flex justify-between text-xs">
-                      <span className="flex-1">{item.name}</span>
-                      <span className="w-12 text-right">{item.qty}</span>
-                      <span className="w-20 text-right">{formatCurrency(item.total)}</span>
+                    <div key={i} className="flex justify-between text-[13px] leading-[18px]">
+                      <span className="flex-1 text-text-body">{item.name}</span>
+                      <span className="w-12 text-right text-text-secondary">{item.qty}</span>
+                      <span className="w-20 text-right text-text-body">{formatCurrency(item.total)}</span>
                     </div>
                   ))}
                   <Separator />
                   <div className="flex justify-between font-semibold">
-                    <span>Total</span>
-                    <span>{formatCurrency(selectedReceipt.total)}</span>
+                    <span className="text-text-primary">Total</span>
+                    <span className="text-text-primary">{formatCurrency(selectedReceipt.total)}</span>
                   </div>
                   <div className="flex items-center justify-between">
-                    <Badge variant={selectedReceipt.status as any}>{selectedReceipt.status}</Badge>
+                    <Badge variant={selectedReceipt.status as any} className={cn(
+                      'text-[11px] leading-[14px]',
+                      selectedReceipt.status === 'approved' && 'bg-primary-tint-bg text-primary-tint-text border-0',
+                      selectedReceipt.status === 'pending' && 'bg-amber-50 text-amber-700 border-0',
+                      selectedReceipt.status === 'rejected' && 'bg-red-50 text-error border-0',
+                    )}>{selectedReceipt.status}</Badge>
                     {selectedReceipt.transaction_hash && (
-                      <Badge variant="success" className="flex items-center gap-1">
+                      <Badge className="bg-primary-tint-bg text-primary-tint-text flex items-center gap-1 border-0">
                         <Shield className="h-3 w-3" /> Blockchain Verified
                       </Badge>
                     )}
@@ -1308,8 +1398,7 @@ Rejection reason: <span className="min-w-0 break-words">{form.rejection_reason}<
               </div>
             </>
           )}
-        </DialogContent>
-      </Dialog>
+      </ResponsiveDialog>
     </div>
   );
 }

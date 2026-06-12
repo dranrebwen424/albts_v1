@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { getEvent, getReceipts, getNoReceiptForms, approveNoReceiptForm, rejectNoReceiptForm, approveFinancialReport, getFinancialReport } from '@/lib/actions';
@@ -9,13 +9,14 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Textarea } from '@/components/ui/textarea';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { ResponsiveDialog } from '@/components/shared/responsive-dialog';
 import { Separator } from '@/components/ui/separator';
 import { Label } from '@/components/ui/label';
 import { cn } from '@/lib/utils/cn';
 import { formatCurrency, formatDate } from '@/lib/utils/format';
 import { ArrowLeft, Receipt as ReceiptIcon, FileText, CheckCircle, XCircle, Shield, Eye, Image as ImageIcon, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
+import { motion } from 'framer-motion';
 import { BudgetChart } from '@/components/shared/budget-chart';
 
 export function AdviserEventDetailClient({
@@ -111,6 +112,31 @@ export function AdviserEventDetailClient({
 
   if (!event) return <div>Event not found</div>;
 
+  function AnimatedNumber({ value, className }: { value: number; className?: string }) {
+    const [animated, setAnimated] = useState(0);
+    const animRef = useRef<number | null>(null);
+
+    useEffect(() => {
+      if (animRef.current) cancelAnimationFrame(animRef.current);
+      const startTime = performance.now();
+      const startVal = 0;
+      const duration = 800;
+
+      const animate = (now: number) => {
+        const elapsed = now - startTime;
+        const progress = Math.min(elapsed / duration, 1);
+        const eased = 1 - Math.pow(1 - progress, 3);
+        setAnimated(Math.round(startVal + (value - startVal) * eased));
+        if (progress < 1) animRef.current = requestAnimationFrame(animate);
+      };
+
+      animRef.current = requestAnimationFrame(animate);
+      return () => { if (animRef.current) cancelAnimationFrame(animRef.current); };
+    }, [value]);
+
+    return <span className={className}>{animated}</span>;
+  }
+
   const totalExpenses = [...receipts.filter(r => r.status === 'approved'), ...forms.filter(f => f.status === 'approved')]
     .reduce((sum, item: any) => sum + (item.total || item.amount || 0), 0);
 
@@ -127,53 +153,58 @@ export function AdviserEventDetailClient({
 
       {/* KPI Dashboard */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">Budget Overview</CardTitle>
+        {/* Budget Overview */}
+        <Card className="h-full">
+          <CardHeader className="pb-3 px-5 pt-5">
+            <CardTitle className="text-[13px] leading-[18px] font-medium text-text-secondary">Budget Overview</CardTitle>
           </CardHeader>
-          <CardContent>
-            <div className="flex items-center gap-4">
-              <div className="h-24 w-24">
-                <BudgetChart used={totalExpenses} remaining={event.budget} />
-              </div>
-              <div className="space-y-1 text-xs">
+          <CardContent className="!p-5">
+            <div className="flex items-start gap-5">
+              <BudgetChart used={totalExpenses} remaining={event.budget} />
+              <div className="space-y-2.5 min-w-0">
                 <div className="flex items-center gap-2">
-                  <div className="h-2 w-2 rounded-full bg-neutral-900 dark:bg-white" />
-                  <span>Expenses: {formatCurrency(totalExpenses)}</span>
+                  <div className="h-2.5 w-2.5 rounded-full bg-primary shrink-0" />
+                  <span className="text-text-secondary text-[13px] leading-[18px]">Expenses</span>
+                  <span className="ml-auto font-[590] text-text-primary text-[15px] leading-[22px]">{formatCurrency(totalExpenses)}</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <div className="h-2 w-2 rounded-full bg-neutral-200 dark:bg-neutral-700" />
-                  <span>Remaining: <span className={event.budget < 0 ? 'text-red-500 font-semibold' : ''}>{formatCurrency(event.budget)}</span></span>
+                  <div className="h-2.5 w-2.5 rounded-full bg-divider shrink-0" />
+                  <span className="text-text-secondary text-[13px] leading-[18px]">Remaining</span>
+                  <span className={cn('ml-auto font-[590] text-[15px] leading-[22px]', event.budget < 0 ? 'text-error' : 'text-text-primary')}>
+                    {formatCurrency(event.budget)}
+                  </span>
                 </div>
               </div>
             </div>
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">Receipts</CardTitle>
+        {/* Receipts */}
+        <Card className="h-full">
+          <CardHeader className="pb-1 px-5 pt-5">
+            <CardTitle className="text-[13px] leading-[18px] font-medium text-text-secondary">Receipts</CardTitle>
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-semibold mb-2">{receipts.length}</div>
-            <div className="flex gap-2 text-xs">
-              <Badge variant="approved">{receipts.filter(r => r.status === 'approved').length} Approved</Badge>
-              <Badge variant="pending">{receipts.filter(r => r.status === 'pending').length} Pending</Badge>
-              <Badge variant="rejected">{receipts.filter(r => r.status === 'rejected').length} Rejected</Badge>
+          <CardContent className="!p-5">
+            <AnimatedNumber value={receipts.length} className="block text-[28px] leading-[34px] font-[650] tracking-[-0.03em] text-text-primary mb-4" />
+            <div className="flex flex-wrap gap-2">
+              <span className="inline-flex items-center px-2.5 py-1 rounded-full text-[12px] leading-[16px] font-medium bg-primary-tint-bg text-primary-tint-text">{receipts.filter(r => r.status === 'approved').length} Approved</span>
+              <span className="inline-flex items-center px-2.5 py-1 rounded-full text-[12px] leading-[16px] font-medium bg-amber-50 text-amber-700">{receipts.filter(r => r.status === 'pending').length} Pending</span>
+              <span className="inline-flex items-center px-2.5 py-1 rounded-full text-[12px] leading-[16px] font-medium bg-red-50 text-error">{receipts.filter(r => r.status === 'rejected').length} Rejected</span>
             </div>
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">No-Receipt Forms</CardTitle>
+        {/* No-Receipt Forms */}
+        <Card className="h-full">
+          <CardHeader className="pb-1 px-5 pt-5">
+            <CardTitle className="text-[13px] leading-[18px] font-medium text-text-secondary">No-Receipt Forms</CardTitle>
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-semibold mb-2">{forms.length}</div>
-            <div className="flex gap-2 text-xs">
-              <Badge variant="approved">{forms.filter(f => f.status === 'approved').length} Approved</Badge>
-              <Badge variant="pending">{forms.filter(f => f.status === 'pending').length} Pending</Badge>
-              <Badge variant="rejected">{forms.filter(f => f.status === 'rejected').length} Rejected</Badge>
+          <CardContent className="!p-5">
+            <AnimatedNumber value={forms.length} className="block text-[28px] leading-[34px] font-[650] tracking-[-0.03em] text-text-primary mb-4" />
+            <div className="flex flex-wrap gap-2">
+              <span className="inline-flex items-center px-2.5 py-1 rounded-full text-[12px] leading-[16px] font-medium bg-primary-tint-bg text-primary-tint-text">{forms.filter(f => f.status === 'approved').length} Approved</span>
+              <span className="inline-flex items-center px-2.5 py-1 rounded-full text-[12px] leading-[16px] font-medium bg-amber-50 text-amber-700">{forms.filter(f => f.status === 'pending').length} Pending</span>
+              <span className="inline-flex items-center px-2.5 py-1 rounded-full text-[12px] leading-[16px] font-medium bg-red-50 text-error">{forms.filter(f => f.status === 'rejected').length} Rejected</span>
             </div>
           </CardContent>
         </Card>
@@ -190,6 +221,12 @@ export function AdviserEventDetailClient({
         </TabsList>
 
         <TabsContent value="forms" className="space-y-3">
+          <motion.div
+            key="forms"
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.15, ease: 'easeOut' }}
+          >
           {/* Needs Review — truly pending, no rejection_reason */}
           {forms.filter(f => f.status === 'pending' && !f.rejection_reason).length > 0 && (
             <>
@@ -308,9 +345,17 @@ export function AdviserEventDetailClient({
               <CardContent className="text-center py-8 text-sm text-neutral-500">No forms yet</CardContent>
             </Card>
           )}
+          </motion.div>
         </TabsContent>
 
         <TabsContent value="receipts" className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+          <motion.div
+            key="receipts"
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.15, ease: 'easeOut' }}
+            className="contents"
+          >
           {receipts.length === 0 && (
             <Card className="col-span-full">
               <CardContent className="text-center py-8 text-sm text-neutral-500">No receipts yet</CardContent>
@@ -337,6 +382,7 @@ export function AdviserEventDetailClient({
               </Card>
             </div>
           ))}
+          </motion.div>
         </TabsContent>
       </Tabs>
 
@@ -371,32 +417,31 @@ export function AdviserEventDetailClient({
       )}
 
       {/* Reject Dialog */}
-      <Dialog open={!!rejectTarget} onOpenChange={(open) => { if (!open) { setRejectTarget(null); setRejectReason(''); } }}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Reject Form</DialogTitle>
-            <DialogDescription>Provide a reason for rejection</DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4">
-            <Label>Rejection Reason</Label>
-            <Textarea value={rejectReason} onChange={e => setRejectReason(e.target.value)} placeholder="Explain why this form is being rejected..." rows={4} />
-            <Button variant="destructive" className="w-full" onClick={() => rejectTarget && handleRejectForm(rejectTarget)} disabled={rejectingForm}>
-              {rejectingForm ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : null}
-              {rejectingForm ? 'Submitting...' : 'Submit Rejection'}
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
+      <ResponsiveDialog
+        open={!!rejectTarget}
+        onOpenChange={(open) => { if (!open) { setRejectTarget(null); setRejectReason(''); } }}
+        title="Reject Form"
+        description="Provide a reason for rejection"
+      >
+        <div className="space-y-4">
+          <Label>Rejection Reason</Label>
+          <Textarea value={rejectReason} onChange={e => setRejectReason(e.target.value)} placeholder="Explain why this form is being rejected..." rows={4} />
+          <Button variant="destructive" className="w-full" onClick={() => rejectTarget && handleRejectForm(rejectTarget)} disabled={rejectingForm}>
+            {rejectingForm ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : null}
+            {rejectingForm ? 'Submitting...' : 'Submit Rejection'}
+          </Button>
+        </div>
+      </ResponsiveDialog>
 
       {/* Form Detail Modal */}
-      <Dialog open={!!selectedForm} onOpenChange={(open) => !open && setSelectedForm(null)}>
-        <DialogContent className="max-w-[calc(100vw-32px)] sm:max-w-3xl max-h-[95vh] overflow-y-auto">
-          {selectedForm && (
-            <>
-              <DialogHeader>
-                <DialogTitle>{selectedForm.expense_name}</DialogTitle>
-                <DialogDescription>No-Receipt Form Details</DialogDescription>
-              </DialogHeader>
+      <ResponsiveDialog
+        open={!!selectedForm}
+        onOpenChange={(open) => !open && setSelectedForm(null)}
+        title={selectedForm?.expense_name || ''}
+        description="No-Receipt Form Details"
+      >
+        {selectedForm && (
+          <>
               <div className="space-y-4 min-w-0">
                 <div className="grid grid-cols-2 gap-3 text-sm">
                   <div className="min-w-0">
@@ -566,17 +611,16 @@ export function AdviserEventDetailClient({
               </div>
             </>
           )}
-        </DialogContent>
-      </Dialog>
+      </ResponsiveDialog>
 
       {/* Receipt Detail Modal */}
-      <Dialog open={!!selectedReceipt} onOpenChange={(open) => !open && setSelectedReceipt(null)}>
-        <DialogContent className="max-w-[calc(100vw-32px)] sm:max-w-2xl">
-          {selectedReceipt && (
-            <>
-              <DialogHeader>
-                <DialogTitle>{selectedReceipt.vendor || 'Receipt Details'}</DialogTitle>
-              </DialogHeader>
+      <ResponsiveDialog
+        open={!!selectedReceipt}
+        onOpenChange={(open) => !open && setSelectedReceipt(null)}
+        title={selectedReceipt?.vendor || 'Receipt Details'}
+      >
+        {selectedReceipt && (
+          <>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="relative w-full h-64">
                   {selectedReceipt.image_url && (
@@ -631,8 +675,7 @@ export function AdviserEventDetailClient({
               </div>
             </>
           )}
-        </DialogContent>
-      </Dialog>
+      </ResponsiveDialog>
     </div>
   );
 }

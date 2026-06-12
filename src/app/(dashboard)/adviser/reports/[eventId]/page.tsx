@@ -63,8 +63,8 @@ export default function AdviserReportDetailPage() {
     return (
       <div className="space-y-6">
         <Skeleton className="h-6 w-48" />
-        <Skeleton className="h-32 rounded-xl" />
-        <Skeleton className="h-64 rounded-xl" />
+        <Skeleton className="h-32 rounded-lg" />
+        <Skeleton className="h-64 rounded-lg" />
       </div>
     );
   }
@@ -72,7 +72,7 @@ export default function AdviserReportDetailPage() {
   if (!data) {
     return (
       <div className="space-y-6">
-        <p className="text-sm text-neutral-500">Failed to load report data.</p>
+        <p className="text-[13px] leading-[18px] text-text-secondary">Failed to load report data.</p>
       </div>
     );
   }
@@ -87,8 +87,8 @@ export default function AdviserReportDetailPage() {
             </Button>
           </Link>
           <div>
-            <h1 className="text-2xl font-semibold tracking-tight">{data.event.name}</h1>
-            <p className="text-sm text-neutral-500 dark:text-neutral-400 mt-1">
+            <h1 className="text-[24px] leading-[30px] font-[650] tracking-[-0.04em]">{data.event.name}</h1>
+            <p className="text-[13px] leading-[18px] text-text-secondary mt-1">
               {data.departmentName} — {data.event.status === 'done' ? 'Completed' : 'Ongoing'}
             </p>
           </div>
@@ -112,7 +112,7 @@ export default function AdviserReportDetailPage() {
           <CardContent className="p-4 flex items-center gap-3">
             <Wallet className="h-8 w-8 text-blue-500" />
             <div>
-              <p className="text-xs text-neutral-500">Original Budget</p>
+              <p className="text-[13px] leading-[18px] text-text-secondary">Original Budget</p>
               <p className="text-lg font-bold">{formatCurrency(data.event.budget + data.totalExpenses)}</p>
             </div>
           </CardContent>
@@ -121,7 +121,7 @@ export default function AdviserReportDetailPage() {
           <CardContent className="p-4 flex items-center gap-3">
             <Receipt className="h-8 w-8 text-amber-500" />
             <div>
-              <p className="text-xs text-neutral-500">Total Expenses</p>
+              <p className="text-[13px] leading-[18px] text-text-secondary">Total Expenses</p>
               <p className="text-lg font-bold">{formatCurrency(data.totalExpenses)}</p>
             </div>
           </CardContent>
@@ -130,7 +130,7 @@ export default function AdviserReportDetailPage() {
           <CardContent className="p-4 flex items-center gap-3">
             <PieChart className="h-8 w-8 text-green-500" />
             <div>
-              <p className="text-xs text-neutral-500">Remaining Budget</p>
+              <p className="text-[13px] leading-[18px] text-text-secondary">Remaining Budget</p>
               <p className="text-lg font-bold">{formatCurrency(data.remainingBudget)}</p>
             </div>
           </CardContent>
@@ -139,24 +139,24 @@ export default function AdviserReportDetailPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">Expense Breakdown by Category</CardTitle>
+          <CardTitle>Expense Breakdown by Category</CardTitle>
         </CardHeader>
         <CardContent>
           {Object.keys(data.categoryBreakdown).length === 0 ? (
-            <p className="text-sm text-neutral-500">No approved expenses yet.</p>
+            <p className="text-[13px] leading-[18px] text-text-secondary">No approved expenses yet.</p>
           ) : (
             <div className="space-y-1">
-              <div className="flex justify-between text-xs font-medium text-neutral-500 pb-2 border-b border-neutral-200 dark:border-neutral-700">
+              <div className="flex justify-between text-[11px] leading-[14px] font-medium text-text-secondary pb-2 border-b border-divider">
                 <span>Category</span>
                 <span>Amount</span>
               </div>
               {Object.entries(data.categoryBreakdown).map(([cat, amount]) => (
-                <div key={cat} className="flex justify-between text-sm py-1.5 border-b border-neutral-100 dark:border-neutral-800 last:border-0">
+                <div key={cat} className="flex justify-between text-[15px] leading-[22px] py-1.5 border-b border-divider last:border-0">
                   <span className="capitalize">{cat}</span>
                   <span className="font-medium">{formatCurrency(amount as number)}</span>
                 </div>
               ))}
-              <div className="flex justify-between text-sm font-bold pt-2 border-t border-neutral-300 dark:border-neutral-600">
+              <div className="flex justify-between text-[15px] leading-[22px] font-bold pt-2 border-t border-divider">
                 <span>Total</span>
                 <span>{formatCurrency(data.totalExpenses)}</span>
               </div>
@@ -167,26 +167,26 @@ export default function AdviserReportDetailPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">Approved Receipts</CardTitle>
+          <CardTitle>Approved Receipts</CardTitle>
         </CardHeader>
         <CardContent>
           {data.approvedReceipts.length === 0 ? (
-            <p className="text-sm text-neutral-500">No approved receipts.</p>
+            <p className="text-[13px] leading-[18px] text-text-secondary">No approved receipts.</p>
           ) : (
             <div className="space-y-1">
-              <div className="flex justify-between text-xs font-medium text-neutral-500 pb-2 border-b border-neutral-200 dark:border-neutral-700">
+              <div className="flex justify-between text-[11px] leading-[14px] font-medium text-text-secondary pb-2 border-b border-divider">
                 <span className="flex-1">Vendor</span>
                 <span className="w-24 text-right">Category</span>
                 <span className="w-24 text-right">Amount</span>
               </div>
               {data.approvedReceipts.map((r: any) => (
-                <div key={r.id} className="flex justify-between text-sm py-1.5 border-b border-neutral-100 dark:border-neutral-800 last:border-0">
+                <div key={r.id} className="flex justify-between text-[15px] leading-[22px] py-1.5 border-b border-divider last:border-0">
                   <span className="flex-1">{r.vendor || 'N/A'}</span>
-                  <span className="w-24 text-right capitalize text-neutral-500">{r.category || 'N/A'}</span>
+                  <span className="w-24 text-right capitalize text-text-secondary">{r.category || 'N/A'}</span>
                   <span className="w-24 text-right font-medium">{formatCurrency(r.total || 0)}</span>
                 </div>
               ))}
-              <div className="flex justify-between text-sm font-bold pt-2 border-t border-neutral-300 dark:border-neutral-600">
+              <div className="flex justify-between text-[15px] leading-[22px] font-bold pt-2 border-t border-divider">
                 <span className="flex-1">Total from Receipts</span>
                 <span className="w-24 text-right" />
                 <span className="w-24 text-right">{formatCurrency(data.totalReceiptExpenses)}</span>
@@ -198,26 +198,26 @@ export default function AdviserReportDetailPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">Approved No-Receipt Forms</CardTitle>
+          <CardTitle>Approved No-Receipt Forms</CardTitle>
         </CardHeader>
         <CardContent>
           {data.approvedForms.length === 0 ? (
-            <p className="text-sm text-neutral-500">No approved no-receipt forms.</p>
+            <p className="text-[13px] leading-[18px] text-text-secondary">No approved no-receipt forms.</p>
           ) : (
             <div className="space-y-1">
-              <div className="flex justify-between text-xs font-medium text-neutral-500 pb-2 border-b border-neutral-200 dark:border-neutral-700">
+              <div className="flex justify-between text-[11px] leading-[14px] font-medium text-text-secondary pb-2 border-b border-divider">
                 <span className="flex-1">Expense Name</span>
                 <span className="w-24 text-right">Type</span>
                 <span className="w-24 text-right">Amount</span>
               </div>
               {data.approvedForms.map((f: any) => (
-                <div key={f.id} className="flex justify-between text-sm py-1.5 border-b border-neutral-100 dark:border-neutral-800 last:border-0">
+                <div key={f.id} className="flex justify-between text-[15px] leading-[22px] py-1.5 border-b border-divider last:border-0">
                   <span className="flex-1">{f.expense_name}</span>
-                  <span className="w-24 text-right capitalize text-neutral-500">{f.expense_type}</span>
+                  <span className="w-24 text-right capitalize text-text-secondary">{f.expense_type}</span>
                   <span className="w-24 text-right font-medium">{formatCurrency(f.amount || 0)}</span>
                 </div>
               ))}
-              <div className="flex justify-between text-sm font-bold pt-2 border-t border-neutral-300 dark:border-neutral-600">
+              <div className="flex justify-between text-[15px] leading-[22px] font-bold pt-2 border-t border-divider">
                 <span className="flex-1">Total from Forms</span>
                 <span className="w-24 text-right" />
                 <span className="w-24 text-right">{formatCurrency(data.totalFormExpenses)}</span>
@@ -246,7 +246,7 @@ export default function AdviserReportDetailPage() {
           </Badge>
         )}
         {!data.fsRecord && (
-          <p className="text-sm text-neutral-500">No Financial Statement has been generated yet. The officer needs to generate it first.</p>
+          <p className="text-[13px] leading-[18px] text-text-secondary">No Financial Statement has been generated yet. The officer needs to generate it first.</p>
         )}
       </div>
     </div>

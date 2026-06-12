@@ -8,13 +8,23 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
-import { User, Shield, Calendar, Building2, KeyRound } from 'lucide-react';
+import { User, Shield, Calendar, Building2, KeyRound, LogOut } from 'lucide-react';
 import { formatDate } from '@/lib/utils/format';
+import { createClient } from '@/lib/supabase/client';
 
 export function ProfilePage() {
   const [profile, setProfile] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [signingOut, setSigningOut] = useState(false);
   const router = useRouter();
+
+  const handleSignOut = async () => {
+    if (signingOut) return;
+    setSigningOut(true);
+    const supabase = createClient();
+    await supabase.auth.signOut();
+    router.push('/login');
+  };
 
   useEffect(() => {
     getMyProfile()
@@ -118,6 +128,21 @@ export function ProfilePage() {
               <KeyRound className="h-4 w-4 mr-2" /> Change Password
             </Button>
           </Link>
+        </CardContent>
+      </Card>
+
+      {/* Sign Out — visible on mobile where the top header logout is removed */}
+      <Card className="shadow-sm border-red-100 lg:hidden">
+        <CardContent className="p-4">
+          <Button
+            variant="ghost"
+            className="w-full justify-start gap-3 text-error hover:bg-red-50 hover:text-error"
+            onClick={handleSignOut}
+            disabled={signingOut}
+          >
+            <LogOut className="h-4 w-4" />
+            <span>{signingOut ? 'Signing out…' : 'Sign Out'}</span>
+          </Button>
         </CardContent>
       </Card>
     </div>

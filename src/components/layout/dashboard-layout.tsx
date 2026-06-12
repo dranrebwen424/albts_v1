@@ -60,7 +60,7 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
       <main
         className={cn(
           'flex-1 overflow-y-auto transition-all duration-500 ease-out',
-          isMobile ? 'ml-0 pt-14 pb-20' : collapsed ? 'ml-16' : 'ml-64'
+          isMobile ? 'ml-0 pt-4 pb-24' : collapsed ? 'ml-16' : 'ml-64'
         )}
       >
         <div className="mx-auto w-full max-w-7xl px-4 py-6 lg:px-6 lg:py-8">

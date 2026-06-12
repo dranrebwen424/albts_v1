@@ -6,19 +6,25 @@ import { motion } from 'framer-motion';
 interface BudgetChartProps {
   used: number;
   remaining: number;
+  size?: number;
 }
 
-function getColor(pct: number): string {
-  if (pct >= 100) return '#1DB954';
-  if (pct >= 80) return '#FF6B6B';
-  if (pct >= 50) return '#FFB347';
-  return '#1DB954';
+function getColorType(pct: number): 'success' | 'warning' | 'error' {
+  if (pct >= 80) return 'error';
+  if (pct >= 50) return 'warning';
+  return 'success';
 }
 
-export function BudgetChart({ used, remaining }: BudgetChartProps) {
+const COLORS = {
+  success: { from: '#1DB954', to: '#0ea570' },
+  warning: { from: '#f59e0b', to: '#FF9500' },
+  error:   { from: '#ef4444', to: '#FF3B30' },
+};
+
+export function BudgetChart({ used, remaining, size = 64 }: BudgetChartProps) {
   const total = Math.max(used + remaining, 1);
   const percentage = Math.min((used / total) * 100, 100);
-  const color = getColor(percentage);
+  const colorType = getColorType(percentage);
 
   const [animatedPercent, setAnimatedPercent] = useState(0);
   const animFrameRef = useRef<number | null>(null);
@@ -27,76 +33,79 @@ export function BudgetChart({ used, remaining }: BudgetChartProps) {
     const target = Math.round(percentage);
     if (animFrameRef.current) cancelAnimationFrame(animFrameRef.current);
     const startTime = performance.now();
-    const startVal = 0;
 
     const animate = (now: number) => {
       const elapsed = now - startTime;
-      const progress = Math.min(elapsed / 1000, 1);
+      const progress = Math.min(elapsed / 800, 1);
       const eased = 1 - Math.pow(1 - progress, 3);
-      const current = Math.round(startVal + (target - startVal) * eased);
-      setAnimatedPercent(current);
-      if (progress < 1) {
-        animFrameRef.current = requestAnimationFrame(animate);
-      }
+      setAnimatedPercent(Math.round(eased * target));
+      if (progress < 1) animFrameRef.current = requestAnimationFrame(animate);
     };
 
     animFrameRef.current = requestAnimationFrame(animate);
-    return () => {
-      if (animFrameRef.current) cancelAnimationFrame(animFrameRef.current);
-    };
+    return () => { if (animFrameRef.current) cancelAnimationFrame(animFrameRef.current); };
   }, [percentage]);
 
-  const size = 96;
+  const strokeWidth = size * 0.1;
+  const radius = (size - strokeWidth) / 2;
   const cx = size / 2;
   const cy = size / 2;
-  const strokeWidth = 10;
-  const radius = (size - strokeWidth) / 2 - 1;
-  const gapAngle = 90;
 
-  const polarToCartesian = (angleDeg: number) => {
-    const rad = ((angleDeg - 90) * Math.PI) / 180;
-    return { x: cx + radius * Math.cos(rad), y: cy + radius * Math.sin(rad) };
-  };
+  const percentTextSize = size >= 96 ? 'text-[22px]' : size >= 80 ? 'text-[17px]' : 'text-[13px]';
+  const labelTextSize  = size >= 96 ? 'text-[9px] mt-0.5' : 'text-[7px]';
 
-  const describeArc = (startAngle: number, endAngle: number) => {
-    const start = polarToCartesian(endAngle);
-    const end = polarToCartesian(startAngle);
-    const largeArc = endAngle - startAngle > 180 ? 1 : 0;
-    return `M ${start.x} ${start.y} A ${radius} ${radius} 0 ${largeArc} 1 ${end.x} ${end.y}`;
-  };
-
-  const startAngle = gapAngle / 2;
-  const endAngle = 360 - gapAngle / 2;
+  const gradId = `bg-${colorType}-${size}`;
 
   return (
-    <div className="relative w-24 h-24 shrink-0 flex items-center justify-center">
-      <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} className="absolute inset-0 overflow-visible">
-        <path
-          d={describeArc(startAngle, endAngle)}
+    <div
+      className="relative shrink-0 flex items-center justify-center"
+      style={{ width: size, height: size }}
+    >
+      {/* SVG rotated so arc starts at 12 o'clock */}
+      <svg
+        width={size}
+        height={size}
+        viewBox={`0 0 ${size} ${size}`}
+        className="absolute inset-0"
+        style={{ transform: 'rotate(-90deg)' }}
+      >
+        <defs>
+          <linearGradient id={gradId} x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%"   stopColor={COLORS[colorType].from} />
+            <stop offset="100%" stopColor={COLORS[colorType].to}   />
+          </linearGradient>
+        </defs>
+
+        {/* Background full-circle track */}
+        <circle
+          cx={cx} cy={cy} r={radius}
           fill="none"
-          stroke="#F0F0F2"
+          stroke="var(--color-surface-gray)"
           strokeWidth={strokeWidth}
-          strokeLinecap="round"
         />
-        <motion.path
-          d={describeArc(startAngle, endAngle)}
+
+        {/* Colored progress arc */}
+        <motion.circle
+          cx={cx} cy={cy} r={radius}
           fill="none"
-          stroke={color}
+          stroke={`url(#${gradId})`}
           strokeWidth={strokeWidth}
           strokeLinecap="round"
           initial={{ pathLength: 0 }}
           animate={{ pathLength: percentage / 100 }}
-          transition={{ duration: 1.2, ease: [0.16, 1, 0.3, 1] }}
+          transition={{ duration: 1.2, ease: [0.34, 1.56, 0.64, 1] }}
         />
       </svg>
-      <div className="text-center z-10">
+
+      {/* Center label — outside SVG so it doesn't rotate */}
+      <div className="text-center z-10 select-none">
         <motion.span
-          className="block text-[18px] leading-[22px] font-[650] tracking-[-0.02em] text-text-primary"
+          className={`block font-serif font-bold tracking-tight text-text-primary ${percentTextSize}`}
           key={animatedPercent}
         >
           {animatedPercent}%
         </motion.span>
-        <span className="block text-[8px] leading-[8px] text-text-secondary font-medium tracking-[0.03em] mt-px">
+        <span className={`block text-text-secondary font-semibold tracking-[0.06em] uppercase ${labelTextSize}`}>
           Used
         </span>
       </div>

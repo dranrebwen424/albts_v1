@@ -5,6 +5,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import dynamic from 'next/dynamic';
 import { motion, AnimatePresence } from 'framer-motion';
+import { gsap } from 'gsap';
 import { getEvent, getReceipts, getNoReceiptForms, uploadReceipt, confirmReceipt, submitNoReceiptForm, resubmitNoReceiptForm, retryOcr } from '@/lib/actions';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -27,6 +28,42 @@ const CameraCapture = dynamic(() => import('@/components/camera/camera-capture')
 const UploadSheet = dynamic(() => import('@/components/camera/upload-sheet').then(m => m.UploadSheet), { ssr: false });
 import type { Event, Receipt, NoReceiptForm } from '@/types';
 
+function AnimatedCount({ value, className }: { value: number; className?: string }) {
+  const [displayVal, setDisplayVal] = useState(0);
+  const countRef = useRef({ val: 0 });
+
+  useEffect(() => {
+    gsap.to(countRef.current, {
+      val: value,
+      duration: 1,
+      ease: 'power2.out',
+      onUpdate: () => {
+        setDisplayVal(Math.round(countRef.current.val));
+      }
+    });
+  }, [value]);
+
+  return <span className={className}>{displayVal}</span>;
+}
+
+function AnimatedCurrency({ value, className }: { value: number; className?: string }) {
+  const [displayVal, setDisplayVal] = useState(0);
+  const countRef = useRef({ val: 0 });
+
+  useEffect(() => {
+    gsap.to(countRef.current, {
+      val: value,
+      duration: 1.2,
+      ease: 'power2.out',
+      onUpdate: () => {
+        setDisplayVal(countRef.current.val);
+      }
+    });
+  }, [value]);
+
+  return <span className={className}>{formatCurrency(displayVal)}</span>;
+}
+
 export function EventDetailClient({
   eventId,
   initialEvent,
@@ -41,6 +78,18 @@ export function EventDetailClient({
   const [event, setEvent] = useState<any>(initialEvent);
   const [receipts, setReceipts] = useState<any[]>(initialReceipts);
   const [forms, setForms] = useState<any[]>(initialForms);
+
+  const kpiGridRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (kpiGridRef.current) {
+      gsap.fromTo(
+        kpiGridRef.current.children,
+        { opacity: 0, y: 24, scale: 0.98 },
+        { opacity: 1, y: 0, scale: 1, duration: 0.5, stagger: 0.08, ease: 'power2.out', clearProps: 'all' }
+      );
+    }
+  }, []);
   const [uploading, setUploading] = useState(false);
   const [processingReceipt, setProcessingReceipt] = useState(false);
   const [confirmingReceipt, setConfirmingReceipt] = useState(false);
@@ -304,31 +353,6 @@ export function EventDetailClient({
     }
   };
 
-  function AnimatedNumber({ value, className }: { value: number; className?: string }) {
-    const [animated, setAnimated] = useState(0);
-    const animRef = useRef<number | null>(null);
-
-    useEffect(() => {
-      if (animRef.current) cancelAnimationFrame(animRef.current);
-      const startTime = performance.now();
-      const startVal = 0;
-      const duration = 800;
-
-      const animate = (now: number) => {
-        const elapsed = now - startTime;
-        const progress = Math.min(elapsed / duration, 1);
-        const eased = 1 - Math.pow(1 - progress, 3);
-        setAnimated(Math.round(startVal + (value - startVal) * eased));
-        if (progress < 1) animRef.current = requestAnimationFrame(animate);
-      };
-
-      animRef.current = requestAnimationFrame(animate);
-      return () => { if (animRef.current) cancelAnimationFrame(animRef.current); };
-    }, [value]);
-
-    return <span className={className}>{animated}</span>;
-  }
-
   if (!event) return <div className="text-text-body text-[15px] leading-[22px]">Event not found</div>;
 
   const isViewOnly = event.status === 'done';
@@ -336,32 +360,45 @@ export function EventDetailClient({
   return (
     <div className="space-y-6">
       {/* KPI Dashboard */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div ref={kpiGridRef} className="grid grid-cols-1 md:grid-cols-3 gap-5">
         {/* Budget Overview */}
         <motion.div
-          initial={{ opacity: 0, y: 16 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0, type: 'spring', stiffness: 260, damping: 20 }}
+          whileHover={{ y: -4, scale: 1.01, transition: { duration: 0.2, ease: "easeOut" } }}
+          whileTap={{ scale: 0.98 }}
+          className="h-full"
         >
-          <Card className="h-full">
-            <CardHeader className="pb-3 px-5 pt-5">
-              <CardTitle className="text-[13px] leading-[18px] font-medium text-text-secondary">Budget Overview</CardTitle>
+          <Card className="h-full bg-surface-white/85 backdrop-blur-md border border-divider/40 shadow-soft hover:shadow-[0_8px_30px_rgba(29,185,84,0.08)] transition-all duration-300">
+            <CardHeader className="pb-3 px-5 pt-5 flex flex-row items-center justify-between space-y-0">
+              <CardTitle className="text-xs font-semibold text-text-secondary uppercase tracking-wider">Budget Overview</CardTitle>
+              <Wallet className="h-4 w-4 text-text-secondary" />
             </CardHeader>
-            <CardContent className="!p-5">
-              <div className="flex items-start gap-5">
-                <BudgetChart used={totalExpenses} remaining={event?.budget || 0} />
-                <div className="space-y-2.5 min-w-0">
-                  <div className="flex items-center gap-2">
-                    <div className="h-2.5 w-2.5 rounded-full bg-primary shrink-0" />
-                    <span className="text-text-secondary text-[13px] leading-[18px]">Expenses</span>
-                    <span className="ml-auto font-[590] text-text-primary text-[15px] leading-[22px]">{formatCurrency(totalExpenses)}</span>
+            <CardContent className="!p-0">
+              <div className="flex">
+                <div className="flex-[3] flex items-center justify-center py-5 pl-5 pr-3">
+                  <BudgetChart used={totalExpenses} remaining={event?.budget || 0} size={108} />
+                </div>
+                <div className="flex-[2] flex flex-col justify-center gap-2 pt-4 pb-5 pr-5 pl-4">
+                  <div>
+                    <p className="text-[9px] font-semibold text-text-secondary uppercase tracking-wider mb-0.5">Total</p>
+                    <AnimatedCurrency value={totalExpenses + (event?.budget || 0)} className="text-[12px] font-semibold text-text-primary leading-tight" />
                   </div>
-                  <div className="flex items-center gap-2">
-                    <div className="h-2.5 w-2.5 rounded-full bg-divider shrink-0" />
-                    <span className="text-text-secondary text-[13px] leading-[18px]">Remaining</span>
-                    <span className={cn('ml-auto font-[590] text-[15px] leading-[22px]', event?.budget < 0 ? 'text-error' : 'text-text-primary')}>
-                      {formatCurrency(event?.budget || 0)}
-                    </span>
+                  <div className="h-px bg-divider/50" />
+                  <div>
+                    <p className="text-[9px] font-semibold text-text-secondary uppercase tracking-wider mb-0.5">Spent</p>
+                    <div className="flex items-center gap-1">
+                      <div className="h-1.5 w-1.5 rounded-full bg-primary shrink-0" />
+                      <AnimatedCurrency value={totalExpenses} className="text-[12px] font-semibold text-text-primary leading-tight" />
+                    </div>
+                  </div>
+                  <div>
+                    <p className="text-[9px] font-semibold text-text-secondary uppercase tracking-wider mb-0.5">Remaining</p>
+                    <div className="flex items-center gap-1">
+                      <div className={cn('h-1.5 w-1.5 rounded-full shrink-0', event?.budget < 0 ? 'bg-error animate-pulse' : 'bg-text-secondary/30')} />
+                      <AnimatedCurrency
+                        value={event?.budget || 0}
+                        className={cn('text-[12px] font-semibold leading-tight', event?.budget < 0 ? 'text-error' : 'text-text-primary')}
+                      />
+                    </div>
                   </div>
                 </div>
               </div>
@@ -371,20 +408,40 @@ export function EventDetailClient({
 
         {/* Receipts */}
         <motion.div
-          initial={{ opacity: 0, y: 16 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.08, type: 'spring', stiffness: 260, damping: 20 }}
+          whileHover={{ y: -4, scale: 1.01, transition: { duration: 0.2, ease: "easeOut" } }}
+          whileTap={{ scale: 0.98 }}
+          className="h-full"
         >
-          <Card className="h-full">
-            <CardHeader className="pb-1 px-5 pt-5">
-              <CardTitle className="text-[13px] leading-[18px] font-medium text-text-secondary">Receipts</CardTitle>
+          <Card className="h-full bg-surface-white/85 backdrop-blur-md border border-divider/40 shadow-soft hover:shadow-md transition-all duration-300">
+            <CardHeader className="pb-2 px-5 pt-5 flex flex-row items-center justify-between space-y-0">
+              <CardTitle className="text-xs font-semibold text-text-secondary uppercase tracking-wider">Receipts</CardTitle>
+              <ReceiptIcon className="h-4 w-4 text-text-secondary" />
             </CardHeader>
             <CardContent className="!p-5">
-              <AnimatedNumber value={receipts.length} className="block text-[28px] leading-[34px] font-[650] tracking-[-0.03em] text-text-primary mb-4" />
+              <div className="flex items-baseline gap-1.5 mb-3.5">
+                <AnimatedCount value={receipts.length} className="text-[32px] leading-[38px] font-serif font-bold tracking-tight text-text-primary" />
+                <span className="text-xs text-text-secondary font-medium">total items</span>
+              </div>
               <div className="flex flex-wrap gap-2">
-                <span className="inline-flex items-center px-2.5 py-1 rounded-full text-[12px] leading-[16px] font-medium bg-primary-tint-bg text-primary-tint-text">{approvedReceipts} Approved</span>
-                <span className="inline-flex items-center px-2.5 py-1 rounded-full text-[12px] leading-[16px] font-medium bg-amber-50 text-amber-700">{pendingReceipts} Pending</span>
-                <span className="inline-flex items-center px-2.5 py-1 rounded-full text-[12px] leading-[16px] font-medium bg-red-50 text-error">{rejectedReceipts} Rejected</span>
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-primary-tint-bg text-primary-tint-text transition-colors hover:bg-primary-tint-bg/85">
+                  <span className="h-1.5 w-1.5 rounded-full bg-primary" />
+                  <AnimatedCount value={approvedReceipts} /> Approved
+                </span>
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-amber-50 text-amber-700 relative overflow-hidden transition-colors hover:bg-amber-100/70">
+                  {pendingReceipts > 0 ? (
+                    <span className="relative flex h-2 w-2 shrink-0">
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
+                      <span className="relative inline-flex rounded-full h-2 w-2 bg-amber-500"></span>
+                    </span>
+                  ) : (
+                    <span className="h-1.5 w-1.5 rounded-full bg-amber-500" />
+                  )}
+                  <AnimatedCount value={pendingReceipts} /> Pending
+                </span>
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-red-50 text-error transition-colors hover:bg-red-100/70">
+                  <span className="h-1.5 w-1.5 rounded-full bg-error" />
+                  <AnimatedCount value={rejectedReceipts} /> Rejected
+                </span>
               </div>
             </CardContent>
           </Card>
@@ -392,20 +449,40 @@ export function EventDetailClient({
 
         {/* No-Receipt Forms */}
         <motion.div
-          initial={{ opacity: 0, y: 16 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.16, type: 'spring', stiffness: 260, damping: 20 }}
+          whileHover={{ y: -4, scale: 1.01, transition: { duration: 0.2, ease: "easeOut" } }}
+          whileTap={{ scale: 0.98 }}
+          className="h-full"
         >
-          <Card className="h-full">
-            <CardHeader className="pb-1 px-5 pt-5">
-              <CardTitle className="text-[13px] leading-[18px] font-medium text-text-secondary">No-Receipt Forms</CardTitle>
+          <Card className="h-full bg-surface-white/85 backdrop-blur-md border border-divider/40 shadow-soft hover:shadow-md transition-all duration-300">
+            <CardHeader className="pb-2 px-5 pt-5 flex flex-row items-center justify-between space-y-0">
+              <CardTitle className="text-xs font-semibold text-text-secondary uppercase tracking-wider">No-Receipt Forms</CardTitle>
+              <FileText className="h-4 w-4 text-text-secondary" />
             </CardHeader>
             <CardContent className="!p-5">
-              <AnimatedNumber value={forms.length} className="block text-[28px] leading-[34px] font-[650] tracking-[-0.03em] text-text-primary mb-4" />
+              <div className="flex items-baseline gap-1.5 mb-3.5">
+                <AnimatedCount value={forms.length} className="text-[32px] leading-[38px] font-serif font-bold tracking-tight text-text-primary" />
+                <span className="text-xs text-text-secondary font-medium">total items</span>
+              </div>
               <div className="flex flex-wrap gap-2">
-                <span className="inline-flex items-center px-2.5 py-1 rounded-full text-[12px] leading-[16px] font-medium bg-primary-tint-bg text-primary-tint-text">{approvedForms} Approved</span>
-                <span className="inline-flex items-center px-2.5 py-1 rounded-full text-[12px] leading-[16px] font-medium bg-amber-50 text-amber-700">{pendingForms} Pending</span>
-                <span className="inline-flex items-center px-2.5 py-1 rounded-full text-[12px] leading-[16px] font-medium bg-red-50 text-error">{rejectedForms} Rejected</span>
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-primary-tint-bg text-primary-tint-text transition-colors hover:bg-primary-tint-bg/85">
+                  <span className="h-1.5 w-1.5 rounded-full bg-primary" />
+                  <AnimatedCount value={approvedForms} /> Approved
+                </span>
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-amber-50 text-amber-700 relative overflow-hidden transition-colors hover:bg-amber-100/70">
+                  {pendingForms > 0 ? (
+                    <span className="relative flex h-2 w-2 shrink-0">
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
+                      <span className="relative inline-flex rounded-full h-2 w-2 bg-amber-500"></span>
+                    </span>
+                  ) : (
+                    <span className="h-1.5 w-1.5 rounded-full bg-amber-500" />
+                  )}
+                  <AnimatedCount value={pendingForms} /> Pending
+                </span>
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-red-50 text-error transition-colors hover:bg-red-100/70">
+                  <span className="h-1.5 w-1.5 rounded-full bg-error" />
+                  <AnimatedCount value={rejectedForms} /> Rejected
+                </span>
               </div>
             </CardContent>
           </Card>

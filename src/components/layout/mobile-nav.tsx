@@ -2,88 +2,114 @@
 
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
+import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils/cn';
 import { useAuthStore } from '@/stores/auth';
-import { useSidebarStore } from '@/stores/sidebar';
-import { createClient } from '@/lib/supabase/client';
+import { useNotifStore } from '@/stores/notifications';
 import {
   CalendarRange,
   FileText,
   ClipboardList,
   Building2,
   UserCircle,
-  Menu,
-  LogOut,
+  Bell,
 } from 'lucide-react';
 
-const navItems = [
-  { label: 'Events', href: '/officer/events', icon: CalendarRange, roles: ['officer'] },
-  { label: 'Reports', href: '/officer/reports', icon: FileText, roles: ['officer'] },
-  { label: 'Profile', href: '/officer/profile', icon: UserCircle, roles: ['officer'] },
-  { label: 'Events', href: '/adviser/events', icon: CalendarRange, roles: ['adviser'] },
-  { label: 'Pending', href: '/adviser/pending', icon: ClipboardList, roles: ['adviser'] },
-  { label: 'Reports', href: '/adviser/reports', icon: FileText, roles: ['adviser'] },
-  { label: 'Profile', href: '/adviser/profile', icon: UserCircle, roles: ['adviser'] },
-  { label: 'Departments', href: '/admin/departments', icon: Building2, roles: ['admin'] },
-  { label: 'Profile', href: '/admin/profile', icon: UserCircle, roles: ['admin'] },
+const NAV_ITEMS = [
+  { label: 'Events',        href: '/officer/events',        icon: CalendarRange,  roles: ['officer'] },
+  { label: 'Notifications', href: '/officer/notifications',  icon: Bell,           roles: ['officer'] },
+  { label: 'Reports',       href: '/officer/reports',        icon: FileText,       roles: ['officer'] },
+  { label: 'Profile',       href: '/officer/profile',        icon: UserCircle,     roles: ['officer'] },
+  { label: 'Events',        href: '/adviser/events',         icon: CalendarRange,  roles: ['adviser'] },
+  { label: 'Pending',       href: '/adviser/pending',        icon: ClipboardList,  roles: ['adviser'] },
+  { label: 'Notifications', href: '/adviser/notifications',  icon: Bell,           roles: ['adviser'] },
+  { label: 'Reports',       href: '/adviser/reports',        icon: FileText,       roles: ['adviser'] },
+  { label: 'Profile',       href: '/adviser/profile',        icon: UserCircle,     roles: ['adviser'] },
+  { label: 'Departments',   href: '/admin/departments',      icon: Building2,      roles: ['admin'] },
+  { label: 'Profile',       href: '/admin/profile',          icon: UserCircle,     roles: ['admin'] },
 ];
+
+// Sub-pages where the nav bar should be hidden
+const SUB_PAGE_PATTERNS = [
+  /\/(officer|adviser)\/events\/[^/]+/,
+  /\/(officer|adviser)\/reports\/[^/]+/,
+  /\/admin\/departments\/[^/]+/,
+];
+
+function isSubPage(pathname: string) {
+  return SUB_PAGE_PATTERNS.some((r) => r.test(pathname));
+}
 
 export function MobileNav() {
   const pathname = usePathname();
-  const router = useRouter();
   const { profile } = useAuthStore();
-  const { setMobileOpen } = useSidebarStore();
+  const { unreadCount } = useNotifStore();
 
-  const userNavItems = navItems.filter((item) =>
+  const items = NAV_ITEMS.filter((item) =>
     profile?.role ? item.roles.includes(profile.role) : false
   );
 
-  const handleSignOut = async () => {
-    const supabase = createClient();
-    await supabase.auth.signOut();
-    router.push('/login');
-  };
+  const hidden = isSubPage(pathname);
 
   return (
-    <>
-      <header className="fixed top-0 left-0 right-0 z-30 flex h-14 items-center justify-between border-b border-divider frosted px-4 lg:hidden">
-        <button
-          onClick={() => setMobileOpen(true)}
-          className="flex items-center gap-2 text-[15px] font-[590] tracking-[-0.02em] text-text-primary"
+    <AnimatePresence>
+      {!hidden && (
+        <motion.nav
+          key="mobile-nav"
+          initial={{ y: 80, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          exit={{ y: 80, opacity: 0 }}
+          transition={{ type: 'spring', stiffness: 380, damping: 38 }}
+          className="fixed bottom-0 left-0 right-0 z-30 lg:hidden"
         >
-          <Menu className="h-5 w-5" />
-          <span>ALBTS</span>
-        </button>
-        <button onClick={handleSignOut} className="text-text-secondary hover:text-text-primary transition-colors">
-          <LogOut className="h-5 w-5" />
-        </button>
-      </header>
+          {/* frosted glass pill bar */}
+          <div className="mx-3 mb-3 rounded-2xl bg-[#1a1a1f]/90 backdrop-blur-xl border border-white/[0.08] shadow-[0_8px_32px_rgba(0,0,0,0.28)]">
+            <div className="flex items-center justify-around px-1 py-2">
+              {items.map((item) => {
+                const Icon = item.icon;
+                const isActive = pathname.startsWith(item.href);
+                const isNotif = item.label === 'Notifications';
+                const hasBadge = isNotif && unreadCount > 0;
 
-      <nav className="fixed bottom-0 left-0 right-0 z-30 flex items-center justify-around border-t border-divider frosted pb-safe lg:hidden">
-        {userNavItems.map((item) => {
-          const Icon = item.icon;
-          const isActive = pathname.startsWith(item.href);
-          return (
-            <Link
-              key={item.href}
-              href={item.href}
-              prefetch={true}
-              className={cn(
-                'flex flex-col items-center gap-0.5 py-2 px-3 text-[10px] font-[500] transition-colors duration-200 relative min-w-[60px]',
-                isActive
-                  ? 'text-primary'
-                  : 'text-text-placeholder hover:text-text-secondary'
-              )}
-            >
-              <Icon className="h-5 w-5" />
-              <span>{item.label}</span>
-              {isActive && (
-                <span className="absolute -top-px left-1/2 -translate-x-1/2 h-0.5 w-8 rounded-full bg-primary" />
-              )}
-            </Link>
-          );
-        })}
-      </nav>
-    </>
+                return (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    prefetch={true}
+                    className={cn(
+                      'relative flex flex-col items-center gap-0.5 px-3 py-1.5 rounded-xl transition-colors duration-200 min-w-[52px]',
+                      isActive ? 'text-white' : 'text-white/40 hover:text-white/70'
+                    )}
+                  >
+                    {/* Active pill background */}
+                    {isActive && (
+                      <motion.div
+                        layoutId="nav-active-pill"
+                        className="absolute inset-0 rounded-xl bg-primary/20"
+                        transition={{ type: 'spring', stiffness: 400, damping: 35 }}
+                      />
+                    )}
+
+                    {/* Icon + badge wrapper */}
+                    <div className="relative z-10">
+                      <Icon className={cn('h-[22px] w-[22px]', isActive && 'text-primary')} strokeWidth={isActive ? 2.2 : 1.8} />
+                      {hasBadge && (
+                        <span className="absolute -top-1 -right-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-error text-[9px] font-bold text-white px-0.5">
+                          {unreadCount > 9 ? '9+' : unreadCount}
+                        </span>
+                      )}
+                    </div>
+
+                    <span className={cn('text-[9px] font-semibold tracking-wide z-10', isActive ? 'text-primary' : 'text-white/40')}>
+                      {item.label}
+                    </span>
+                  </Link>
+                );
+              })}
+            </div>
+          </div>
+        </motion.nav>
+      )}
+    </AnimatePresence>
   );
 }

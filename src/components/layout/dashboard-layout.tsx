@@ -60,10 +60,10 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
       <main
         className={cn(
           'flex-1 overflow-y-auto transition-all duration-500 ease-out',
-          isMobile ? 'ml-0 pt-4 pb-24' : collapsed ? 'ml-16' : 'ml-64'
+          isMobile ? 'ml-0 pt-4 pb-28' : collapsed ? 'ml-16' : 'ml-64'
         )}
       >
-        <div className="mx-auto w-full max-w-7xl px-4 py-6 lg:px-6 lg:py-8">
+        <div className="mx-auto w-full max-w-7xl px-4 py-6 lg:px-8 lg:py-10">
           <PageTransition>{children}</PageTransition>
         </div>
       </main>
@@ -75,9 +75,10 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
             color: '#1D1D1F',
             border: 'none',
             boxShadow: '0 8px 30px rgba(0,0,0,0.06), 0 4px 12px rgba(0,0,0,0.08)',
-            borderRadius: '12px',
+            borderRadius: '14px',
             fontSize: '13px',
-            padding: '12px 16px',
+            padding: '14px 18px',
+            fontWeight: 500,
           },
         }}
       />

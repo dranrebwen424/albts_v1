@@ -70,7 +70,7 @@ export function NotificationsPage({ role }: { role: 'officer' | 'adviser' }) {
   const unreadList = notifications.filter((n) => !n.read);
 
   return (
-    <div className="max-w-2xl mx-auto space-y-6">
+    <div className="max-w-2xl mx-auto space-y-8">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
           <Bell className="h-6 w-6 text-text-secondary" />
@@ -96,7 +96,7 @@ export function NotificationsPage({ role }: { role: 'officer' | 'adviser' }) {
           <p className="text-[15px] leading-[22px] text-text-secondary">No notifications yet</p>
         </div>
       ) : (
-        <motion.div {...staggerContainer()} viewport={{ once: true, margin: '-30px' }} whileInView="animate" className="space-y-2">
+        <motion.div {...staggerContainer()} viewport={{ once: true, margin: '-30px' }} whileInView="animate" className="space-y-3">
           {notifications.map((n, index) => {
             const link = getNotifLink(n, role);
             return (
@@ -106,8 +106,8 @@ export function NotificationsPage({ role }: { role: 'officer' | 'adviser' }) {
                 className={cn(
                   'w-full text-left p-4 rounded-xl transition-all duration-300 ease-out',
                   n.read
-                    ? 'bg-surface-white shadow-sm hover:shadow-md'
-                    : 'bg-primary-tint-bg shadow-sm hover:shadow-md',
+                    ? 'bg-surface-white shadow-soft hover:shadow-md'
+                    : 'bg-primary-tint-bg shadow-soft hover:shadow-md',
                   link ? 'cursor-pointer' : 'cursor-default'
                 )}
               >

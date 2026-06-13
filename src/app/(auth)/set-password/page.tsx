@@ -6,8 +6,8 @@ import { resetPasswordWithToken } from '@/lib/actions';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Loader2 } from 'lucide-react';
+import { Card, CardContent } from '@/components/ui/card';
+import { Loader2, Lock } from 'lucide-react';
 import { toast } from 'sonner';
 
 function SetPasswordForm() {
@@ -54,26 +54,26 @@ function SetPasswordForm() {
   };
 
   return (
-    <div className="w-full max-w-sm space-y-6 animate-fade-in">
-      <div className="text-center space-y-1">
-        <h1 className="text-[28px] font-[700] leading-[34px] tracking-[-0.05em] text-text-primary">
-          ALBTS
-        </h1>
-        <p className="text-[13px] leading-[18px] text-text-secondary">
-          Set your new password
-        </p>
+    <div className="w-full space-y-8">
+      <div className="text-center space-y-3">
+        <div className="inline-flex items-center justify-center h-14 w-14 rounded-2xl bg-primary-tint-bg border border-primary-tint-border">
+          <Lock className="h-7 w-7 text-primary" />
+        </div>
+        <div className="space-y-1">
+          <h1 className="text-[28px] font-[700] leading-[34px] tracking-[-0.05em] text-text-primary">
+            ALBTS
+          </h1>
+          <p className="text-[13px] leading-[18px] text-text-secondary">
+            Set your new password
+          </p>
+        </div>
       </div>
-      <Card className="shadow-sm">
-        <CardHeader className="text-center">
-          <CardTitle>Set New Password</CardTitle>
-          <CardDescription>
-            Enter your new password
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-5">
+
+      <Card className="shadow-soft">
+        <CardContent className="p-7">
+          <form onSubmit={handleSubmit} className="space-y-6">
             <div className="space-y-2">
-              <Label htmlFor="password">New Password</Label>
+              <Label htmlFor="password" className="text-[13px] font-medium text-text-body">New Password</Label>
               <Input
                 id="password"
                 type="password"
@@ -85,7 +85,7 @@ function SetPasswordForm() {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="confirmPassword">Confirm Password</Label>
+              <Label htmlFor="confirmPassword" className="text-[13px] font-medium text-text-body">Confirm Password</Label>
               <Input
                 id="confirmPassword"
                 type="password"
@@ -100,7 +100,7 @@ function SetPasswordForm() {
                 <p className="text-[11px] leading-[14px] text-error">Passwords do not match</p>
               )}
             </div>
-            <Button type="submit" className="w-full" disabled={loading || passwordMismatch}>
+            <Button type="submit" className="w-full h-11 text-[15px] font-[590]" disabled={loading || passwordMismatch}>
               {loading ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Saving...</> : 'Set Password'}
             </Button>
           </form>
@@ -112,16 +112,14 @@ function SetPasswordForm() {
 
 export default function SetPasswordPage() {
   return (
-    <div className="flex min-h-screen items-center justify-center bg-bg-app p-4">
-      <Suspense fallback={
-        <div className="w-full max-w-sm animate-fade-in">
-          <Card className="shadow-sm">
-            <CardContent className="py-8 text-center text-[13px] text-text-secondary">Loading...</CardContent>
-          </Card>
-        </div>
-      }>
-        <SetPasswordForm />
-      </Suspense>
-    </div>
+    <Suspense fallback={
+      <div className="w-full animate-fade-in">
+        <Card className="shadow-soft">
+          <CardContent className="py-10 text-center text-[13px] text-text-secondary">Loading...</CardContent>
+        </Card>
+      </div>
+    }>
+      <SetPasswordForm />
+    </Suspense>
   );
 }

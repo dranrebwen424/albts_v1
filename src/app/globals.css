@@ -40,22 +40,24 @@
   --shadow-lg: 0 8px 30px rgba(0,0,0,0.06), 0 4px 12px rgba(0,0,0,0.08);
   --shadow-xl: 0 16px 48px rgba(0,0,0,0.08);
   --shadow-soft: 0 0 0 1px rgba(0,0,0,0.02), 0 2px 4px rgba(0,0,0,0.02), 0 8px 24px rgba(0,0,0,0.04);
+  --shadow-glow: 0 0 0 1px rgba(29,185,84,0.08), 0 4px 12px rgba(29,185,84,0.12);
 
   --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
   --ease-out: cubic-bezier(0.33, 1, 0.68, 1);
   --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
   --ease-spring-sm: cubic-bezier(0.34, 1.4, 0.64, 1);
 
-  --animate-fade-in: fade-in 300ms var(--ease-out);
-  --animate-scale-in: scale-in 300ms var(--ease-spring);
-  --animate-spring-up: spring-up 500ms var(--ease-spring);
-  --animate-slide-up: slide-up 400ms var(--ease-spring);
+  --animate-fade-in: fade-in 400ms var(--ease-out);
+  --animate-scale-in: scale-in 400ms var(--ease-spring);
+  --animate-spring-up: spring-up 600ms var(--ease-spring);
+  --animate-slide-up: slide-up 500ms var(--ease-spring);
   --animate-frost-in: frost-in 400ms var(--ease-out);
-  --animate-enter: enter 300ms var(--ease-out);
-  --animate-exit: exit 200ms var(--ease-in);
-  --animate-card-in: card-in 400ms var(--ease-spring);
-  --animate-list-in: list-in 500ms var(--ease-out);
+  --animate-enter: enter 400ms var(--ease-out);
+  --animate-exit: exit 250ms var(--ease-in);
+  --animate-card-in: card-in 500ms var(--ease-spring);
+  --animate-list-in: list-in 600ms var(--ease-out);
   --animate-shimmer: shimmer 2s ease-in-out infinite;
+  --animate-pulse-soft: pulse-soft 3s ease-in-out infinite;
 }
 
 :root {
@@ -65,6 +67,7 @@
 
 html {
   font-size: 15px;
+  scroll-behavior: smooth;
 }
 
 @media (max-width: 1023px) {
@@ -79,6 +82,7 @@ body {
   font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
 }
 
 ::selection {
@@ -87,8 +91,8 @@ body {
 }
 
 ::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+  width: 5px;
+  height: 5px;
 }
 
 ::-webkit-scrollbar-track {
@@ -120,7 +124,7 @@ body {
 }
 
 @keyframes spring-up {
-  from { opacity: 0; transform: translateY(16px); }
+  from { opacity: 0; transform: translateY(20px); }
   to { opacity: 1; transform: translateY(0); }
 }
 
@@ -149,6 +153,11 @@ body {
   50% { opacity: 0.5; }
 }
 
+@keyframes pulse-soft {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.85; transform: scale(1.01); }
+}
+
 @keyframes breathe {
   0%, 100% { transform: scale(1); }
   50% { transform: scale(1.02); }
@@ -167,6 +176,11 @@ body {
 @keyframes shimmer {
   0% { background-position: -200% 0; }
   100% { background-position: 200% 0; }
+}
+
+@keyframes mesh-shift {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
 }
 
 @utility pb-safe {
@@ -205,6 +219,12 @@ body {
   -webkit-backdrop-filter: blur(20px);
 }
 
+@utility frosted-strong {
+  background: rgba(255,255,255,0.88);
+  backdrop-filter: blur(24px) saturate(1.2);
+  -webkit-backdrop-filter: blur(24px) saturate(1.2);
+}
+
 @utility frosted-dark {
   background: rgba(0,0,0,0.4);
   backdrop-filter: blur(20px);
@@ -230,4 +250,67 @@ body {
   &:active {
     transform: scale(0.97);
   }
+}
+
+@utility auth-mesh {
+  background:
+    radial-gradient(ellipse 80% 50% at 50% -20%, rgba(29,185,84,0.08), transparent),
+    radial-gradient(ellipse 60% 40% at 80% 80%, rgba(29,185,84,0.05), transparent),
+    radial-gradient(ellipse 50% 50% at 20% 60%, rgba(232,249,240,0.6), transparent);
+  background-size: 200% 200%;
+  animation: mesh-shift 15s ease-in-out infinite;
+}
+
+@utility text-balance {
+  text-wrap: balance;
+}
+
+@utility page-container {
+  max-width: 1280px;
+  margin-left: auto;
+  margin-right: auto;
+  padding-left: 1.5rem;
+  padding-right: 1.5rem;
+}
+
+@utility page-header {
+  margin-bottom: 2rem;
+}
+
+@utility page-title {
+  font-size: 1.6rem;
+  line-height: 2rem;
+  font-weight: 650;
+  letter-spacing: -0.04em;
+  color: var(--color-text-primary);
+}
+
+@utility page-description {
+  font-size: 0.8667rem;
+  line-height: 1.2rem;
+  color: var(--color-text-secondary);
+  margin-top: 0.3333rem;
+}
+
+@utility section-title {
+  font-size: 1.1333rem;
+  line-height: 1.6rem;
+  font-weight: 590;
+  letter-spacing: -0.02em;
+  color: var(--color-text-primary);
+}
+
+@utility kpi-value {
+  font-size: 1.1333rem;
+  line-height: 1.6rem;
+  font-weight: 650;
+  letter-spacing: -0.02em;
+  color: var(--color-text-primary);
+}
+
+@utility kpi-label {
+  font-size: 0.7333rem;
+  line-height: 1rem;
+  letter-spacing: 0.01em;
+  color: var(--color-text-secondary);
 }

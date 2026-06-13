@@ -19,7 +19,6 @@ export default function AdviserEventsPage() {
   const profile = useAuthStore(s => s.profile);
   const prefetchedIds = useRef<Set<string>>(new Set());
 
-  // Batch-prefetch all event details when list loads → instant navigation
   useEffect(() => {
     events.forEach(event => {
       if (prefetchedIds.current.has(event.id)) return;
@@ -31,21 +30,21 @@ export default function AdviserEventsPage() {
   }, [events, setEventDetailCache]);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8 animate-fade-in">
       <div>
-        <h1 className="text-2xl font-semibold tracking-tight">Events</h1>
-        <p className="text-sm text-neutral-500 dark:text-neutral-400 mt-1">Review and manage events</p>
+        <h1 className="page-title">Events</h1>
+        <p className="page-description">Review and manage department events</p>
       </div>
 
       {events.length === 0 ? (
-        <Card>
-          <CardContent className="flex flex-col items-center justify-center py-12 text-center">
-            <FolderOpen className="h-12 w-12 text-neutral-300 dark:text-neutral-700 mb-4" />
-            <p className="text-sm text-neutral-500 dark:text-neutral-400">No events yet</p>
+        <Card className="bg-surface-white shadow-soft rounded-xl">
+          <CardContent className="flex flex-col items-center justify-center py-16 text-center">
+            <FolderOpen className="h-12 w-12 text-text-placeholder mb-4" />
+            <p className="text-[13px] leading-[18px] text-text-secondary">No events yet</p>
           </CardContent>
         </Card>
       ) : (
-        <motion.div {...staggerContainer()} viewport={{ once: true, margin: '-30px' }} whileInView="animate" className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <motion.div {...staggerContainer()} viewport={{ once: true, margin: '-30px' }} whileInView="animate" className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
           {events.map((event, index) => (
             <motion.div {...fadeSlideUp(index)} key={event.id}>
             <Link href={`/adviser/events/${event.id}`} prefetch={true}
@@ -54,7 +53,7 @@ export default function AdviserEventsPage() {
                   setEventDetailCache(event.id, data)
                 ).catch(() => {});
               }}>
-              <Card className="h-full transition-all hover:shadow-md hover:-translate-y-0.5 cursor-pointer">
+              <Card className="h-full bg-surface-white shadow-soft rounded-xl transition-all duration-300 hover:shadow-md hover:-translate-y-0.5 cursor-pointer">
                 <CardHeader>
                   <div className="flex items-start justify-between">
                     <CardTitle className="text-base">{event.name}</CardTitle>
@@ -68,9 +67,9 @@ export default function AdviserEventsPage() {
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <div className="flex items-center gap-2 text-sm">
-                    <Wallet className="h-4 w-4 text-neutral-500" />
-                    <span className="font-medium">{formatCurrency(event.budget)}</span>
+                  <div className="flex items-center gap-2 text-[13px] leading-[18px]">
+                    <Wallet className="h-4 w-4 text-text-secondary" />
+                    <span className="font-medium text-text-primary">{formatCurrency(event.budget)}</span>
                   </div>
                 </CardContent>
               </Card>

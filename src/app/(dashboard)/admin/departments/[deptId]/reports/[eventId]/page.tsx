@@ -24,11 +24,11 @@ export default async function AdminReportDetailPage({ params }: { params: Promis
 function ReportDetailSkeleton() {
   return (
     <div className="space-y-6">
-      <div className="h-6 w-48 rounded-lg bg-neutral-200 dark:bg-neutral-800 animate-pulse" />
+      <Skeleton className="h-6 w-48" />
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        {[1, 2, 3].map(i => <div key={i} className="h-24 rounded-xl bg-neutral-200 dark:bg-neutral-800 animate-pulse" />)}
+        {[1, 2, 3].map(i => <Skeleton key={i} className="h-24 rounded-xl" />)}
       </div>
-      <div className="h-64 rounded-xl bg-neutral-200 dark:bg-neutral-800 animate-pulse" />
+      <Skeleton className="h-64 rounded-xl" />
     </div>
   );
 }

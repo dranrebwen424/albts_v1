@@ -17,6 +17,8 @@ import {
 import { formatCurrency } from '@/lib/utils/format';
 import { Skeleton } from '@/components/ui/skeleton';
 import { toast } from 'sonner';
+import { motion } from 'framer-motion';
+import { fadeSlideUp, staggerContainer } from '@/components/shared/page-transition';
 
 export default function AdviserReportDetailPage() {
   const params = useParams();
@@ -61,10 +63,12 @@ export default function AdviserReportDetailPage() {
 
   if (loading) {
     return (
-      <div className="space-y-6">
+      <div className="space-y-8">
         <Skeleton className="h-6 w-48" />
-        <Skeleton className="h-32 rounded-lg" />
-        <Skeleton className="h-64 rounded-lg" />
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
+          {[1,2,3].map(i => <Skeleton key={i} className="h-24 rounded-xl" />)}
+        </div>
+        <Skeleton className="h-64 rounded-xl" />
       </div>
     );
   }
@@ -78,17 +82,17 @@ export default function AdviserReportDetailPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8 animate-fade-in">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
           <Link href="/adviser/reports" prefetch={true}>
-            <Button variant="ghost" size="icon">
+            <Button variant="ghost" size="icon" className="rounded-xl">
               <ArrowLeft className="h-4 w-4" />
             </Button>
           </Link>
           <div>
-            <h1 className="text-[24px] leading-[30px] font-[650] tracking-[-0.04em]">{data.event.name}</h1>
-            <p className="text-[13px] leading-[18px] text-text-secondary mt-1">
+            <h1 className="page-title">{data.event.name}</h1>
+            <p className="page-description">
               {data.departmentName} — {data.event.status === 'done' ? 'Completed' : 'Ongoing'}
             </p>
           </div>
@@ -100,44 +104,56 @@ export default function AdviserReportDetailPage() {
             </Badge>
           )}
           <Link href={`/adviser/events/${eventId}`} prefetch={true}>
-            <Button variant="outline" size="sm">
+            <Button variant="outline" size="sm" className="rounded-lg">
               <ArrowLeft className="h-3.5 w-3.5 mr-1.5" /> Back to Event
             </Button>
           </Link>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <Card>
-          <CardContent className="p-4 flex items-center gap-3">
-            <Wallet className="h-8 w-8 text-blue-500" />
-            <div>
-              <p className="text-[13px] leading-[18px] text-text-secondary">Original Budget</p>
-              <p className="text-lg font-bold">{formatCurrency(data.event.budget + data.totalExpenses)}</p>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4 flex items-center gap-3">
-            <Receipt className="h-8 w-8 text-amber-500" />
-            <div>
-              <p className="text-[13px] leading-[18px] text-text-secondary">Total Expenses</p>
-              <p className="text-lg font-bold">{formatCurrency(data.totalExpenses)}</p>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4 flex items-center gap-3">
-            <PieChart className="h-8 w-8 text-green-500" />
-            <div>
-              <p className="text-[13px] leading-[18px] text-text-secondary">Remaining Budget</p>
-              <p className="text-lg font-bold">{formatCurrency(data.remainingBudget)}</p>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+      <motion.div {...staggerContainer()} viewport={{ once: true }} whileInView="animate" className="grid grid-cols-1 sm:grid-cols-3 gap-5">
+        <motion.div {...fadeSlideUp(0)}>
+          <Card className="bg-surface-white shadow-soft rounded-xl">
+            <CardContent className="p-5 flex items-center gap-4">
+              <div className="h-11 w-11 rounded-xl bg-primary-tint-bg border border-primary-tint-border flex items-center justify-center">
+                <Wallet className="h-5 w-5 text-primary" />
+              </div>
+              <div>
+                <p className="text-[11px] leading-[14px] text-text-secondary font-medium uppercase tracking-wider">Original Budget</p>
+                <p className="text-[17px] leading-6 font-[590] text-text-primary mt-0.5">{formatCurrency(data.event.budget + data.totalExpenses)}</p>
+              </div>
+            </CardContent>
+          </Card>
+        </motion.div>
+        <motion.div {...fadeSlideUp(1)}>
+          <Card className="bg-surface-white shadow-soft rounded-xl">
+            <CardContent className="p-5 flex items-center gap-4">
+              <div className="h-11 w-11 rounded-xl bg-amber-50 border border-amber-100 flex items-center justify-center">
+                <Receipt className="h-5 w-5 text-amber-600" />
+              </div>
+              <div>
+                <p className="text-[11px] leading-[14px] text-text-secondary font-medium uppercase tracking-wider">Total Expenses</p>
+                <p className="text-[17px] leading-6 font-[590] text-text-primary mt-0.5">{formatCurrency(data.totalExpenses)}</p>
+              </div>
+            </CardContent>
+          </Card>
+        </motion.div>
+        <motion.div {...fadeSlideUp(2)}>
+          <Card className="bg-surface-white shadow-soft rounded-xl">
+            <CardContent className="p-5 flex items-center gap-4">
+              <div className="h-11 w-11 rounded-xl bg-primary-tint-bg border border-primary-tint-border flex items-center justify-center">
+                <PieChart className="h-5 w-5 text-primary" />
+              </div>
+              <div>
+                <p className="text-[11px] leading-[14px] text-text-secondary font-medium uppercase tracking-wider">Remaining Budget</p>
+                <p className="text-[17px] leading-6 font-[590] text-text-primary mt-0.5">{formatCurrency(data.remainingBudget)}</p>
+              </div>
+            </CardContent>
+          </Card>
+        </motion.div>
+      </motion.div>
 
-      <Card>
+      <Card className="bg-surface-white shadow-soft rounded-xl">
         <CardHeader>
           <CardTitle>Expense Breakdown by Category</CardTitle>
         </CardHeader>
@@ -165,7 +181,7 @@ export default function AdviserReportDetailPage() {
         </CardContent>
       </Card>
 
-      <Card>
+      <Card className="bg-surface-white shadow-soft rounded-xl">
         <CardHeader>
           <CardTitle>Approved Receipts</CardTitle>
         </CardHeader>
@@ -196,7 +212,7 @@ export default function AdviserReportDetailPage() {
         </CardContent>
       </Card>
 
-      <Card>
+      <Card className="bg-surface-white shadow-soft rounded-xl">
         <CardHeader>
           <CardTitle>Approved No-Receipt Forms</CardTitle>
         </CardHeader>
@@ -231,7 +247,7 @@ export default function AdviserReportDetailPage() {
 
       <div className="flex items-center gap-3">
         {data.fsRecord && data.fsRecord.status === 'pending' && (
-          <Button size="lg" onClick={handleApprove} disabled={approving}>
+          <Button size="lg" onClick={handleApprove} disabled={approving} className="bg-primary text-white hover:bg-primary-hover rounded-xl">
             {approving ? (
               <Loader2 className="h-4 w-4 mr-2 animate-spin" />
             ) : (

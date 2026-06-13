@@ -7,13 +7,14 @@ import { prefetchFsDetail } from '@/lib/actions';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { FileText, Users, Calendar, FolderOpen } from 'lucide-react';
+import { motion } from 'framer-motion';
+import { fadeSlideUp, staggerContainer } from '@/components/shared/page-transition';
 
 export default function AdviserReportsPage() {
   const events = useEventsStore(s => s.events);
   const setFsDetailCache = useEventsStore(s => s.setFsDetailCache);
   const prefetchedIds = useRef<Set<string>>(new Set());
 
-  // Batch-prefetch all FS details when list loads → instant navigation
   useEffect(() => {
     events.forEach(event => {
       if (prefetchedIds.current.has(event.id)) return;
@@ -38,53 +39,54 @@ export default function AdviserReportsPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8 animate-fade-in">
       <div>
-        <h1 className="text-2xl font-semibold tracking-tight">Financial Reports</h1>
-        <p className="text-sm text-neutral-500 dark:text-neutral-400 mt-1">
-          Overview of all events and their financial statement status
-        </p>
+        <h1 className="page-title">Financial Reports</h1>
+        <p className="page-description">Review and approve financial statements</p>
       </div>
 
       {events.length === 0 ? (
-        <Card>
-          <CardContent className="flex flex-col items-center justify-center py-12 text-center">
-            <FolderOpen className="h-12 w-12 text-neutral-300 dark:text-neutral-700 mb-4" />
-            <p className="text-sm text-neutral-500 dark:text-neutral-400">No events found.</p>
+        <Card className="bg-surface-white shadow-soft rounded-xl">
+          <CardContent className="flex flex-col items-center justify-center py-16 text-center">
+            <FolderOpen className="h-12 w-12 text-text-placeholder mb-4" />
+            <p className="text-[13px] leading-[18px] text-text-secondary">No events found.</p>
           </CardContent>
         </Card>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {events.map((event) => {
+        <motion.div {...staggerContainer()} viewport={{ once: true, margin: '-30px' }} whileInView="animate" className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+          {events.map((event, index) => {
             const status = getStatusInfo(event);
             return (
-              <Link key={event.id} href={`/adviser/reports/${event.id}`} prefetch={true}
+              <motion.div {...fadeSlideUp(index)} key={event.id}>
+              <Link href={`/adviser/reports/${event.id}`} prefetch={true}
                 onMouseEnter={() => {
                   prefetchFsDetail(event.id).then(data =>
                     setFsDetailCache(event.id, data)
                   ).catch(() => {});
                 }}>
-                <Card className="h-full transition-all hover:shadow-md hover:-translate-y-0.5 cursor-pointer">
+                <Card className="h-full bg-surface-white shadow-soft rounded-xl transition-all duration-300 hover:shadow-md hover:-translate-y-0.5 cursor-pointer">
                   <CardHeader>
                     <div className="flex items-start justify-between">
-                      <CardTitle className="text-base">{event.name}</CardTitle>
+                      <CardTitle>{event.name}</CardTitle>
                       <Badge variant={status.variant}>{status.label}</Badge>
                     </div>
-                    <CardDescription className="flex items-center gap-1.5 mt-1">
-                      <Users className="h-3.5 w-3.5" />
-                      {event.officer?.first_name} {event.officer?.last_name}
+                    <CardDescription>
+                      <span className="flex items-center gap-1.5">
+                        <Users className="h-3.5 w-3.5" />
+                        {event.officer?.first_name} {event.officer?.last_name}
+                      </span>
                     </CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-2">
-                    <div className="flex items-center gap-2 text-sm">
-                      <Calendar className="h-4 w-4 text-neutral-500" />
-                      <span className="text-neutral-600 dark:text-neutral-400">
+                    <div className="flex items-center gap-2 text-[13px] leading-[18px]">
+                      <Calendar className="h-4 w-4 text-text-secondary" />
+                      <span className="text-text-body">
                         {new Date(event.created_at).toLocaleDateString('en-PH', { year: 'numeric', month: 'short', day: 'numeric' })}
                       </span>
                     </div>
-                    <div className="flex items-center gap-2 text-sm">
-                      <FileText className="h-4 w-4 text-neutral-500" />
-                      <span className="text-neutral-600 dark:text-neutral-400">
+                    <div className="flex items-center gap-2 text-[13px] leading-[18px]">
+                      <FileText className="h-4 w-4 text-text-secondary" />
+                      <span className="text-text-body">
                         {event.formCount > 0
                           ? `${event.pendingFormCount} pending / ${event.formCount} total no-receipt forms`
                           : 'No no-receipt forms'}
@@ -93,9 +95,10 @@ export default function AdviserReportsPage() {
                   </CardContent>
                 </Card>
               </Link>
+              </motion.div>
             );
           })}
-        </div>
+        </motion.div>
       )}
     </div>
   );

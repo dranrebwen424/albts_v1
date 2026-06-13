@@ -14,21 +14,21 @@ export default async function OfficerEventDetailPage({ params }: { params: Promi
     getNoReceiptForms(eventId).catch(() => [] as any[]),
   ]);
 
-  if (!event) return <div>Event not found</div>;
+  if (!event) return <div className="text-text-body text-[15px] leading-[22px]">Event not found</div>;
 
   const totalExpenses = [...receipts.filter(r => r.status === 'approved'), ...forms.filter(f => f.status === 'approved')]
     .reduce((sum: number, item: any) => sum + (item.total || item.amount || 0), 0);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8 animate-fade-in">
       <div className="flex items-center gap-4">
-        <Link href="/officer/events" prefetch={true} className="text-neutral-500 hover:text-neutral-900 dark:hover:text-white">
+        <Link href="/officer/events" prefetch={true} className="text-text-secondary hover:text-text-primary transition-colors duration-150">
           <ArrowLeft className="h-5 w-5" />
         </Link>
-        <div className="flex-1">
-          <h1 className="text-2xl font-semibold tracking-tight">{event.name}</h1>
-          <p className="text-sm text-neutral-500 dark:text-neutral-400">
-            Budget: {formatCurrency((event.budget || 0) + totalExpenses)} | Used: {formatCurrency(totalExpenses)} | Remaining: <span className={event.budget < 0 ? 'text-red-500 font-semibold' : ''}>{formatCurrency(event.budget || 0)}</span>
+        <div className="flex-1 min-w-0">
+          <h1 className="page-title">{event.name}</h1>
+          <p className="page-description">
+            Budget: {formatCurrency((event.budget || 0) + totalExpenses)} | Used: {formatCurrency(totalExpenses)} | Remaining: <span className={event.budget < 0 ? 'text-error font-[590]' : ''}>{formatCurrency(event.budget || 0)}</span>
           </p>
         </div>
         <Badge variant={event.status === 'ongoing' ? 'warning' : 'success'}>

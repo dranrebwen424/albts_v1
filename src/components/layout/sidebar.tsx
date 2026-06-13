@@ -19,6 +19,7 @@ import {
   LogOut,
   Bell,
   UserCircle,
+  Leaf,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -102,21 +103,26 @@ export function Sidebar() {
 
   const sidebarContent = (
     <>
-      <div className={cn('flex h-14 items-center px-5', collapsed ? 'justify-center px-0' : 'justify-between')}>
+      <div className={cn('flex h-[60px] items-center px-5', collapsed ? 'justify-center px-0' : 'justify-between')}>
         <AnimatePresence mode="wait">
           {!collapsed && (
-            <motion.span
+            <motion.div
               initial={{ opacity: 0, x: -8 }}
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: -8 }}
               transition={{ duration: 0.2, ease: [0.33, 1, 0.68, 1] }}
-              className="text-[15px] font-[590] tracking-[-0.02em] text-text-primary"
+              className="flex items-center gap-2"
             >
-              ALBTS
-            </motion.span>
+              <div className="h-7 w-7 rounded-lg bg-primary-tint-bg border border-primary-tint-border flex items-center justify-center">
+                <Leaf className="h-4 w-4 text-primary" />
+              </div>
+              <span className="text-[15px] font-[590] tracking-[-0.02em] text-text-primary">
+                ALBTS
+              </span>
+            </motion.div>
           )}
         </AnimatePresence>
-        <Button variant="ghost" size="icon" onClick={toggle} className="h-8 w-8">
+        <Button variant="ghost" size="icon" onClick={toggle} className="h-8 w-8 text-text-secondary hover:text-text-primary hover:bg-surface-gray">
           {collapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
         </Button>
       </div>
@@ -213,7 +219,10 @@ export function Sidebar() {
             <SheetTitle className="sr-only">Navigation</SheetTitle>
           </SheetHeader>
           <div className="flex h-full flex-col">
-            <div className="flex h-14 items-center px-5">
+            <div className="flex h-[60px] items-center px-5 gap-2">
+              <div className="h-7 w-7 rounded-lg bg-primary-tint-bg border border-primary-tint-border flex items-center justify-center">
+                <Leaf className="h-4 w-4 text-primary" />
+              </div>
               <span className="text-[15px] font-[590] tracking-[-0.02em] text-text-primary">ALBTS</span>
             </div>
             <ScrollArea className="flex-1 px-3 py-3 min-h-0">

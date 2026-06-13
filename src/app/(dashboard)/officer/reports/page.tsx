@@ -40,17 +40,15 @@ export default function OfficerReportsPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8 animate-fade-in">
       <div>
-        <h1 className="text-[24px] leading-[30px] font-[650] tracking-[-0.04em] text-text-primary">Financial Reports</h1>
-        <p className="text-[13px] leading-[18px] text-text-secondary mt-1">
-          Overview of all events and their financial statement status
-        </p>
+        <h1 className="page-title">Financial Reports</h1>
+        <p className="page-description">Overview of all events and their financial statement status</p>
       </div>
 
       {events.length === 0 ? (
-        <Card>
-          <CardContent className="flex flex-col items-center justify-center py-12 text-center">
+        <Card className="bg-surface-white shadow-soft rounded-xl">
+          <CardContent className="flex flex-col items-center justify-center py-16 text-center">
             <FolderOpen className="h-12 w-12 text-text-placeholder mb-4" />
             <p className="text-[13px] leading-[18px] text-text-secondary">No events found.</p>
           </CardContent>
@@ -67,7 +65,7 @@ export default function OfficerReportsPage() {
                     setFsDetailCache(event.id, data)
                   ).catch(() => {});
                 }}>
-                <Card className="h-full transition-all duration-300 ease-out hover:shadow-md hover:-translate-y-0.5 cursor-pointer">
+                <Card className="h-full bg-surface-white shadow-soft rounded-xl transition-all duration-300 hover:shadow-md hover:-translate-y-0.5 cursor-pointer">
                   <CardHeader>
                     <div className="flex items-start justify-between">
                       <CardTitle>{event.name}</CardTitle>

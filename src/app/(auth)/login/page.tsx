@@ -7,8 +7,8 @@ import { createClient } from '@/lib/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Eye, EyeOff } from 'lucide-react';
+import { Card, CardContent } from '@/components/ui/card';
+import { Eye, EyeOff, Leaf } from 'lucide-react';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
@@ -73,9 +73,12 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-bg-app p-4">
-      <div className="w-full max-w-sm space-y-6 animate-fade-in">
-        <div className="text-center space-y-1">
+    <div className="w-full space-y-8">
+      <div className="text-center space-y-3">
+        <div className="inline-flex items-center justify-center h-14 w-14 rounded-2xl bg-primary-tint-bg border border-primary-tint-border">
+          <Leaf className="h-7 w-7 text-primary" />
+        </div>
+        <div className="space-y-1">
           <h1 className="text-[28px] font-[700] leading-[34px] tracking-[-0.05em] text-text-primary">
             ALBTS
           </h1>
@@ -83,55 +86,56 @@ export default function LoginPage() {
             Departmental Liquidation &amp; Financial Reporting
           </p>
         </div>
-        <Card className="shadow-sm">
-          <CardContent className="p-6">
-            <form onSubmit={handleLogin} className="space-y-5">
-              <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
-                <Input
-                  id="email"
-                  type="email"
-                  placeholder="gmail@example.com"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  required
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="password">Password</Label>
-                <div className="relative">
-                  <Input
-                    id="password"
-                    type={showPassword ? 'text' : 'password'}
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    required
-                    className="pr-12"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-text-secondary hover:text-text-primary transition-colors"
-                  >
-                    {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                  </button>
-                </div>
-                <div className="flex justify-end">
-                  <Link href="/forgot-password" prefetch={true} className="text-[11px] leading-[14px] text-text-secondary hover:text-text-primary transition-colors">
-                    Forgot password?
-                  </Link>
-                </div>
-              </div>
-              {error && (
-                <p className="text-[11px] leading-[14px] text-error">{error}</p>
-              )}
-              <Button type="submit" className="w-full" disabled={loading}>
-                {loading ? 'Signing in...' : 'Sign in'}
-              </Button>
-            </form>
-          </CardContent>
-        </Card>
       </div>
+
+      <Card className="shadow-soft">
+        <CardContent className="p-7">
+          <form onSubmit={handleLogin} className="space-y-6">
+            <div className="space-y-2">
+              <Label htmlFor="email" className="text-[13px] font-medium text-text-body">Email</Label>
+              <Input
+                id="email"
+                type="email"
+                placeholder="gmail@example.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="password" className="text-[13px] font-medium text-text-body">Password</Label>
+              <div className="relative">
+                <Input
+                  id="password"
+                  type={showPassword ? 'text' : 'password'}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                  className="pr-12"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-text-secondary hover:text-text-primary transition-colors duration-150"
+                >
+                  {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </button>
+              </div>
+              <div className="flex justify-end pt-0.5">
+                <Link href="/forgot-password" prefetch={true} className="text-[11px] leading-[14px] text-text-secondary hover:text-text-primary transition-colors duration-150">
+                  Forgot password?
+                </Link>
+              </div>
+            </div>
+            {error && (
+              <p className="text-[11px] leading-[14px] text-error">{error}</p>
+            )}
+            <Button type="submit" className="w-full h-11 text-[15px] font-[590]" disabled={loading}>
+              {loading ? 'Signing in...' : 'Sign in'}
+            </Button>
+          </form>
+        </CardContent>
+      </Card>
     </div>
   );
 }

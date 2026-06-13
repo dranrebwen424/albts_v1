@@ -12,7 +12,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ResponsiveDialog } from '@/components/shared/responsive-dialog';
-import { CalendarRange, Users, Wallet, FolderOpen, Plus } from 'lucide-react';
+import { Users, Wallet, FolderOpen, Plus } from 'lucide-react';
 import { formatCurrency } from '@/lib/utils/format';
 import { toast } from 'sonner';
 import type { Profile } from '@/types';
@@ -84,15 +84,13 @@ export default function OfficerEventsPage() {
   }, [events.length]);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8 animate-fade-in">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Events</h1>
-          <p className="text-sm text-neutral-500 dark:text-neutral-400 mt-1">
-            Department events
-          </p>
+          <h1 className="page-title">Events</h1>
+          <p className="page-description">Manage and track your department events</p>
         </div>
-        <Button onClick={() => setShowCreate(true)}>
+        <Button onClick={() => setShowCreate(true)} className="bg-primary text-white hover:bg-primary-hover rounded-xl">
           <Plus className="h-4 w-4 mr-2" /> New Event
         </Button>
         <ResponsiveDialog
@@ -121,7 +119,7 @@ export default function OfficerEventsPage() {
               <Label>Budget</Label>
               <Input type="number" value={form.budget} onChange={e => setForm({...form, budget: e.target.value})} placeholder="0.00" />
             </div>
-            <Button className="w-full" onClick={handleCreate} disabled={creating}>
+            <Button className="w-full bg-primary text-white hover:bg-primary-hover" onClick={handleCreate} disabled={creating}>
               {creating ? 'Creating...' : 'Create Event'}
             </Button>
           </div>
@@ -129,14 +127,14 @@ export default function OfficerEventsPage() {
       </div>
 
       {events.length === 0 ? (
-        <Card>
-          <CardContent className="flex flex-col items-center justify-center py-12 text-center">
-            <FolderOpen className="h-12 w-12 text-neutral-300 dark:text-neutral-700 mb-4" />
-            <p className="text-sm text-neutral-500 dark:text-neutral-400">No events yet. Create your first event!</p>
+        <Card className="bg-surface-white shadow-soft rounded-xl">
+          <CardContent className="flex flex-col items-center justify-center py-16 text-center">
+            <FolderOpen className="h-12 w-12 text-text-placeholder mb-4" />
+            <p className="text-[13px] leading-[18px] text-text-secondary">No events yet. Create your first event!</p>
           </CardContent>
         </Card>
       ) : (
-        <motion.div {...staggerContainer()} viewport={{ once: true, margin: '-30px' }} whileInView="animate" className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <motion.div {...staggerContainer()} viewport={{ once: true, margin: '-30px' }} whileInView="animate" className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
           {events.map((event, index) => (
             <motion.div {...fadeSlideUp(index)} key={event.id}>
             <Link href={`/officer/events/${event.id}`} prefetch={true}
@@ -145,7 +143,7 @@ export default function OfficerEventsPage() {
                   setEventDetailCache(event.id, data)
                 ).catch(() => {});
               }}>
-              <Card className="h-full transition-all hover:shadow-md hover:-translate-y-0.5 cursor-pointer">
+              <Card className="h-full bg-surface-white shadow-soft rounded-xl transition-all duration-300 hover:shadow-md hover:-translate-y-0.5 cursor-pointer">
                 <CardHeader>
                   <div className="flex items-start justify-between">
                     <CardTitle className="text-base">{event.name}</CardTitle>
@@ -160,8 +158,8 @@ export default function OfficerEventsPage() {
                 </CardHeader>
                 <CardContent>
                   <div className="flex items-center gap-2 text-sm">
-                    <Wallet className="h-4 w-4 text-neutral-500" />
-                    <span className="font-medium">{formatCurrency(event.budget)}</span>
+                    <Wallet className="h-4 w-4 text-text-secondary" />
+                    <span className="font-medium text-text-primary">{formatCurrency(event.budget)}</span>
                   </div>
                 </CardContent>
               </Card>

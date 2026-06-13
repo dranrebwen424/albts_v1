@@ -62,8 +62,8 @@ export function MobileNav() {
           transition={{ type: 'spring', stiffness: 380, damping: 38 }}
           className="fixed bottom-0 left-0 right-0 z-30 lg:hidden"
         >
-          {/* frosted glass pill bar */}
-          <div className="mx-3 mb-3 rounded-2xl bg-[#1a1a1f]/90 backdrop-blur-xl border border-white/[0.08] shadow-[0_8px_32px_rgba(0,0,0,0.28)]">
+          {/* frosted glass pill bar — light editorial warmth */}
+          <div className="mx-3 mb-3 rounded-2xl frosted-strong border border-white/[0.6] shadow-[0_8px_32px_rgba(0,0,0,0.08),0_1px_3px_rgba(0,0,0,0.04)]">
             <div className="flex items-center justify-around px-1 py-2">
               {items.map((item) => {
                 const Icon = item.icon;
@@ -78,14 +78,14 @@ export function MobileNav() {
                     prefetch={true}
                     className={cn(
                       'relative flex flex-col items-center gap-0.5 px-3 py-1.5 rounded-xl transition-colors duration-200 min-w-[52px]',
-                      isActive ? 'text-white' : 'text-white/40 hover:text-white/70'
+                      isActive ? 'text-text-primary' : 'text-text-secondary hover:text-text-body'
                     )}
                   >
                     {/* Active pill background */}
                     {isActive && (
                       <motion.div
                         layoutId="nav-active-pill"
-                        className="absolute inset-0 rounded-xl bg-primary/20"
+                        className="absolute inset-0 rounded-xl bg-primary-tint-bg"
                         transition={{ type: 'spring', stiffness: 400, damping: 35 }}
                       />
                     )}
@@ -100,7 +100,7 @@ export function MobileNav() {
                       )}
                     </div>
 
-                    <span className={cn('text-[9px] font-semibold tracking-wide z-10', isActive ? 'text-primary' : 'text-white/40')}>
+                    <span className={cn('text-[9px] font-semibold tracking-wide z-10', isActive ? 'text-primary' : 'text-text-secondary')}>
                       {item.label}
                     </span>
                   </Link>

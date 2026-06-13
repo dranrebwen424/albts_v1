@@ -325,8 +325,8 @@ export default function PendingApprovalsPage() {
                 {/* Certification */}
                 <Separator />
                 <div className="flex items-center gap-2">
-                  <div className={cn('h-4 w-4 rounded border flex items-center justify-center', selectedForm.certification ? 'bg-neutral-900 dark:bg-white' : 'border-divider')}>
-                    {selectedForm.certification && <CheckCircle className="h-3 w-3 text-white dark:text-neutral-900" />}
+                  <div className={cn('h-4 w-4 rounded border flex items-center justify-center', selectedForm.certification ? 'bg-text-primary' : 'border-divider')}>
+                    {selectedForm.certification && <CheckCircle className="h-3 w-3 text-white" />}
                   </div>
                   <span className="text-[11px] leading-[14px] text-text-secondary">Certified true and correct</span>
                 </div>

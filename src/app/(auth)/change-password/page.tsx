@@ -6,9 +6,9 @@ import { createClient } from '@/lib/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { toast } from 'sonner';
-import { Loader2 } from 'lucide-react';
+import { Loader2, ShieldCheck } from 'lucide-react';
 import { setPasswordChanged } from '@/lib/actions';
 
 export default function ChangePasswordPage() {
@@ -52,9 +52,12 @@ export default function ChangePasswordPage() {
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-bg-app p-4">
-      <div className="w-full max-w-sm space-y-6 animate-fade-in">
-        <div className="text-center space-y-1">
+    <div className="w-full space-y-8">
+      <div className="text-center space-y-3">
+        <div className="inline-flex items-center justify-center h-14 w-14 rounded-2xl bg-primary-tint-bg border border-primary-tint-border">
+          <ShieldCheck className="h-7 w-7 text-primary" />
+        </div>
+        <div className="space-y-1">
           <h1 className="text-[28px] font-[700] leading-[34px] tracking-[-0.05em] text-text-primary">
             ALBTS
           </h1>
@@ -62,50 +65,45 @@ export default function ChangePasswordPage() {
             Set your password for the first time
           </p>
         </div>
-        <Card className="shadow-sm">
-          <CardHeader className="text-center">
-            <CardTitle>Change Password</CardTitle>
-            <CardDescription>
-              Enter your new password
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <form onSubmit={handleChangePassword} className="space-y-5">
-              <div className="space-y-2">
-                <Label htmlFor="password">New Password</Label>
-                <Input
-                  id="password"
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  required
-                  minLength={6}
-                  disabled={loading}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="confirmPassword">Confirm Password</Label>
-                <Input
-                  id="confirmPassword"
-                  type="password"
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                  required
-                  minLength={6}
-                  disabled={loading}
-                  className={passwordMismatch ? 'ring-2 ring-error' : ''}
-                />
-                {passwordMismatch && (
-                  <p className="text-[11px] leading-[14px] text-error">Passwords do not match</p>
-                )}
-              </div>
-              <Button type="submit" className="w-full" disabled={loading || passwordMismatch}>
-                {loading ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Changing...</> : 'Change Password'}
-              </Button>
-            </form>
-          </CardContent>
-        </Card>
       </div>
+
+      <Card className="shadow-soft">
+        <CardContent className="p-7">
+          <form onSubmit={handleChangePassword} className="space-y-6">
+            <div className="space-y-2">
+              <Label htmlFor="password" className="text-[13px] font-medium text-text-body">New Password</Label>
+              <Input
+                id="password"
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+                minLength={6}
+                disabled={loading}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="confirmPassword" className="text-[13px] font-medium text-text-body">Confirm Password</Label>
+              <Input
+                id="confirmPassword"
+                type="password"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                required
+                minLength={6}
+                disabled={loading}
+                className={passwordMismatch ? 'ring-2 ring-error' : ''}
+              />
+              {passwordMismatch && (
+                <p className="text-[11px] leading-[14px] text-error">Passwords do not match</p>
+              )}
+            </div>
+            <Button type="submit" className="w-full h-11 text-[15px] font-[590]" disabled={loading || passwordMismatch}>
+              {loading ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Changing...</> : 'Change Password'}
+            </Button>
+          </form>
+        </CardContent>
+      </Card>
     </div>
   );
 }

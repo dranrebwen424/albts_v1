@@ -4,8 +4,8 @@ import { Suspense, useState, useRef, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { verifyResetCode } from '@/lib/actions';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { ArrowLeft, Loader2 } from 'lucide-react';
+import { Card, CardContent } from '@/components/ui/card';
+import { ArrowLeft, Loader2, KeyRound } from 'lucide-react';
 import { toast } from 'sonner';
 import Link from 'next/link';
 
@@ -81,25 +81,31 @@ function VerifyCodeForm() {
   };
 
   return (
-    <div className="w-full max-w-sm space-y-6 animate-fade-in">
-      <div className="text-center space-y-1">
-        <h1 className="text-[28px] font-[700] leading-[34px] tracking-[-0.05em] text-text-primary">
-          ALBTS
-        </h1>
-        <p className="text-[13px] leading-[18px] text-text-secondary">
-          Reset your password
-        </p>
+    <div className="w-full space-y-8">
+      <div className="text-center space-y-3">
+        <div className="inline-flex items-center justify-center h-14 w-14 rounded-2xl bg-primary-tint-bg border border-primary-tint-border">
+          <KeyRound className="h-7 w-7 text-primary" />
+        </div>
+        <div className="space-y-1">
+          <h1 className="text-[28px] font-[700] leading-[34px] tracking-[-0.05em] text-text-primary">
+            ALBTS
+          </h1>
+          <p className="text-[13px] leading-[18px] text-text-secondary">
+            Reset your password
+          </p>
+        </div>
       </div>
-      <Card className="shadow-sm">
-        <CardHeader className="text-center">
-          <CardTitle>Enter Reset Code</CardTitle>
-          <CardDescription>
-            Enter the 6-digit code sent to {email ? `${email.slice(0, 3)}...${email.slice(email.indexOf('@'))}` : 'your email'}
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-5">
-            <div className="flex justify-center gap-2">
+
+      <Card className="shadow-soft">
+        <CardContent className="p-7">
+          <div className="text-center mb-5">
+            <h2 className="text-[17px] font-[590] tracking-[-0.02em] text-text-primary">Enter Reset Code</h2>
+            <p className="text-[13px] leading-[18px] text-text-secondary mt-1">
+              We sent a 6-digit code to {email ? `${email.slice(0, 3)}...${email.slice(email.indexOf('@'))}` : 'your email'}
+            </p>
+          </div>
+          <form onSubmit={handleSubmit} className="space-y-6">
+            <div className="flex justify-center gap-2.5">
               {digits.map((digit, index) => (
                 <input
                   key={index}
@@ -112,16 +118,16 @@ function VerifyCodeForm() {
                   onKeyDown={(e) => handleKeyDown(index, e)}
                   onPaste={index === 0 ? handlePaste : undefined}
                   disabled={loading}
-                  className="h-12 w-11 rounded-lg border border-divider bg-surface-white text-center text-[17px] font-[590] focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-0 disabled:opacity-50 transition-all duration-200"
+                  className="h-14 w-12 rounded-xl border border-divider bg-surface-white text-center text-[20px] font-[590] focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-0 focus:border-primary disabled:opacity-50 transition-all duration-200"
                   required
                 />
               ))}
             </div>
-            <Button type="submit" className="w-full" disabled={loading || digits.join('').length !== 6}>
+            <Button type="submit" className="w-full h-11 text-[15px] font-[590]" disabled={loading || digits.join('').length !== 6}>
               {loading ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Verifying...</> : 'Verify Code'}
             </Button>
             <div className="text-center">
-              <Link href="/forgot-password" prefetch={true} className="text-[11px] leading-[14px] text-text-secondary hover:text-text-primary transition-colors inline-flex items-center gap-1">
+              <Link href="/forgot-password" prefetch={true} className="text-[11px] leading-[14px] text-text-secondary hover:text-text-primary transition-colors duration-150 inline-flex items-center gap-1">
                 <ArrowLeft className="h-3 w-3" /> Try a different email
               </Link>
             </div>
@@ -134,16 +140,14 @@ function VerifyCodeForm() {
 
 export default function VerifyResetCodePage() {
   return (
-    <div className="flex min-h-screen items-center justify-center bg-bg-app p-4">
-      <Suspense fallback={
-        <div className="w-full max-w-sm animate-fade-in">
-          <Card className="shadow-sm">
-            <CardContent className="py-8 text-center text-[13px] text-text-secondary">Loading...</CardContent>
-          </Card>
-        </div>
-      }>
-        <VerifyCodeForm />
-      </Suspense>
-    </div>
+    <Suspense fallback={
+      <div className="w-full animate-fade-in">
+        <Card className="shadow-soft">
+          <CardContent className="py-10 text-center text-[13px] text-text-secondary">Loading...</CardContent>
+        </Card>
+      </div>
+    }>
+      <VerifyCodeForm />
+    </Suspense>
   );
 }

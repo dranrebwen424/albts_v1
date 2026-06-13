@@ -6,7 +6,7 @@ import { useEventsStore } from '@/stores/events';
 import { prefetchFsDetail } from '@/lib/actions';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { FileText, Users, Calendar, FolderOpen } from 'lucide-react';
+import { FileText, Users, Calendar, FolderOpen} from '@phosphor-icons/react';
 import { motion } from 'framer-motion';
 import { fadeSlideUp, staggerContainer } from '@/components/shared/page-transition';
 

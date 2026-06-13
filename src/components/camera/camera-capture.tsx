@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { X, Camera, RefreshCw, Zap, ZapOff } from 'lucide-react';
+import { X, Camera, ArrowsClockwise, Lightning, LightningSlash} from '@phosphor-icons/react';
 import { ViewfinderOverlay } from './viewfinder-overlay';
 import { cn } from '@/lib/utils/cn';
 
@@ -398,7 +398,7 @@ export function CameraCapture({ onCapture, onClose }: CameraCaptureProps) {
                   onClick={toggleTorch}
                   className="h-10 w-10 flex items-center justify-center rounded-full bg-black/50 backdrop-blur-sm text-white"
                 >
-                  {torchOn ? <ZapOff className="h-5 w-5" /> : <Zap className="h-5 w-5" />}
+                  {torchOn ? <LightningSlash className="h-5 w-5" /> : <Lightning className="h-5 w-5" />}
                 </button>
               )}
             </div>
@@ -408,7 +408,7 @@ export function CameraCapture({ onCapture, onClose }: CameraCaptureProps) {
               onClick={switchCamera}
               className="absolute top-4 left-[calc(4rem+0.5rem)] z-20 h-10 w-10 flex items-center justify-center rounded-full bg-black/50 backdrop-blur-sm text-white"
             >
-              <RefreshCw className="h-4 w-4" />
+              <ArrowsClockwise className="h-4 w-4" />
             </button>
           </div>
 

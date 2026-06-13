@@ -12,10 +12,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
-import {
-  ArrowLeft, FileText, Download, CheckCircle, AlertCircle, Loader2,
-  Wallet, Receipt, PieChart,
-} from 'lucide-react';
+import { ArrowLeft, FileText, Download, CheckCircle, WarningCircle, Spinner, Wallet, Receipt, ChartPieSlice,
+} from '@phosphor-icons/react';
 import { formatCurrency } from '@/lib/utils/format';
 import { Skeleton } from '@/components/ui/skeleton';
 import { toast } from 'sonner';
@@ -205,7 +203,7 @@ export default function OfficerReportDetailPage() {
         <Card>
           <CardContent className="p-5 flex items-center gap-4">
             <div className="h-8 w-8 flex items-center justify-center rounded-lg bg-primary-tint-bg text-primary-tint-text">
-              <PieChart className="h-4 w-4" />
+              <ChartPieSlice className="h-4 w-4" />
             </div>
             <div className="min-w-0">
               <p className="text-[11px] leading-[14px] tracking-[0.01em] text-text-secondary">Remaining Budget</p>
@@ -225,7 +223,7 @@ export default function OfficerReportDetailPage() {
             <p className="text-[13px] leading-[18px] text-text-secondary">No approved expenses yet.</p>
           ) : (
             <motion.div {...staggerContainer()} viewport={{ once: true, margin: '-30px' }} whileInView="animate" className="space-y-1">
-              <div className="flex justify-between text-[11px] leading-[14px] tracking-[0.01em] font-[590] text-text-secondary pb-2 border-b border-divider">
+              <div key="header" className="flex justify-between text-[11px] leading-[14px] tracking-[0.01em] font-[590] text-text-secondary pb-2 border-b border-divider">
                 <span>Category</span>
                 <span>Amount</span>
               </div>
@@ -235,7 +233,7 @@ export default function OfficerReportDetailPage() {
                   <span className="font-[590]">{formatCurrency(amount as number)}</span>
                 </motion.div>
               ))}
-              <div className="flex justify-between text-[13px] leading-[18px] font-[590] pt-2 border-t border-divider">
+              <div key="total" className="flex justify-between text-[13px] leading-[18px] font-[590] pt-2 border-t border-divider">
                 <span>Total</span>
                 <span>{formatCurrency(data.totalExpenses)}</span>
               </div>
@@ -253,7 +251,7 @@ export default function OfficerReportDetailPage() {
             <p className="text-[13px] leading-[18px] text-text-secondary">No approved receipts.</p>
           ) : (
             <motion.div {...staggerContainer()} viewport={{ once: true, margin: '-30px' }} whileInView="animate" className="space-y-1">
-              <div className="flex justify-between text-[11px] leading-[14px] tracking-[0.01em] font-[590] text-text-secondary pb-2 border-b border-divider">
+              <div key="header" className="flex justify-between text-[11px] leading-[14px] tracking-[0.01em] font-[590] text-text-secondary pb-2 border-b border-divider">
                 <span className="flex-1">Vendor</span>
                 <span className="w-24 text-right">Category</span>
                 <span className="w-24 text-right">Amount</span>
@@ -265,7 +263,7 @@ export default function OfficerReportDetailPage() {
                   <span className="w-24 text-right font-[590]">{formatCurrency(r.total || 0)}</span>
                 </motion.div>
               ))}
-              <div className="flex justify-between text-[13px] leading-[18px] font-[590] pt-2 border-t border-divider">
+              <div key="total" className="flex justify-between text-[13px] leading-[18px] font-[590] pt-2 border-t border-divider">
                 <span className="flex-1">Total from Receipts</span>
                 <span className="w-24 text-right" />
                 <span className="w-24 text-right">{formatCurrency(data.totalReceiptExpenses)}</span>
@@ -284,7 +282,7 @@ export default function OfficerReportDetailPage() {
             <p className="text-[13px] leading-[18px] text-text-secondary">No approved no-receipt forms.</p>
           ) : (
             <motion.div {...staggerContainer()} viewport={{ once: true, margin: '-30px' }} whileInView="animate" className="space-y-1">
-              <div className="flex justify-between text-[11px] leading-[14px] tracking-[0.01em] font-[590] text-text-secondary pb-2 border-b border-divider">
+              <div key="header" className="flex justify-between text-[11px] leading-[14px] tracking-[0.01em] font-[590] text-text-secondary pb-2 border-b border-divider">
                 <span className="flex-1">Expense Name</span>
                 <span className="w-24 text-right">Type</span>
                 <span className="w-24 text-right">Amount</span>
@@ -296,7 +294,7 @@ export default function OfficerReportDetailPage() {
                   <span className="w-24 text-right font-[590]">{formatCurrency(f.amount || 0)}</span>
                 </motion.div>
               ))}
-              <div className="flex justify-between text-[13px] leading-[18px] font-[590] pt-2 border-t border-divider">
+              <div key="total" className="flex justify-between text-[13px] leading-[18px] font-[590] pt-2 border-t border-divider">
                 <span className="flex-1">Total from Forms</span>
                 <span className="w-24 text-right" />
                 <span className="w-24 text-right">{formatCurrency(data.totalFormExpenses)}</span>
@@ -315,7 +313,7 @@ export default function OfficerReportDetailPage() {
           disabled={!canGenerate || generating || data.event.status === 'done'}
         >
           {generating ? (
-            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+            <Spinner className="h-4 w-4 mr-2 animate-spin" />
           ) : (
             <Download className="h-4 w-4 mr-2" />
           )}
@@ -323,7 +321,7 @@ export default function OfficerReportDetailPage() {
         </Button>
         {disableReason && (
           <p className="text-[11px] leading-[14px] tracking-[0.01em] text-amber-700 flex items-center gap-1">
-            <AlertCircle className="h-3.5 w-3.5" /> {disableReason}
+            <WarningCircle className="h-3.5 w-3.5" /> {disableReason}
           </p>
         )}
 
@@ -336,7 +334,7 @@ export default function OfficerReportDetailPage() {
           disabled={!data.fsRecord || markingDone || data.event.status === 'done'}
         >
           {markingDone ? (
-            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+            <Spinner className="h-4 w-4 mr-2 animate-spin" />
           ) : (
             <CheckCircle className="h-4 w-4 mr-2" />
           )}
@@ -344,7 +342,7 @@ export default function OfficerReportDetailPage() {
         </Button>
         {!data.fsRecord && data.event.status !== 'done' && (
           <p className="text-[11px] leading-[14px] tracking-[0.01em] text-amber-700 flex items-center gap-1">
-            <AlertCircle className="h-3.5 w-3.5" /> Generate the FS first
+            <WarningCircle className="h-3.5 w-3.5" /> Generate the FS first
           </p>
         )}
       </div>

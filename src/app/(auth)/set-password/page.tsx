@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent } from '@/components/ui/card';
-import { Loader2, Lock } from 'lucide-react';
+import { Spinner, Lock} from '@phosphor-icons/react';
 import { toast } from 'sonner';
 
 function SetPasswordForm() {
@@ -101,7 +101,7 @@ function SetPasswordForm() {
               )}
             </div>
             <Button type="submit" className="w-full h-11 text-[15px] font-[590]" disabled={loading || passwordMismatch}>
-              {loading ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Saving...</> : 'Set Password'}
+              {loading ? <><Spinner className="h-4 w-4 mr-2 animate-spin" /> Saving...</> : 'Set Password'}
             </Button>
           </form>
         </CardContent>

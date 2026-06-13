@@ -13,7 +13,7 @@ import { Label } from '@/components/ui/label';
 import { ResponsiveDialog } from '@/components/shared/responsive-dialog';
 import { cn } from '@/lib/utils/cn';
 import { formatCurrency, formatDate } from '@/lib/utils/format';
-import { CheckCircle, XCircle, ClipboardList, ArrowRight, Shield, Loader2 } from 'lucide-react';
+import { CheckCircle, XCircle, ClipboardText, ArrowRight, Shield, Spinner} from '@phosphor-icons/react';
 import { toast } from 'sonner';
 import { Skeleton } from '@/components/ui/skeleton';
 import { motion } from 'framer-motion';
@@ -101,7 +101,7 @@ export default function PendingApprovalsPage() {
       {forms.length === 0 ? (
         <Card className="hover:shadow-md">
           <CardContent className="flex flex-col items-center justify-center py-12 text-center">
-            <ClipboardList className="h-12 w-12 text-text-secondary mb-4" />
+            <ClipboardText className="h-12 w-12 text-text-secondary mb-4" />
             <p className="text-[13px] leading-[18px] text-text-secondary">No pending approvals</p>
           </CardContent>
         </Card>
@@ -132,11 +132,11 @@ export default function PendingApprovalsPage() {
                     </div>
                     <div className="flex items-center gap-2 ml-4" onClick={(e) => e.stopPropagation()}>
                       <Button size="sm" onClick={() => handleApprove(form.id, form.event_id)} disabled={approvingFormId === form.id || rejectingFormId === form.id}>
-                        {approvingFormId === form.id ? <Loader2 className="h-3.5 w-3.5 mr-1 animate-spin" /> : <CheckCircle className="h-3.5 w-3.5 mr-1" />}
+                        {approvingFormId === form.id ? <Spinner className="h-3.5 w-3.5 mr-1 animate-spin" /> : <CheckCircle className="h-3.5 w-3.5 mr-1" />}
                         {approvingFormId === form.id ? 'Approving...' : 'Approve'}
                       </Button>
                       <Button size="sm" variant="destructive" onClick={() => setRejectTarget(form.id)} disabled={rejectingFormId === form.id || approvingFormId === form.id}>
-                        {rejectingFormId === form.id ? <Loader2 className="h-3.5 w-3.5 mr-1 animate-spin" /> : <XCircle className="h-3.5 w-3.5 mr-1" />}
+                        {rejectingFormId === form.id ? <Spinner className="h-3.5 w-3.5 mr-1 animate-spin" /> : <XCircle className="h-3.5 w-3.5 mr-1" />}
                         Reject
                       </Button>
                     </div>
@@ -161,7 +161,7 @@ export default function PendingApprovalsPage() {
             const form = forms.find(f => f.id === rejectTarget);
             if (form) handleReject(rejectTarget!, form.event_id);
           }}>
-            {rejectingFormId ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : null}
+            {rejectingFormId ? <Spinner className="h-4 w-4 mr-2 animate-spin" /> : null}
             {rejectingFormId ? 'Submitting...' : 'Submit Rejection'}
           </Button>
         </div>

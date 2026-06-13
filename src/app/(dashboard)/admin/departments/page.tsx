@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { ResponsiveDialog } from '@/components/shared/responsive-dialog';
-import { Building2, Plus, ChevronRight } from 'lucide-react';
+import { Building, Plus, CaretRight} from '@phosphor-icons/react';
 import { toast } from 'sonner';
 import { Skeleton } from '@/components/ui/skeleton';
 import { motion } from 'framer-motion';
@@ -110,7 +110,7 @@ export default function AdminDepartmentsPage() {
                 <CardHeader className="pb-3">
                   <div className="flex items-center gap-4">
                     <div className="h-11 w-11 rounded-xl bg-surface-gray flex items-center justify-center">
-                      <Building2 className="h-5 w-5 text-text-secondary" />
+                      <Building className="h-5 w-5 text-text-secondary" />
                     </div>
                     <div className="min-w-0">
                       <CardTitle className="text-[17px] leading-6 font-[590] tracking-[-0.02em] truncate">{dept.name}</CardTitle>
@@ -121,7 +121,7 @@ export default function AdminDepartmentsPage() {
                 <CardContent className="pt-0">
                   <div className="flex items-center text-[13px] leading-[18px] text-text-secondary">
                     <span>View details</span>
-                    <ChevronRight className="h-4 w-4 ml-1" />
+                    <CaretRight className="h-4 w-4 ml-1" />
                   </div>
                 </CardContent>
               </Card>

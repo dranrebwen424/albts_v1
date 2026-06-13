@@ -1,7 +1,7 @@
 import { Suspense } from 'react';
 import Link from 'next/link';
 import { getFsDetailData } from '@/lib/actions';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft} from '@phosphor-icons/react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { AdminReportDetailClient } from './report-detail-client';
 

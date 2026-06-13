@@ -10,10 +10,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
-import {
-  ArrowLeft, FileText, CheckCircle, Loader2,
-  Wallet, Receipt, PieChart,
-} from 'lucide-react';
+import { ArrowLeft, FileText, CheckCircle, Spinner, Wallet, Receipt, ChartPieSlice,
+} from '@phosphor-icons/react';
 import { formatCurrency } from '@/lib/utils/format';
 import { Skeleton } from '@/components/ui/skeleton';
 import { toast } from 'sonner';
@@ -142,7 +140,7 @@ export default function AdviserReportDetailPage() {
           <Card className="bg-surface-white shadow-soft rounded-xl">
             <CardContent className="p-5 flex items-center gap-4">
               <div className="h-11 w-11 rounded-xl bg-primary-tint-bg border border-primary-tint-border flex items-center justify-center">
-                <PieChart className="h-5 w-5 text-primary" />
+                <ChartPieSlice className="h-5 w-5 text-primary" />
               </div>
               <div>
                 <p className="text-[11px] leading-[14px] text-text-secondary font-medium uppercase tracking-wider">Remaining Budget</p>
@@ -249,7 +247,7 @@ export default function AdviserReportDetailPage() {
         {data.fsRecord && data.fsRecord.status === 'pending' && (
           <Button size="lg" onClick={handleApprove} disabled={approving} className="bg-primary text-white hover:bg-primary-hover rounded-xl">
             {approving ? (
-              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+              <Spinner className="h-4 w-4 mr-2 animate-spin" />
             ) : (
               <CheckCircle className="h-4 w-4 mr-2" />
             )}

@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef } from 'react';
-import { Camera, Image } from 'lucide-react';
+import { Camera, Image} from '@phosphor-icons/react';
 
 interface UploadSheetProps {
   open: boolean;

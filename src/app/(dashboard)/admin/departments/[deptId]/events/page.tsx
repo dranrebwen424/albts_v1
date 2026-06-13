@@ -7,7 +7,7 @@ import { useEventsStore } from '@/stores/events';
 import { getEvents, prefetchEventDetail } from '@/lib/actions';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Users, Wallet, ChevronRight } from 'lucide-react';
+import { Users, Wallet, CaretRight} from '@phosphor-icons/react';
 import { formatCurrency, formatDate } from '@/lib/utils/format';
 import { Skeleton } from '@/components/ui/skeleton';
 import { motion } from 'framer-motion';
@@ -63,7 +63,7 @@ export default function AdminEventsPage() {
                     <span>{formatDate(event.created_at)}</span>
                   </div>
                 </div>
-                <ChevronRight className="h-4 w-4 text-text-placeholder" />
+                <CaretRight className="h-4 w-4 text-text-placeholder" />
               </CardContent>
             </Card>
           </Link>

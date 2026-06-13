@@ -8,7 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent } from '@/components/ui/card';
 import { toast } from 'sonner';
-import { Loader2, ShieldCheck } from 'lucide-react';
+import { Spinner, ShieldCheck} from '@phosphor-icons/react';
 import { setPasswordChanged } from '@/lib/actions';
 
 export default function ChangePasswordPage() {
@@ -99,7 +99,7 @@ export default function ChangePasswordPage() {
               )}
             </div>
             <Button type="submit" className="w-full h-11 text-[15px] font-[590]" disabled={loading || passwordMismatch}>
-              {loading ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Changing...</> : 'Change Password'}
+              {loading ? <><Spinner className="h-4 w-4 mr-2 animate-spin" /> Changing...</> : 'Change Password'}
             </Button>
           </form>
         </CardContent>

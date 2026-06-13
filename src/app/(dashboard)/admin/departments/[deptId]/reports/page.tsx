@@ -7,7 +7,7 @@ import { useEventsStore } from '@/stores/events';
 import { getEvents, getReceipts, getNoReceiptForms, prefetchFsDetail } from '@/lib/actions';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { formatCurrency } from '@/lib/utils/format';
-import { FileText, ChevronRight } from 'lucide-react';
+import { FileText, CaretRight} from '@phosphor-icons/react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { motion } from 'framer-motion';
 import { fadeSlideUp, staggerContainer } from '@/components/shared/page-transition';
@@ -66,7 +66,7 @@ export default function ReportsPage() {
               <CardHeader className="pb-2">
                 <div className="flex items-center justify-between">
                   <CardTitle className="text-[17px] leading-6 font-[590] tracking-[-0.02em]">{event.name}</CardTitle>
-                  <ChevronRight className="h-4 w-4 text-text-placeholder" />
+                  <CaretRight className="h-4 w-4 text-text-placeholder" />
                 </div>
               </CardHeader>
               <CardContent>

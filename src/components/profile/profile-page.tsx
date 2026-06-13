@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
-import { User, Shield, Calendar, Building2, KeyRound, LogOut, Mail } from 'lucide-react';
+import { User, Shield, Calendar, Building, Key, SignOut, Envelope} from '@phosphor-icons/react';
 import { formatDate } from '@/lib/utils/format';
 import { createClient } from '@/lib/supabase/client';
 import { motion } from 'framer-motion';
@@ -65,7 +65,7 @@ export function ProfilePage() {
                     {profile.first_name} {profile.middle_name ? profile.middle_name + ' ' : ''}{profile.last_name}
                   </h2>
                   <div className="flex items-center gap-2 mt-1.5">
-                    <Mail className="h-3.5 w-3.5 text-text-secondary" />
+                    <Envelope className="h-3.5 w-3.5 text-text-secondary" />
                     <p className="text-[13px] leading-[18px] text-text-secondary">{profile.email}</p>
                   </div>
                   <div className="flex flex-wrap gap-2 mt-3">
@@ -88,7 +88,7 @@ export function ProfilePage() {
             <CardContent className="space-y-5">
               <div className="flex items-center gap-3">
                 <div className="h-9 w-9 rounded-lg bg-surface-gray flex items-center justify-center">
-                  <Building2 className="h-4 w-4 text-text-secondary" />
+                  <Building className="h-4 w-4 text-text-secondary" />
                 </div>
                 <div>
                   <p className="text-[11px] leading-[14px] text-text-secondary">Department</p>
@@ -134,7 +134,7 @@ export function ProfilePage() {
             <CardContent>
               <Link href="/change-password" prefetch={true}>
                 <Button variant="outline" className="rounded-lg">
-                  <KeyRound className="h-4 w-4 mr-2" /> Change Password
+                  <Key className="h-4 w-4 mr-2" /> Change Password
                 </Button>
               </Link>
             </CardContent>
@@ -151,7 +151,7 @@ export function ProfilePage() {
                 onClick={handleSignOut}
                 disabled={signingOut}
               >
-                <LogOut className="h-4 w-4" />
+                <SignOut className="h-4 w-4" />
                 <span>{signingOut ? 'Signing out…' : 'Sign Out'}</span>
               </Button>
             </CardContent>

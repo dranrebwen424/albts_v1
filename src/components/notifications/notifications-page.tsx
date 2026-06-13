@@ -7,7 +7,7 @@ import { useNotifStore } from '@/stores/notifications';
 import { getNotifications, markNotificationRead, markAllNotificationsRead } from '@/lib/actions';
 import { formatDateTime } from '@/lib/utils/format';
 import { Button } from '@/components/ui/button';
-import { Bell, ExternalLink } from 'lucide-react';
+import { Bell, ArrowSquareOut} from '@phosphor-icons/react';
 import { cn } from '@/lib/utils/cn';
 import type { Notification } from '@/types';
 import { motion } from 'framer-motion';
@@ -129,7 +129,7 @@ export function NotificationsPage({ role }: { role: 'officer' | 'adviser' }) {
                         {n.title}
                       </p>
                       {link && (
-                        <ExternalLink className="h-3 w-3 shrink-0 text-text-secondary" />
+                        <ArrowSquareOut className="h-3 w-3 shrink-0 text-text-secondary" />
                       )}
                     </div>
                     {n.events?.name && (

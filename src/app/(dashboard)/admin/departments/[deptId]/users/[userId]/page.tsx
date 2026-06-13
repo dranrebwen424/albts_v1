@@ -7,9 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
-import {
-  ArrowLeft, User, Shield, Calendar, Building2, Loader2, KeyRound, Ban, CheckCircle, Clock, AlertTriangle
-} from 'lucide-react';
+import { ArrowLeft, User, Shield, Calendar, Building, Spinner, Key, Prohibit, CheckCircle, Clock, Warning} from '@phosphor-icons/react';
 import Link from 'next/link';
 import { toast } from 'sonner';
 import { formatDate } from '@/lib/utils/format';
@@ -123,7 +121,7 @@ export default function UserDetailPage() {
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="flex items-center gap-3 text-[13px] leading-[18px]">
-                <Building2 className="h-4 w-4 text-text-secondary" />
+                <Building className="h-4 w-4 text-text-secondary" />
                 <div>
                   <p className="text-[11px] leading-[14px] text-text-secondary">Department</p>
                   <p className="font-medium text-text-primary">{profile.departments?.name || 'N/A'}</p>
@@ -166,7 +164,7 @@ export default function UserDetailPage() {
                 onClick={handleResetPassword}
                 disabled={resetting}
               >
-                {resetting ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <KeyRound className="h-4 w-4 mr-2" />}
+                {resetting ? <Spinner className="h-4 w-4 mr-2 animate-spin" /> : <Key className="h-4 w-4 mr-2" />}
                 Reset Password & Copy Invitation Link
               </Button>
               <Button
@@ -176,11 +174,11 @@ export default function UserDetailPage() {
                 disabled={togglingStatus}
               >
                 {togglingStatus ? (
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  <Spinner className="h-4 w-4 mr-2 animate-spin" />
                 ) : isDeactivated ? (
                   <CheckCircle className="h-4 w-4 mr-2" />
                 ) : (
-                  <Ban className="h-4 w-4 mr-2" />
+                  <Prohibit className="h-4 w-4 mr-2" />
                 )}
                 {isDeactivated ? 'Reactivate Account' : 'Deactivate Account'}
               </Button>

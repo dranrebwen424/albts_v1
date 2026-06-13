@@ -9,18 +9,8 @@ import { useSidebarStore } from '@/stores/sidebar';
 import { useAuthStore } from '@/stores/auth';
 import { useNotifStore } from '@/stores/notifications';
 import { useEventsStore } from '@/stores/events';
-import {
-  CalendarRange,
-  ClipboardList,
-  Building2,
-  FileText,
-  ChevronLeft,
-  ChevronRight,
-  LogOut,
-  Bell,
-  UserCircle,
-  Leaf,
-} from 'lucide-react';
+import { CalendarCheck, ClipboardText, Building, FileText, CaretLeft, CaretRight, SignOut, Bell, UserCircle, Leaf,
+} from '@phosphor-icons/react';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { createClient } from '@/lib/supabase/client';
@@ -36,14 +26,14 @@ interface NavItem {
 }
 
 const navItems: NavItem[] = [
-  { label: 'Events', href: '/officer/events', icon: <CalendarRange className="h-5 w-5" />, roles: ['officer'] },
+  { label: 'Events', href: '/officer/events', icon: <CalendarCheck className="h-5 w-5" />, roles: ['officer'] },
   { label: 'Notifications', href: '/officer/notifications', icon: <Bell className="h-5 w-5" />, roles: ['officer'] },
   { label: 'Financial Reports', href: '/officer/reports', icon: <FileText className="h-5 w-5" />, roles: ['officer'] },
-  { label: 'Events', href: '/adviser/events', icon: <CalendarRange className="h-5 w-5" />, roles: ['adviser'] },
-  { label: 'Pending Approvals', href: '/adviser/pending', icon: <ClipboardList className="h-5 w-5" />, roles: ['adviser'] },
+  { label: 'Events', href: '/adviser/events', icon: <CalendarCheck className="h-5 w-5" />, roles: ['adviser'] },
+  { label: 'Pending Approvals', href: '/adviser/pending', icon: <ClipboardText className="h-5 w-5" />, roles: ['adviser'] },
   { label: 'Notifications', href: '/adviser/notifications', icon: <Bell className="h-5 w-5" />, roles: ['adviser'] },
   { label: 'Financial Reports', href: '/adviser/reports', icon: <FileText className="h-5 w-5" />, roles: ['adviser'] },
-  { label: 'Departments', href: '/admin/departments', icon: <Building2 className="h-5 w-5" />, roles: ['admin'] },
+  { label: 'Departments', href: '/admin/departments', icon: <Building className="h-5 w-5" />, roles: ['admin'] },
   { label: 'Profile', href: '/officer/profile', icon: <UserCircle className="h-5 w-5" />, roles: ['officer'] },
   { label: 'Profile', href: '/adviser/profile', icon: <UserCircle className="h-5 w-5" />, roles: ['adviser'] },
   { label: 'Profile', href: '/admin/profile', icon: <UserCircle className="h-5 w-5" />, roles: ['admin'] },
@@ -123,7 +113,7 @@ export function Sidebar() {
           )}
         </AnimatePresence>
         <Button variant="ghost" size="icon" onClick={toggle} className="h-8 w-8 text-text-secondary hover:text-text-primary hover:bg-surface-gray">
-          {collapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
+          {collapsed ? <CaretRight className="h-4 w-4" /> : <CaretLeft className="h-4 w-4" />}
         </Button>
       </div>
 
@@ -204,7 +194,7 @@ export function Sidebar() {
           )}
           onClick={handleSignOut}
         >
-          <LogOut className="h-4 w-4" />
+          <SignOut className="h-4 w-4" />
           {!collapsed && <span>Sign out</span>}
         </Button>
       </div>
@@ -283,7 +273,7 @@ export function Sidebar() {
                 className="w-full justify-start gap-3 text-error hover:bg-red-50 hover:text-error"
                 onClick={handleSignOut}
               >
-                <LogOut className="h-4 w-4" />
+                <SignOut className="h-4 w-4" />
                 <span>Sign out</span>
               </Button>
             </div>

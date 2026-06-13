@@ -1,8 +1,4 @@
-import Link from 'next/link';
 import { getEvent, getReceipts, getNoReceiptForms } from '@/lib/actions';
-import { Badge } from '@/components/ui/badge';
-import { formatCurrency } from '@/lib/utils/format';
-import { ArrowLeft } from 'lucide-react';
 import { AdminEventDetailClient } from './event-detail-client';
 
 export default async function AdminEventDetailPage({ params }: { params: Promise<{ deptId: string; eventId: string }> }) {
@@ -16,34 +12,13 @@ export default async function AdminEventDetailPage({ params }: { params: Promise
 
   if (!event) return <div className="py-8 text-[13px] leading-[18px] text-text-secondary">Event not found.</div>;
 
-  const totalExpenses = [...receipts.filter(r => r.status === 'approved'), ...forms.filter(f => f.status === 'approved')]
-    .reduce((sum: number, item: any) => sum + (item.total || item.amount || 0), 0);
-
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center gap-4">
-        <Link href={`/admin/departments/${deptId}/events`} prefetch={true} className="text-text-secondary hover:text-text-primary transition-colors">
-          <ArrowLeft className="h-5 w-5" />
-        </Link>
-        <div className="flex-1">
-          <h1 className="text-[24px] leading-[30px] font-[650] tracking-[-0.04em]">{event.name}</h1>
-          <p className="text-[13px] leading-[18px] text-text-secondary">
-            Budget: {formatCurrency(event.budget + totalExpenses)} | Used: {formatCurrency(totalExpenses)} | Remaining: <span className={event.budget < 0 ? 'text-error font-semibold' : ''}>{formatCurrency(event.budget)}</span>
-          </p>
-        </div>
-        <Badge variant={event.status === 'ongoing' ? 'warning' : 'success'}>
-          {event.status === 'ongoing' ? 'Ongoing' : 'Done'}
-        </Badge>
-      </div>
-
-      <AdminEventDetailClient
-        deptId={deptId}
-        eventId={eventId}
-        initialEvent={event}
-        initialReceipts={receipts}
-        initialForms={forms}
-      />
-    </div>
+    <AdminEventDetailClient
+      deptId={deptId}
+      eventId={eventId}
+      initialEvent={event}
+      initialReceipts={receipts}
+      initialForms={forms}
+    />
   );
 }

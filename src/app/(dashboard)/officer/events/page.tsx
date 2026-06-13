@@ -12,7 +12,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ResponsiveDialog } from '@/components/shared/responsive-dialog';
-import { Users, Wallet, FolderOpen, Plus } from 'lucide-react';
+import { Users, Wallet, FolderOpen, Plus} from '@phosphor-icons/react';
 import { formatCurrency } from '@/lib/utils/format';
 import { toast } from 'sonner';
 import type { Profile } from '@/types';

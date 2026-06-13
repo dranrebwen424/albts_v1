@@ -6,9 +6,8 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { formatCurrency } from '@/lib/utils/format';
-import {
-  ArrowLeft, FileText, Wallet, Receipt, PieChart, Shield, Clock,
-} from 'lucide-react';
+import { ArrowLeft, FileText, Wallet, Receipt, ChartPieSlice, Shield, Clock,
+} from '@phosphor-icons/react';
 
 export function AdminReportDetailClient({
   deptId,
@@ -83,7 +82,7 @@ export function AdminReportDetailClient({
         </Card>
         <Card className="bg-surface-white rounded-xl shadow-sm">
           <CardContent className="p-4 flex items-center gap-3">
-            <PieChart className="h-8 w-8 text-primary" />
+            <ChartPieSlice className="h-8 w-8 text-primary" />
             <div>
               <p className="text-[11px] leading-[14px] text-text-secondary">Remaining Budget</p>
               <p className="text-[17px] leading-6 font-[590] tracking-[-0.02em]">{formatCurrency(data.remainingBudget)}</p>

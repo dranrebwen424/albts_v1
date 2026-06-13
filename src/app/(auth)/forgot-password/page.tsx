@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent } from '@/components/ui/card';
-import { ArrowLeft, Loader2, Mail } from 'lucide-react';
+import { ArrowLeft, Spinner, Envelope} from '@phosphor-icons/react';
 import { toast } from 'sonner';
 
 export default function ForgotPasswordPage() {
@@ -41,7 +41,7 @@ export default function ForgotPasswordPage() {
     <div className="w-full space-y-8">
       <div className="text-center space-y-3">
         <div className="inline-flex items-center justify-center h-14 w-14 rounded-2xl bg-primary-tint-bg border border-primary-tint-border">
-          <Mail className="h-7 w-7 text-primary" />
+          <Envelope className="h-7 w-7 text-primary" />
         </div>
         <div className="space-y-1">
           <h1 className="text-[28px] font-[700] leading-[34px] tracking-[-0.05em] text-text-primary">
@@ -69,7 +69,7 @@ export default function ForgotPasswordPage() {
               />
             </div>
             <Button type="submit" className="w-full h-11 text-[15px] font-[590]" disabled={loading}>
-              {loading ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Sending...</> : 'Send Reset Code'}
+              {loading ? <><Spinner className="h-4 w-4 mr-2 animate-spin" /> Sending...</> : 'Send Reset Code'}
             </Button>
             <div className="text-center">
               <Link href="/login" prefetch={true} className="text-[11px] leading-[14px] text-text-secondary hover:text-text-primary transition-colors duration-150 inline-flex items-center gap-1">

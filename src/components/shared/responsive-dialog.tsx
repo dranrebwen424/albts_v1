@@ -54,7 +54,9 @@ export function ResponsiveDialog({
       <DialogContent className="sm:max-w-lg max-h-[85vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{title}</DialogTitle>
-          {description && <DialogDescription>{description}</DialogDescription>}
+          <DialogDescription className={description ? '' : 'sr-only'}>
+            {description || `${title} dialog`}
+          </DialogDescription>
         </DialogHeader>
         {children}
       </DialogContent>

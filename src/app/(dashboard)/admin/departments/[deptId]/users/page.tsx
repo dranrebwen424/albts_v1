@@ -11,7 +11,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ResponsiveDialog } from '@/components/shared/responsive-dialog';
-import { UserPlus, Users, Trash2, ChevronRight } from 'lucide-react';
+import { UserPlus, Users, Trash, CaretRight} from '@phosphor-icons/react';
 import Link from 'next/link';
 import { toast } from 'sonner';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -154,9 +154,9 @@ export default function UsersPage() {
                 <div className="flex items-center gap-2" onClick={e => e.stopPropagation()}>
                   <Badge variant={u.status === 'deactivated' ? 'destructive' : 'secondary'}>{u.role} {u.status === 'deactivated' ? '(Deactivated)' : ''}</Badge>
                   <Button variant="ghost" size="icon" className="h-8 w-8 text-error hover:text-error hover:bg-red-50" onClick={() => handleDelete(u.user_id, `${u.first_name} ${u.last_name}`)}>
-                    <Trash2 className="h-4 w-4" />
+                    <Trash className="h-4 w-4" />
                   </Button>
-                  <ChevronRight className="h-4 w-4 text-text-placeholder" />
+                  <CaretRight className="h-4 w-4 text-text-placeholder" />
                 </div>
               </CardContent>
             </Card>

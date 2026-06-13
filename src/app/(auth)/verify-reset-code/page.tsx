@@ -5,7 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { verifyResetCode } from '@/lib/actions';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { ArrowLeft, Loader2, KeyRound } from 'lucide-react';
+import { ArrowLeft, Spinner, Key} from '@phosphor-icons/react';
 import { toast } from 'sonner';
 import Link from 'next/link';
 
@@ -84,7 +84,7 @@ function VerifyCodeForm() {
     <div className="w-full space-y-8">
       <div className="text-center space-y-3">
         <div className="inline-flex items-center justify-center h-14 w-14 rounded-2xl bg-primary-tint-bg border border-primary-tint-border">
-          <KeyRound className="h-7 w-7 text-primary" />
+          <Key className="h-7 w-7 text-primary" />
         </div>
         <div className="space-y-1">
           <h1 className="text-[28px] font-[700] leading-[34px] tracking-[-0.05em] text-text-primary">
@@ -124,7 +124,7 @@ function VerifyCodeForm() {
               ))}
             </div>
             <Button type="submit" className="w-full h-11 text-[15px] font-[590]" disabled={loading || digits.join('').length !== 6}>
-              {loading ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Verifying...</> : 'Verify Code'}
+              {loading ? <><Spinner className="h-4 w-4 mr-2 animate-spin" /> Verifying...</> : 'Verify Code'}
             </Button>
             <div className="text-center">
               <Link href="/forgot-password" prefetch={true} className="text-[11px] leading-[14px] text-text-secondary hover:text-text-primary transition-colors duration-150 inline-flex items-center gap-1">

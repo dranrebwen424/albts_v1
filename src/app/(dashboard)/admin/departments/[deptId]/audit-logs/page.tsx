@@ -7,7 +7,7 @@ import { createClient } from '@/lib/supabase/client';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { formatDateTime } from '@/lib/utils/format';
-import { ScrollText, Shield, User } from 'lucide-react';
+import { Scroll, Shield, User} from '@phosphor-icons/react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { motion } from 'framer-motion';
 import { fadeSlideUp, staggerContainer } from '@/components/shared/page-transition';
@@ -38,7 +38,7 @@ export default function AuditLogsPage() {
       {logs.length === 0 ? (
         <Card className="bg-surface-white rounded-xl shadow-sm">
           <CardContent className="text-center py-8 text-[13px] leading-[18px] text-text-secondary flex flex-col items-center gap-2">
-            <ScrollText className="h-8 w-8 text-text-placeholder" />
+            <Scroll className="h-8 w-8 text-text-placeholder" />
             No audit logs yet
           </CardContent>
         </Card>

@@ -57,7 +57,7 @@ export const getEvent = cache(async (eventId: string) => {
   const supabase = await createClient();
   const { data } = await supabase
     .from('events')
-    .select('*, officer:profiles!events_officer_id_fkey(first_name, last_name), adviser:profiles!events_adviser_id_fkey(first_name, last_name)')
+    .select('id, name, budget, original_budget, status, department_id, officer_id, adviser_id, created_at, officer:profiles!events_officer_id_fkey(first_name, last_name), adviser:profiles!events_adviser_id_fkey(first_name, last_name)')
     .eq('id', eventId)
     .single();
   return data;
@@ -385,7 +385,8 @@ export async function submitNoReceiptForm(formData: any) {
 
   // Notify adviser
   const event = await getEvent(formData.event_id);
-  if (event?.adviser_id) {
+  if (!event) throw new Error('Event not found');
+  if (event.adviser_id) {
     await supabase.from('notifications').insert({
       user_id: event.adviser_id,
       title: 'New No-Receipt Form',
@@ -629,7 +630,8 @@ export async function resubmitNoReceiptForm(formId: string, eventId: string, exp
 
   // Notify adviser
   const event = await getEvent(eventId);
-  if (event?.adviser_id) {
+  if (!event) throw new Error('Event not found');
+  if (event.adviser_id) {
     await supabase.from('notifications').insert({
       user_id: event.adviser_id,
       title: 'Form Resubmitted',
@@ -660,6 +662,8 @@ export async function generateFinancialReport(eventId: string, departmentId: str
     getReceipts(eventId),
     getNoReceiptForms(eventId),
   ]);
+
+  if (!event) throw new Error('Event not found');
 
   const approvedReceipts = receipts.filter(r => r.status === 'approved');
   const approvedForms = forms.filter(f => f.status === 'approved');
@@ -718,15 +722,15 @@ export async function approveFinancialReport(reportId: string, eventId: string) 
 
   // Notify officer — parallel with audit log
   const event = await getEvent(eventId);
-  if (event) {
-    await supabase.from('notifications').insert({
-      user_id: event.officer_id,
-      title: 'Financial Statement Approved',
-      message: `The Financial Statement for "${event.name}" has been approved. You can now download the PDF.`,
-      type: 'fs_approved',
-      event_id: eventId,
-    });
-  }
+  if (!event) throw new Error('Event not found');
+
+  await supabase.from('notifications').insert({
+    user_id: event.officer_id,
+    title: 'Financial Statement Approved',
+    message: `The Financial Statement for "${event.name}" has been approved. You can now download the PDF.`,
+    type: 'fs_approved',
+    event_id: eventId,
+  });
 
   await createAuditLog(event.department_id, 'Financial statement approved', {
     event_id: eventId,
@@ -845,7 +849,7 @@ export async function deleteUser(userId: string) {
 
 // ─── Financial Reports Dashboard ───
 
-export async function getEventsWithFsStatus(departmentId: string) {
+export const getEventsWithFsStatus = cache(async (departmentId: string) => {
   const supabase = await createClient();
   const { data: events } = await supabase
     .from('events')
@@ -889,9 +893,9 @@ export async function getEventsWithFsStatus(departmentId: string) {
       hasFsRecord: reportsSet.has(event.id),
     };
   });
-}
+});
 
-export async function getFsDetailData(eventId: string) {
+export const getFsDetailData = cache(async (eventId: string) => {
   const supabase = await createClient();
 
   const event = await getEvent(eventId);
@@ -944,11 +948,11 @@ export async function getFsDetailData(eventId: string) {
     categoryBreakdown,
     fsRecord,
   };
-}
+});
 
 // ─── Prefetch ───
 
-export async function prefetchEventDetail(eventId: string) {
+export const prefetchEventDetail = cache(async (eventId: string) => {
   const [event, receipts, forms, report] = await Promise.all([
     getEvent(eventId),
     getReceipts(eventId),
@@ -956,11 +960,11 @@ export async function prefetchEventDetail(eventId: string) {
     getFinancialReport(eventId).catch(() => null),
   ]);
   return { event, receipts, forms, report };
-}
+});
 
-export async function prefetchFsDetail(eventId: string) {
+export const prefetchFsDetail = cache(async (eventId: string) => {
   return getFsDetailData(eventId);
-}
+});
 
 // ─── Password Reset ───
 

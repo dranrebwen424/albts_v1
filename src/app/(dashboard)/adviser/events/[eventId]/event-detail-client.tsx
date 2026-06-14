@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef, useMemo } from 'react';
+import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { getEvent, getReceipts, getNoReceiptForms, approveNoReceiptForm, rejectNoReceiptForm, approveFinancialReport, getFinancialReport } from '@/lib/actions';
@@ -112,7 +112,7 @@ export function AdviserEventDetailClient({
   }, [eventId]);
 
   // Desktop layout state
-  const { isMobile } = useSidebarStore();
+  const isMobile = useSidebarStore(s => s.isMobile);
   const [expensesTab, setExpensesTab] = useState<'expenses' | 'report'>('expenses');
   const [filterType, setFilterType] = useState<'all' | 'receipt' | 'no-receipt'>('all');
   const [filterStatus, setFilterStatus] = useState<ExpenseStatus | 'all'>('all');
@@ -166,7 +166,7 @@ export function AdviserEventDetailClient({
     return Array.from(map.entries()).map(([category, data]) => ({ category, ...data })).sort((a, b) => b.total - a.total);
   }, [receipts, forms]);
 
-  const handleApproveForm = async (formId: string) => {
+  const handleApproveForm = useCallback(async (formId: string) => {
     if (approvingForm || rejectingForm) return;
     setApprovingForm(true);
     try {
@@ -179,9 +179,9 @@ export function AdviserEventDetailClient({
     } finally {
       setApprovingForm(false);
     }
-  };
+  }, [approvingForm, rejectingForm, eventId]);
 
-  const handleRejectForm = async (formId: string) => {
+  const handleRejectForm = useCallback(async (formId: string) => {
     if (rejectingForm || approvingForm) return;
     if (!rejectReason.trim()) {
       toast.error('Please provide a reason for rejection');
@@ -200,9 +200,9 @@ export function AdviserEventDetailClient({
     } finally {
       setRejectingForm(false);
     }
-  };
+  }, [rejectingForm, approvingForm, rejectReason, eventId]);
 
-  const handleApproveReport = async () => {
+  const handleApproveReport = useCallback(async () => {
     if (!report || approvingReport) return;
     setApprovingReport(true);
     try {
@@ -215,22 +215,22 @@ export function AdviserEventDetailClient({
     } finally {
       setApprovingReport(false);
     }
-  };
+  }, [report, approvingReport, eventId]);
 
   if (!event) return <div>Event not found</div>;
 
-  const totalExpenses = [...receipts.filter(r => r.status === 'approved'), ...forms.filter(f => f.status === 'approved')]
-    .reduce((sum, item: any) => sum + (item.total || item.amount || 0), 0);
+  const totalExpenses = useMemo(() => [...receipts.filter(r => r.status === 'approved'), ...forms.filter(f => f.status === 'approved')]
+    .reduce((sum, item: any) => sum + (item.total || item.amount || 0), 0), [receipts, forms]);
 
   // Receipt KPIs
-  const approvedReceipts = receipts.filter(r => r.status === 'approved').length;
-  const pendingReceipts = receipts.filter(r => r.status === 'pending').length;
-  const rejectedReceipts = receipts.filter(r => r.status === 'rejected').length;
+  const approvedReceipts = useMemo(() => receipts.filter(r => r.status === 'approved').length, [receipts]);
+  const pendingReceipts = useMemo(() => receipts.filter(r => r.status === 'pending').length, [receipts]);
+  const rejectedReceipts = useMemo(() => receipts.filter(r => r.status === 'rejected').length, [receipts]);
 
   // Form KPIs
-  const approvedForms = forms.filter(f => f.status === 'approved').length;
-  const pendingForms = forms.filter(f => f.status === 'pending').length;
-  const rejectedForms = forms.filter(f => f.status === 'rejected').length;
+  const approvedForms = useMemo(() => forms.filter(f => f.status === 'approved').length, [forms]);
+  const pendingForms = useMemo(() => forms.filter(f => f.status === 'pending').length, [forms]);
+  const rejectedForms = useMemo(() => forms.filter(f => f.status === 'rejected').length, [forms]);
 
   const backHref = '/adviser/events';
 
@@ -361,7 +361,7 @@ export function AdviserEventDetailClient({
                       <p className="text-[11px] text-[#afafaf] mt-0.5">{filterLabel}</p>
                     </div>
                     <div className="relative" ref={filterRef}>
-                      <button onClick={() => setShowFilterDropdown(!showFilterDropdown)} className="h-8 w-8 flex items-center justify-center rounded-full text-[#6b6b6b]">
+                      <button aria-label="Filter expenses" onClick={() => setShowFilterDropdown(!showFilterDropdown)} className="h-8 w-8 flex items-center justify-center rounded-full text-[#6b6b6b]">
                         <Funnel className="h-[18px] w-[18px]" weight="regular" />
                       </button>
                       {showFilterDropdown && (
@@ -824,6 +824,7 @@ export function AdviserEventDetailClient({
             {/* Filter dropdown */}
             <div className="relative" ref={filterRef}>
               <button
+                aria-label="Filter expenses"
                 onClick={() => setShowFilterDropdown(!showFilterDropdown)}
                 className={cn(
                   'h-9 w-9 flex items-center justify-center rounded-xl transition-all duration-200',

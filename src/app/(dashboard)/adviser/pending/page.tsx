@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import Link from 'next/link';
 import { useAuthStore } from '@/stores/auth';
 import { getPendingForms, approveNoReceiptForm, rejectNoReceiptForm } from '@/lib/actions';
@@ -29,14 +29,14 @@ export default function PendingApprovalsPage() {
   const [rejectingFormId, setRejectingFormId] = useState<string | null>(null);
   const profile = useAuthStore(s => s.profile);
 
-  const loadForms = async () => {
+  const loadForms = useCallback(async () => {
     if (!profile) return;
     const data = await getPendingForms(profile.department_id);
     setForms(data);
     setLoading(false);
-  };
+  }, [profile]);
 
-  useEffect(() => { loadForms(); }, [profile]);
+  useEffect(() => { loadForms(); }, [loadForms]);
 
   // Background polling to sync with event detail page changes — pause when hidden
   useEffect(() => {
@@ -44,9 +44,9 @@ export default function PendingApprovalsPage() {
       if (document.visibilityState === 'visible') loadForms();
     }, 30000);
     return () => clearInterval(interval);
-  }, [profile]);
+  }, [loadForms]);
 
-  const handleApprove = async (formId: string, eventId: string) => {
+  const handleApprove = useCallback(async (formId: string, eventId: string) => {
     if (approvingFormId || rejectingFormId) return;
     setApprovingFormId(formId);
     try {
@@ -58,9 +58,9 @@ export default function PendingApprovalsPage() {
     } finally {
       setApprovingFormId(null);
     }
-  };
+  }, [approvingFormId, rejectingFormId, loadForms]);
 
-  const handleReject = async (formId: string, eventId: string) => {
+  const handleReject = useCallback(async (formId: string, eventId: string) => {
     if (rejectingFormId || approvingFormId) return;
     if (!rejectReason.trim()) {
       toast.error('Please provide a reason');
@@ -78,7 +78,7 @@ export default function PendingApprovalsPage() {
     } finally {
       setRejectingFormId(null);
     }
-  };
+  }, [rejectingFormId, approvingFormId, rejectReason, loadForms]);
 
   if (loading) {
     return (

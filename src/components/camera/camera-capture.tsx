@@ -332,6 +332,7 @@ export function CameraCapture({ onCapture, onClose }: CameraCaptureProps) {
       {/* Close button */}
       <button
         onClick={handleClose}
+        aria-label="Close camera"
         className="absolute top-4 right-4 z-20 h-10 w-10 flex items-center justify-center rounded-full bg-black/50 backdrop-blur-sm text-white"
       >
         <X className="h-5 w-5" />
@@ -396,6 +397,7 @@ export function CameraCapture({ onCapture, onClose }: CameraCaptureProps) {
               {torchSupported && (
                 <button
                   onClick={toggleTorch}
+                  aria-label={torchOn ? 'Toggle flashlight off' : 'Toggle flashlight on'}
                   className="h-10 w-10 flex items-center justify-center rounded-full bg-black/50 backdrop-blur-sm text-white"
                 >
                   {torchOn ? <LightningSlash className="h-5 w-5" /> : <Lightning className="h-5 w-5" />}
@@ -406,6 +408,7 @@ export function CameraCapture({ onCapture, onClose }: CameraCaptureProps) {
             {/* Switch camera button */}
             <button
               onClick={switchCamera}
+              aria-label="Switch camera"
               className="absolute top-4 left-[calc(4rem+0.5rem)] z-20 h-10 w-10 flex items-center justify-center rounded-full bg-black/50 backdrop-blur-sm text-white"
             >
               <ArrowsClockwise className="h-4 w-4" />
@@ -421,6 +424,7 @@ export function CameraCapture({ onCapture, onClose }: CameraCaptureProps) {
             )}
             <button
               onClick={capturePhoto}
+              aria-label="Capture photo"
               className={cn(
                 'h-16 w-16 rounded-full border-4 flex items-center justify-center transition-all active:scale-95',
                 captureReady

@@ -42,7 +42,11 @@ function getNotifLink(n: Notification, role: string): string | null {
 export function NotificationsPage({ role }: { role: 'officer' | 'adviser' }) {
   const router = useRouter();
   const profile = useAuthStore((s) => s.profile);
-  const { notifications, unreadCount, setNotifications, markRead, markAllRead } = useNotifStore();
+  const notifications = useNotifStore(s => s.notifications);
+  const unreadCount = useNotifStore(s => s.unreadCount);
+  const setNotifications = useNotifStore(s => s.setNotifications);
+  const markRead = useNotifStore(s => s.markRead);
+  const markAllRead = useNotifStore(s => s.markAllRead);
 
   useEffect(() => {
     if (!profile?.user_id) return;

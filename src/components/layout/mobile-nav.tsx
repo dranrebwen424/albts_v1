@@ -36,8 +36,8 @@ function isSubPage(pathname: string) {
 
 export function MobileNav() {
   const pathname = usePathname();
-  const { profile } = useAuthStore();
-  const { unreadCount } = useNotifStore();
+  const profile = useAuthStore(s => s.profile);
+  const unreadCount = useNotifStore(s => s.unreadCount);
 
   const items = NAV_ITEMS.filter((item) =>
     profile?.role ? item.roles.includes(profile.role) : false

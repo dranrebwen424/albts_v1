@@ -44,8 +44,11 @@ const navSpring = { stiffness: 400, damping: 35, mass: 0.8 };
 export function Sidebar() {
   const pathname = usePathname();
   const router = useRouter();
-  const { collapsed, toggle, mobileOpen, setMobileOpen } = useSidebarStore();
-  const { profile } = useAuthStore();
+  const collapsed = useSidebarStore(s => s.collapsed);
+  const toggle = useSidebarStore(s => s.toggle);
+  const mobileOpen = useSidebarStore(s => s.mobileOpen);
+  const setMobileOpen = useSidebarStore(s => s.setMobileOpen);
+  const profile = useAuthStore(s => s.profile);
 
   const handleSignOut = async () => {
     const supabase = createClient();
@@ -67,7 +70,8 @@ export function Sidebar() {
     }
   }, [profile]);
 
-  const { setNotifications, unreadCount } = useNotifStore();
+  const setNotifications = useNotifStore(s => s.setNotifications);
+  const unreadCount = useNotifStore(s => s.unreadCount);
 
   useEffect(() => {
     if (!profile?.user_id) return;
@@ -79,7 +83,7 @@ export function Sidebar() {
     return () => clearInterval(interval);
   }, [profile?.user_id, setNotifications]);
 
-  const { setEvents } = useEventsStore();
+  const setEvents = useEventsStore(s => s.setEvents);
 
   useEffect(() => {
     if (!profile?.department_id) return;
@@ -112,7 +116,7 @@ export function Sidebar() {
             </motion.div>
           )}
         </AnimatePresence>
-        <Button variant="ghost" size="icon" onClick={toggle} className="h-8 w-8 text-text-secondary hover:text-text-primary hover:bg-surface-gray">
+        <Button variant="ghost" size="icon" onClick={toggle} aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'} className="h-8 w-8 text-text-secondary hover:text-text-primary hover:bg-surface-gray">
           {collapsed ? <CaretRight className="h-4 w-4" /> : <CaretLeft className="h-4 w-4" />}
         </Button>
       </div>
@@ -193,6 +197,7 @@ export function Sidebar() {
             collapsed && 'justify-center'
           )}
           onClick={handleSignOut}
+          aria-label="Sign out"
         >
           <SignOut className="h-4 w-4" />
           {!collapsed && <span>Sign out</span>}

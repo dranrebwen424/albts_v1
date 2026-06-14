@@ -10,7 +10,7 @@ interface BottomSheetProps {
 }
 
 const springOverlay = { stiffness: 300, damping: 35, mass: 0.9 };
-const springSheet = { stiffness: 500, damping: 45, mass: 1.1 };
+const springSheet = { stiffness: 500, damping: 45, mass: 0.85 };
 
 export function BottomSheet({ open, onClose, children }: BottomSheetProps) {
   useEffect(() => {
@@ -35,7 +35,7 @@ export function BottomSheet({ open, onClose, children }: BottomSheetProps) {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.25, ease: [0.33, 1, 0.68, 1] }}
-            className="absolute inset-0 bg-black/[0.1] backdrop-blur-sm"
+            className="absolute inset-0 bg-black/[0.1]"
             onClick={onClose}
           />
           <motion.div
@@ -45,7 +45,7 @@ export function BottomSheet({ open, onClose, children }: BottomSheetProps) {
             transition={springSheet}
             drag="y"
             dragConstraints={{ top: 0, bottom: 300 }}
-            dragElastic={0.15}
+            dragElastic={0.2}
             onDragEnd={(_: any, info: PanInfo) => {
               if (info.offset.y > 80) onClose();
             }}

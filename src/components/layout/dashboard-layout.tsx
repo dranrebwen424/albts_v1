@@ -11,8 +11,10 @@ import { cn } from '@/lib/utils/cn';
 import { PageTransition } from '@/components/shared/page-transition';
 
 export function DashboardLayout({ children }: { children: React.ReactNode }) {
-  const { collapsed, setIsMobile, isMobile } = useSidebarStore();
-  const { setProfile } = useAuthStore();
+  const collapsed = useSidebarStore(s => s.collapsed);
+  const setIsMobile = useSidebarStore(s => s.setIsMobile);
+  const isMobile = useSidebarStore(s => s.isMobile);
+  const setProfile = useAuthStore(s => s.setProfile);
   const resizeTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
 
   const handleResize = useCallback(() => {

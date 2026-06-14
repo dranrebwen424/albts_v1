@@ -77,7 +77,7 @@ export function AdminEventDetailClient({
   const [selectedForm, setSelectedForm] = useState<any>(null);
 
   // Desktop layout state
-  const { isMobile } = useSidebarStore();
+  const isMobile = useSidebarStore(s => s.isMobile);
   const [expensesTab, setExpensesTab] = useState<'expenses' | 'report'>('expenses');
   const [filterType, setFilterType] = useState<'all' | 'receipt' | 'no-receipt'>('all');
   const [filterStatus, setFilterStatus] = useState<ExpenseStatus | 'all'>('all');
@@ -145,18 +145,16 @@ export function AdminEventDetailClient({
 
   if (!event) return <div className="py-8 text-[13px] leading-[18px] text-text-secondary">Event not found.</div>;
 
-  const totalExpenses = [...receipts.filter(r => r.status === 'approved'), ...forms.filter(f => f.status === 'approved')]
-    .reduce((sum, item: any) => sum + (item.total || item.amount || 0), 0);
+  const totalExpenses = useMemo(() => [...receipts.filter(r => r.status === 'approved'), ...forms.filter(f => f.status === 'approved')]
+    .reduce((sum, item: any) => sum + (item.total || item.amount || 0), 0), [receipts, forms]);
 
-  // Receipt KPIs
-  const approvedReceipts = receipts.filter(r => r.status === 'approved').length;
-  const pendingReceipts = receipts.filter(r => r.status === 'pending').length;
-  const rejectedReceipts = receipts.filter(r => r.status === 'rejected').length;
+  const approvedReceipts = useMemo(() => receipts.filter(r => r.status === 'approved').length, [receipts]);
+  const pendingReceipts = useMemo(() => receipts.filter(r => r.status === 'pending').length, [receipts]);
+  const rejectedReceipts = useMemo(() => receipts.filter(r => r.status === 'rejected').length, [receipts]);
 
-  // Form KPIs
-  const approvedForms = forms.filter(f => f.status === 'approved').length;
-  const pendingForms = forms.filter(f => f.status === 'pending').length;
-  const rejectedForms = forms.filter(f => f.status === 'rejected').length;
+  const approvedForms = useMemo(() => forms.filter(f => f.status === 'approved').length, [forms]);
+  const pendingForms = useMemo(() => forms.filter(f => f.status === 'pending').length, [forms]);
+  const rejectedForms = useMemo(() => forms.filter(f => f.status === 'rejected').length, [forms]);
 
   const backHref = `/admin/departments/${deptId}/events`;
 
@@ -278,6 +276,7 @@ export function AdminEventDetailClient({
                 </div>
                 <div className="relative" ref={filterRef}>
                   <button
+                    aria-label="Filter expenses"
                     onClick={() => setShowFilterDropdown(!showFilterDropdown)}
                     className="h-8 w-8 flex items-center justify-center rounded-full text-[#6b6b6b]"
                   >
@@ -588,7 +587,7 @@ export function AdminEventDetailClient({
 
             {/* Filter */}
             <div className="relative" ref={filterRef}>
-              <button onClick={() => setShowFilterDropdown(!showFilterDropdown)} className={cn('h-9 w-9 flex items-center justify-center rounded-xl transition-all duration-200', showFilterDropdown ? 'bg-surface-gray text-text-primary' : 'text-text-secondary hover:bg-surface-gray hover:text-text-body')}>
+              <button aria-label="Filter expenses" onClick={() => setShowFilterDropdown(!showFilterDropdown)} className={cn('h-9 w-9 flex items-center justify-center rounded-xl transition-all duration-200', showFilterDropdown ? 'bg-surface-gray text-text-primary' : 'text-text-secondary hover:bg-surface-gray hover:text-text-body')}>
                 <Funnel className="h-4 w-4" />
               </button>
               {showFilterDropdown && (

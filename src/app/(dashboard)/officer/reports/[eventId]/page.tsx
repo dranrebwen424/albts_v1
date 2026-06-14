@@ -76,7 +76,7 @@ export default function OfficerReportDetailPage() {
         eventName: data.event.name,
         departmentName: data.departmentName,
         items,
-        totalBudget: data.event.budget + data.totalExpenses,
+        totalBudget: data.event.original_budget,
         totalExpenses: data.totalExpenses,
         remainingBudget: data.remainingBudget,
         preparedBy: `${profile.first_name} ${profile.last_name}`,
@@ -181,7 +181,7 @@ export default function OfficerReportDetailPage() {
             </div>
             <div className="min-w-0">
               <p className="text-[11px] leading-[14px] tracking-[0.01em] text-text-secondary">Original Budget</p>
-              <p className="text-[17px] leading-6 font-[590] tracking-[-0.02em]">{formatCurrency(data.event.budget + data.totalExpenses)}</p>
+              <p className="text-[17px] leading-6 font-[590] tracking-[-0.02em]">{formatCurrency(data.event.original_budget)}</p>
             </div>
           </CardContent>
         </Card>

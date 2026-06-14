@@ -38,6 +38,7 @@ export interface Event {
   officer_id: string;
   adviser_id: string;
   budget: number;
+  original_budget: number;
   status: EventStatus;
   created_at: string;
 }

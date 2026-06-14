@@ -67,7 +67,7 @@ export function AdminReportDetailClient({
             <Wallet className="h-8 w-8 text-primary" />
             <div>
               <p className="text-[11px] leading-[14px] text-text-secondary">Original Budget</p>
-              <p className="text-[17px] leading-6 font-[590] tracking-[-0.02em]">{formatCurrency(data.event.budget + data.totalExpenses)}</p>
+              <p className="text-[17px] leading-6 font-[590] tracking-[-0.02em]">{formatCurrency(data.event.original_budget)}</p>
             </div>
           </CardContent>
         </Card>

@@ -1,7 +1,6 @@
 'use client';
 
 import { useEffect, useCallback, useRef } from 'react';
-import { useRouter } from 'next/navigation';
 import { Sidebar } from '@/components/layout/sidebar';
 import { MobileNav } from '@/components/layout/mobile-nav';
 import { useSidebarStore } from '@/stores/sidebar';
@@ -12,7 +11,6 @@ import { cn } from '@/lib/utils/cn';
 import { PageTransition } from '@/components/shared/page-transition';
 
 export function DashboardLayout({ children }: { children: React.ReactNode }) {
-  const router = useRouter();
   const { collapsed, setIsMobile, isMobile } = useSidebarStore();
   const { setProfile } = useAuthStore();
   const resizeTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
@@ -33,10 +31,7 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
       const supabase = createClient();
       const { data: { user } } = await supabase.auth.getUser();
 
-      if (!user) {
-        router.push('/login');
-        return;
-      }
+      if (!user) return;
 
       try {
         const { data: profile } = await supabase
@@ -51,7 +46,7 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
     };
 
     initAuth();
-  }, [router, setProfile]);
+  }, [setProfile]);
 
   return (
     <div className="flex min-h-screen bg-bg-app">

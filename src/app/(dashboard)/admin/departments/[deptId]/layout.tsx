@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useParams, usePathname, useRouter } from 'next/navigation';
+import { useParams, usePathname } from 'next/navigation';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/client';
 import { getDepartments } from '@/lib/actions';
@@ -20,7 +20,6 @@ const tabs = [
 export default function DepartmentLayout({ children }: { children: React.ReactNode }) {
   const params = useParams();
   const pathname = usePathname();
-  const router = useRouter();
   const [deptName, setDeptName] = useState('');
   const [loading, setLoading] = useState(true);
 
@@ -28,14 +27,14 @@ export default function DepartmentLayout({ children }: { children: React.ReactNo
     const init = async () => {
       const supabase = createClient();
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) { router.push('/login'); return; }
+      if (!user) return;
       const depts = await getDepartments();
       const dept = depts.find((d: any) => d.id === params.deptId);
       if (dept) setDeptName(dept.name);
       setLoading(false);
     };
     init();
-  }, [params.deptId, router]);
+  }, [params.deptId]);
 
   const currentTab = pathname.split('/').pop();
 

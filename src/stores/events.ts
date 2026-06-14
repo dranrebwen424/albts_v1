@@ -6,6 +6,7 @@ interface EventWithFsStatus {
   status: string;
   created_at: string;
   budget: number;
+  original_budget: number;
   officer?: { first_name: string; last_name: string } | null;
   formCount: number;
   pendingFormCount: number;

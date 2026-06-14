@@ -59,7 +59,7 @@ export default function AdminEventsPage() {
                   </div>
                   <div className="flex items-center gap-4 mt-1 text-[11px] leading-[14px] text-text-secondary">
                     <span className="flex items-center gap-1"><Users className="h-3 w-3" /> {event.officer?.first_name} {event.officer?.last_name}</span>
-                    <span className="flex items-center gap-1"><Wallet className="h-3 w-3" /> {formatCurrency(event.budget)}</span>
+                    <span className="flex items-center gap-1"><Wallet className="h-3 w-3" /> {formatCurrency(event.original_budget)}</span>
                     <span>{formatDate(event.created_at)}</span>
                   </div>
                 </div>

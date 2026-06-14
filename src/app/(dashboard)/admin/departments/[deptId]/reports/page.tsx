@@ -73,7 +73,7 @@ export default function ReportsPage() {
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-[15px] leading-[22px]">
                   <div>
                     <p className="text-[11px] leading-[14px] text-text-secondary">Total Budget</p>
-                    <p className="text-[15px] leading-[22px] font-semibold">{formatCurrency(event.budget + event.totalExpenses)}</p>
+                    <p className="text-[15px] leading-[22px] font-semibold">{formatCurrency(event.original_budget)}</p>
                   </div>
                   <div>
                     <p className="text-[11px] leading-[14px] text-text-secondary">Total Expenses</p>
@@ -81,7 +81,7 @@ export default function ReportsPage() {
                   </div>
                   <div>
                     <p className="text-[11px] leading-[14px] text-text-secondary">Remaining</p>
-                    <p className="text-[15px] leading-[22px] font-semibold">{formatCurrency(event.budget)}</p>
+                    <p className="text-[15px] leading-[22px] font-semibold">{formatCurrency(event.original_budget - event.totalExpenses)}</p>
                   </div>
                   <div>
                     <p className="text-[11px] leading-[14px] text-text-secondary">Approved Items</p>

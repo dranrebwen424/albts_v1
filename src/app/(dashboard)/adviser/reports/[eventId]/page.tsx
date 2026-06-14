@@ -118,7 +118,7 @@ export default function AdviserReportDetailPage() {
               </div>
               <div>
                 <p className="text-[11px] leading-[14px] text-text-secondary font-medium uppercase tracking-wider">Original Budget</p>
-                <p className="text-[17px] leading-6 font-[590] text-text-primary mt-0.5">{formatCurrency(data.event.budget + data.totalExpenses)}</p>
+                <p className="text-[17px] leading-6 font-[590] text-text-primary mt-0.5">{formatCurrency(data.event.original_budget)}</p>
               </div>
             </CardContent>
           </Card>

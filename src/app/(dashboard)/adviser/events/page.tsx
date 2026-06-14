@@ -69,7 +69,7 @@ export default function AdviserEventsPage() {
                 <CardContent>
                   <div className="flex items-center gap-2 text-[13px] leading-[18px]">
                     <Wallet className="h-4 w-4 text-text-secondary" />
-                    <span className="font-medium text-text-primary">{formatCurrency(event.budget)}</span>
+                    <span className="font-medium text-text-primary">{formatCurrency(event.original_budget)}</span>
                   </div>
                 </CardContent>
               </Card>

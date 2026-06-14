@@ -86,7 +86,7 @@ export async function createEvent(
 
   const { data, error } = await supabase
     .from('events')
-    .insert({ department_id: departmentId, name, officer_id: officerId, adviser_id: adviserId, budget })
+    .insert({ department_id: departmentId, name, officer_id: officerId, adviser_id: adviserId, budget, original_budget: budget })
     .select()
     .single();
   if (error) throw new Error(error.message);
@@ -202,7 +202,7 @@ export async function confirmReceipt(
 
   const { data: event } = await supabase
     .from('events')
-    .select('budget, department_id, name')
+    .select('budget, original_budget, department_id, name')
     .eq('id', eventId)
     .single();
 
@@ -269,7 +269,7 @@ export async function approveReceipt(receiptId: string, eventId: string) {
   const supabase = await createClient();
   const { data: receipt } = await supabase
     .from('receipts')
-    .select('*, events!inner(budget, department_id)')
+    .select('*, events!inner(budget, original_budget, department_id)')
     .eq('id', receiptId)
     .single();
 
@@ -278,8 +278,6 @@ export async function approveReceipt(receiptId: string, eventId: string) {
   // Deduct from budget
   const currentBudget = (receipt.events as any).budget;
   const newBudget = currentBudget - receipt.total;
-
-  if (newBudget < 0) throw new Error('Insufficient budget');
 
   const { error: budgetError } = await supabase
     .from('events')
@@ -414,7 +412,7 @@ export async function approveNoReceiptForm(formId: string, eventId: string) {
   const supabase = await createClient();
   const { data: form } = await supabase
     .from('no_receipt_forms')
-    .select('*, events!inner(budget, department_id, name)')
+    .select('*, events!inner(budget, original_budget, department_id, name)')
     .eq('id', formId)
     .single();
 
@@ -480,11 +478,11 @@ async function checkBudgetThreshold(eventId: string) {
 
   const { data: event } = await supabase
     .from('events')
-    .select('id, name, budget, adviser_id, department_id')
+    .select('id, name, budget, original_budget, adviser_id, officer_id, department_id')
     .eq('id', eventId)
     .single();
 
-  if (!event || !event.adviser_id || event.budget <= 0) return;
+  if (!event || event.original_budget <= 0) return;
 
   const [receiptsRes, formsRes] = await Promise.all([
     supabase.from('receipts').select('total').eq('event_id', eventId).eq('status', 'approved'),
@@ -496,40 +494,46 @@ async function checkBudgetThreshold(eventId: string) {
     ...(formsRes.data || []),
   ].reduce((sum: number, item: any) => sum + (item.total || item.amount || 0), 0);
 
-  const ratio = totalExpenses / event.budget;
+  const ratio = totalExpenses / event.original_budget;
 
   const thresholds = [
     { at: 0.8, type: 'budget_80', title: '⚠ Budget Warning: 80% Used', message: `Event "${event.name}" has used 80% of its budget.` },
     { at: 0.9, type: 'budget_90', title: '⚠ Budget Warning: 90% Used', message: `Event "${event.name}" has used 90% of its budget.` },
-    { at: 1.0, type: 'budget_100', title: '🚫 Over Budget Alert', message: `Event "${event.name}" is over budget! (${formatCurrency(totalExpenses)} spent against ${formatCurrency(event.budget)} budget).` },
+    { at: 1.0, type: 'budget_100', title: '🚫 Over Budget Alert', message: `Event "${event.name}" is over budget! (${formatCurrency(totalExpenses)} spent against ${formatCurrency(event.original_budget)} budget).` },
   ];
+
+  const recipients = [event.adviser_id, event.officer_id].filter(Boolean);
 
   for (const threshold of thresholds) {
     if (ratio >= threshold.at) {
       const notifType = `${threshold.type}_${eventId}`;
-      const { data: existing } = await supabase
-        .from('notifications')
-        .select('id')
-        .eq('user_id', event.adviser_id)
-        .eq('type', notifType)
-        .limit(1);
 
-      if (!existing || existing.length === 0) {
-        await supabase.from('notifications').insert({
-          user_id: event.adviser_id,
-          title: threshold.title,
-          message: threshold.message,
-          type: notifType,
-          event_id: eventId,
-        });
-        await createAuditLog(event.department_id, threshold.title, {
-          event_id: eventId,
-          event_name: event.name,
-          budget: event.budget,
-          total_expenses: totalExpenses,
-          ratio: Math.round(ratio * 100) + '%',
-        });
+      for (const userId of recipients) {
+        const { data: existing } = await supabase
+          .from('notifications')
+          .select('id')
+          .eq('user_id', userId)
+          .eq('type', notifType)
+          .limit(1);
+
+        if (!existing || existing.length === 0) {
+          await supabase.from('notifications').insert({
+            user_id: userId,
+            title: threshold.title,
+            message: threshold.message,
+            type: notifType,
+            event_id: eventId,
+          });
+        }
       }
+
+      await createAuditLog(event.department_id, threshold.title, {
+        event_id: eventId,
+        event_name: event.name,
+        budget: event.original_budget,
+        total_expenses: totalExpenses,
+        ratio: Math.round(ratio * 100) + '%',
+      });
     }
   }
 }

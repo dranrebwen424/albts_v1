@@ -235,8 +235,8 @@ export function AdviserEventDetailClient({
   const backHref = '/adviser/events';
 
   if (isMobile) {
-    const budgetPercent = Math.min((totalExpenses / Math.max(totalExpenses + (event?.budget || 0), 1)) * 100, 100);
-    const remainingBalance = event?.budget || 0;
+    const budgetPercent = (totalExpenses / Math.max(event?.original_budget || 1, 1)) * 100;
+    const remainingBalance = (event?.original_budget || 0) - totalExpenses;
     const filterLabel = (() => {
       if (filterType !== 'all') {
         const items = filterType === 'receipt' ? receipts : forms;
@@ -307,7 +307,7 @@ export function AdviserEventDetailClient({
           </p>
           <div className="mt-3 space-y-1.5">
             <div className="text-[13px] text-[#6b6b6b]">
-              Total: <span className="text-[#000000] font-medium">₱{(totalExpenses + remainingBalance).toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+              Total: <span className="text-[#000000] font-medium">₱{(event?.original_budget || 0).toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
             </div>
             <div className="text-[13px] text-[#6b6b6b]">
               Spent: <span className="text-[#000000] font-medium">₱{totalExpenses.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
@@ -753,10 +753,10 @@ export function AdviserEventDetailClient({
   return (
     <div className="space-y-6 animate-fade-in">
       {/* Over-budget banner */}
-      {event.budget < 0 && (
+      {(event.original_budget - totalExpenses) < 0 && (
         <div className="bg-red-50 dark:bg-red-950 border border-red-200 dark:border-red-800 rounded-lg px-4 py-3 flex items-center gap-3">
           <span className="text-red-600 dark:text-red-400 text-sm font-medium">
-            This event exceeds its budget by {formatCurrency(Math.abs(event.budget))}.
+            This event exceeds its budget by {formatCurrency(Math.abs(event.original_budget - totalExpenses))}.
           </span>
         </div>
       )}
@@ -1015,11 +1015,11 @@ export function AdviserEventDetailClient({
             <Card className="bg-surface-white rounded-2xl shadow-soft border border-divider/20 overflow-hidden">
               <CardContent className="p-6">
                 <div className="flex flex-col items-center">
-                  <BudgetChart used={totalExpenses} remaining={event.budget} size={160} />
+                  <BudgetChart used={totalExpenses} remaining={Math.max(event.original_budget - totalExpenses, 0)} size={160} />
                   <div className="w-full mt-5 grid grid-cols-3 divide-x divide-divider/60">
                     <div className="text-center pr-2">
                       <p className="text-[9px] font-semibold text-text-secondary uppercase tracking-wider">Total</p>
-                      <AnimatedCurrency value={totalExpenses + event.budget} className="text-[14px] font-semibold text-text-primary leading-tight block mt-0.5" />
+                      <AnimatedCurrency value={event.original_budget} className="text-[14px] font-semibold text-text-primary leading-tight block mt-0.5" />
                     </div>
                     <div className="text-center px-2">
                       <p className="text-[9px] font-semibold text-text-secondary uppercase tracking-wider">Spent</p>
@@ -1027,12 +1027,12 @@ export function AdviserEventDetailClient({
                     </div>
                     <div className="text-center pl-2">
                       <p className="text-[9px] font-semibold text-text-secondary uppercase tracking-wider">Remain</p>
-                      <AnimatedCurrency value={event.budget} className={cn('text-[14px] font-semibold leading-tight block mt-0.5', event.budget < 0 ? 'text-error' : 'text-text-primary')} />
+                      <AnimatedCurrency value={event.original_budget - totalExpenses} className={cn('text-[14px] font-semibold leading-tight block mt-0.5', (event.original_budget - totalExpenses) < 0 ? 'text-error' : 'text-text-primary')} />
                     </div>
                   </div>
-                  {event.budget < 0 && (
+                  {(event.original_budget - totalExpenses) < 0 && (
                     <div className="mt-3 w-full px-3 py-1.5 bg-red-50 rounded-xl text-[10px] font-medium text-error text-center">
-                      Budget exceeded by {formatCurrency(Math.abs(event.budget))}
+                      Budget exceeded by {formatCurrency(Math.abs(event.original_budget - totalExpenses))}
                     </div>
                   )}
                 </div>
